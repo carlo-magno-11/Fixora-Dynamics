@@ -1,6 +1,6 @@
 # Fixora Dynamics
 
-PWA para calcular costes, precios y rentabilidad de pequeños negocios. MVP: calculadora general; especializaciones futuras quedan fuera del primer lanzamiento.
+Aplicación web adaptable para calcular costes, precios y rentabilidad de pequeños negocios. La conversión a PWA instalable y el modo offline están planificados para una fase posterior. MVP: calculadora general; especializaciones futuras quedan fuera del primer lanzamiento.
 
 ## Principios
 - React + TypeScript estricto + Vite.
