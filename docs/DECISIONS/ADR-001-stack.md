@@ -7,7 +7,7 @@
 Se requiere una app para muchos pequeños negocios, con cálculos fiables, historial, acceso web y evolución por módulos, manteniendo el gasto inicial mínimo.
 
 ## Decisión
-React + TypeScript + Vite como PWA. PostgreSQL/Supabase como backend gestionado cuando el presupuesto lo permita; desarrollo inicial contra Supabase local mediante CLI/Docker. Decimal.js para aritmética financiera. Vitest para unitarias y Playwright para E2E cuando se incorpore. pnpm con lockfile versionado.
+React + TypeScript + Vite como base web adaptable, con PWA en fase posterior. PostgreSQL/Supabase como backend gestionado cuando el presupuesto lo permita; desarrollo inicial contra Supabase local mediante CLI/Docker. Decimal.js para aritmética financiera. Vitest para unitarias y Playwright para E2E cuando se incorpore. pnpm con lockfile versionado.
 
 ## Consecuencias
 - Una sola app web adaptable; no mantener iOS/Android nativos en el MVP.
