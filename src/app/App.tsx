@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { calculatePrice } from "../modules/pricing/domain/pricing";
 import { ExpensesPage } from "../modules/expenses/ui/ExpensesPage";
 import { CatalogPage } from "../modules/catalog/ui/CatalogPage";
+import { createPricingSnapshot } from "../modules/snapshots/domain/calculation-snapshot";
+import { PRICING_FORMULA_VERSION } from "../modules/pricing/domain/pricing";
 import { calculateBreakEven } from "../modules/break-even/domain/break-even";
 import type { BreakEvenInput } from "../modules/break-even/domain/break-even";
 import type { PricingInput, PricingResult } from "../modules/pricing/domain/pricing";
@@ -16,6 +18,8 @@ type SavedCalculation = {
   currency: CurrencyCode;
   input: PricingInput;
   result: PricingResult;
+  formulaVersion?: typeof PRICING_FORMULA_VERSION;
+  snapshotVersion?: 1;
 };
 
 const STORAGE_KEY = "fixora.calculations.v1";
@@ -89,7 +93,13 @@ function readHistory(): SavedCalculation[] {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return [];
     const parsed: unknown = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed.filter(isSavedCalculation).slice(0, 100) : [];
+    return Array.isArray(parsed)
+      ? parsed.filter(isSavedCalculation).slice(0, 100).map((record) => ({
+        ...record,
+        formulaVersion: record.formulaVersion ?? PRICING_FORMULA_VERSION,
+        snapshotVersion: record.snapshotVersion ?? 1,
+      }))
+      : [];
   } catch {
     return [];
   }
@@ -174,13 +184,21 @@ export function App() {
 
   function saveCalculation() {
     if (!calculation.result) return;
-    const record: SavedCalculation = {
-      id: crypto.randomUUID(),
+    const snapshot = createPricingSnapshot({
       name: name.trim() || "Cálculo sin nombre",
       createdAt: new Date().toISOString(),
       currency,
-      input: { ...input },
-      result: calculation.result,
+      pricingInput: input,
+    });
+    const record: SavedCalculation = {
+      id: snapshot.id,
+      name: snapshot.name,
+      createdAt: snapshot.createdAt,
+      currency: snapshot.currency,
+      input: { ...snapshot.pricingInput },
+      result: { ...snapshot.pricingResult },
+      formulaVersion: snapshot.formulaVersion,
+      snapshotVersion: snapshot.schemaVersion,
     };
     setHistory((current) => [record, ...current].slice(0, 100));
     setSavedMessage("Cálculo guardado en este dispositivo.");
