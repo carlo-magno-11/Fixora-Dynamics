@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   CALCULATION_HISTORY_STORAGE_KEY,
   createCalculationHistoryRepository,
-  type KeyValueStorage,
 } from "./browser-calculation-repository";
+import type { KeyValueStorage } from "../../../shared/infrastructure/key-value-storage";
 
 function createMemoryStorage(initial: Record<string, string> = {}): KeyValueStorage {
   const values = new Map(Object.entries(initial));
