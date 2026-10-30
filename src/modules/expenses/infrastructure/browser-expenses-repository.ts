@@ -62,9 +62,12 @@ export function createExpensesRepository(storageSource: KeyValueStorageSource) {
         const parsed: unknown = JSON.parse(raw);
         if (!parsed || typeof parsed !== "object") return empty;
         const value = parsed as Record<string, unknown>;
-        const validFixed = Array.isArray(value.fixed) && value.fixed.every(isFixedExpense);
-        const validVariable = Array.isArray(value.variable) && value.variable.every(isVariableExpense);
-        if (!validFixed || !validVariable || typeof value.expectedUnits !== "number" ||
+        const fixed = Array.isArray(value.fixed) ? value.fixed.filter(isFixedExpense) : null;
+        const variable = Array.isArray(value.variable) ? value.variable.filter(isVariableExpense) : null;
+        if (!fixed || !variable ||
+          fixed.length !== (value.fixed as unknown[]).length ||
+          variable.length !== (value.variable as unknown[]).length ||
+          typeof value.expectedUnits !== "number" ||
           !Number.isFinite(value.expectedUnits) || value.expectedUnits <= 0) {
           return empty;
         }
@@ -73,12 +76,13 @@ export function createExpensesRepository(storageSource: KeyValueStorageSource) {
           ? value.period as ExpensePeriod
           : "month";
         const hasCurrency = value.currency === "MXN" || value.currency === "USD";
+        const currency: ExpenseCurrency = hasCurrency ? value.currency : defaultCurrency;
         return {
-          fixed: value.fixed,
-          variable: value.variable,
+          fixed,
+          variable,
           expectedUnits: value.expectedUnits,
           period,
-          currency: hasCurrency ? value.currency : defaultCurrency,
+          currency,
           needsCurrencyReview: !hasCurrency,
         };
       } catch {
