@@ -21,7 +21,6 @@ describe("summarizeExpenses", () => {
       fullyAllocatedCostPerUnit: 106,
       expectedUnits: 100,
       period: "month",
-      period: "month",
     });
   });
 
@@ -77,7 +76,7 @@ describe("summarizeExpenses", () => {
         fixedExpenses: [{ id: "rent", name: "Renta", amount }],
         variableExpenses: [],
         expectedUnits: 1,
-      period: "month",
+        period: "month",
       })).toThrow("Los importes deben ser finitos y no negativos.");
     }
   });
