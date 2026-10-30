@@ -333,7 +333,7 @@ export function App() {
                 <span className="essentials-seal">F<span>·</span>D</span>
               </div>
               <section className="essentials-welcome">
-                <div><span className="welcome-kicker">TU KIT DE ACCESO GENERAL</span><h2>Fixora Essentials</h2><p>La base común para cualquier emprendimiento: costes, precios y rentabilidad sin complicaciones.</p></div>
+                <div><span className="welcome-family">Bienvenido a la familia Fixora</span><span className="welcome-kicker">TU KIT DE ACCESO GENERAL</span><h2>Fixora Essentials</h2><p>La base común para cualquier emprendimiento: costes, precios y rentabilidad sin complicaciones.</p><button className="welcome-about-link" onClick={() => setView("about")}>Conoce quiénes somos <span>↗</span></button></div>
                 <div className="welcome-actions"><button className="welcome-primary" onClick={() => setView("calculator")}>Abrir calculadora <span>↗</span></button><button className="welcome-secondary" onClick={() => setView("kits")}>Personalizar mi negocio</button></div>
               </section>
               <div className="essentials-section-title"><div><p className="eyebrow">HERRAMIENTAS ESENCIALES</p><h2>Lo que puedes hacer desde hoy.</h2></div><span className="profile-chip">{businessTypes.find((item) => item.id === businessType)?.subtitle ?? "Perfil general"}</span></div>
