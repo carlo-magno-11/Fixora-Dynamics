@@ -47,3 +47,12 @@ Cambios en esta entrega (commits secuenciales de la misma rama):
 3. Extraer textos restantes de la UI al catálogo central y añadir detección de claves faltantes.
 4. Completar CRUD/edición de catálogo y revisar gastos/historial.
 5. Preparar Supabase CLI local, conciliar historial y generar la primera migración únicamente con `supabase migration new`; ejecutar y probar solo en local antes de proponer cualquier despliegue remoto.
+
+## 2026-10-30 — Entrega 2: catálogo editable
+
+- Commit `069dd0fad63afcaf8e1d93eb8aac9caec0ac429d`: función de dominio `updateCatalogItem`, conserva ID/estado y valida SKU excluyendo el propio registro.
+- Commit `767acc8e4539959d710376dcd1291104bd3d2554`: pruebas para edición, duplicados y elementos inexistentes.
+- Commit `6148aa7618074a351bcc354c6cd23ade5a6f67bf`: UI de edición, selector de moneda por registro, archivo y reactivación. No se elimina el registro al archivarlo.
+- Commit `dd3d452e873ea9ac3dcc46f05109fc6b80c55d65`: estilos responsive de las acciones del catálogo.
+- CI PR #246 aprobada en `6148aa7618074a351bcc354c6cd23ade5a6f67bf`: frozen install, typecheck, tests y build pasaron. CI push de commits posteriores está pendiente de confirmación.
+- Persistencia continúa siendo localStorage; la edición no implica sincronización cloud.
