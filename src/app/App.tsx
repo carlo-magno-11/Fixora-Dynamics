@@ -5,7 +5,6 @@ import { CatalogPage } from "../modules/catalog/ui/CatalogPage";
 import { createPricingSnapshot } from "../modules/snapshots/domain/calculation-snapshot";
 import type { CatalogItem } from "../modules/catalog/domain/catalog";
 import type { CatalogItemSnapshot } from "../modules/snapshots/domain/calculation-snapshot";
-import { PRICING_FORMULA_VERSION } from "../modules/pricing/domain/pricing";
 import { calculateBreakEven } from "../modules/break-even/domain/break-even";
 import type { BreakEvenInput } from "../modules/break-even/domain/break-even";
 import type { PricingInput } from "../modules/pricing/domain/pricing";
@@ -50,6 +49,27 @@ const initial: PricingInput = {
 };
 
 const currencyOptions: CurrencyCode[] = ["MXN", "USD"];
+
+function downloadHistoryCsv(records: readonly SavedCalculation[]) {
+  const csv = calculationsToCsv(records.map((record) => ({
+    name: record.name,
+    createdAt: record.createdAt,
+    currency: record.currency,
+    input: record.input,
+    result: record.result,
+    formulaVersion: record.formulaVersion,
+  })));
+  const blob = new Blob(["\\uFEFF", csv], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `fixora-historial-${new Date().toISOString().slice(0, 10)}.csv`;
+  link.hidden = true;
+  document.body.append(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
 
 function formatMoney(value: number, currency: CurrencyCode) {
   return new Intl.NumberFormat(currency === "MXN" ? "es-MX" : "en-US", {
