@@ -43,20 +43,19 @@ No habilitar signup remoto hasta que exista una migración de transición revisa
 
 ## Primera migración Fixora
 
-La especificación vigente está en `docs/FIXORA-FOUNDATION-SPEC.md`.
+La especificación vigente está en `docs/FIXORA-FOUNDATION-SPEC.md`. La migración generada por Supabase CLI ya está versionada en:
 
-Crear el archivo únicamente desde Codespaces:
+`supabase/migrations/20261030165305_fixora_identity_and_businesses.sql`
 
-```bash
-cd /workspaces/Fixora-Dynamics || exit 1
-pnpm dlx supabase migration new fixora_identity_and_businesses
-```
+También existe una primera prueba pgTAP de estructura, RLS y grants en `supabase/tests/fixora_foundation.test.sql`. Ambas siguen pendientes de ejecución local; no se declara validación SQL todavía.
 
-Después:
-1. Revisar el timestamp/nombre que generó la CLI.
-2. Pegar la implementación SQL aprobada en el archivo recién creado.
-3. Ejecutar una reconstrucción exclusivamente local con el comando local confirmado por `pnpm dlx supabase db reset --help`.
-4. Ejecutar pruebas SQL de aislamiento A/B y dos negocios.
+Si Codespaces contiene los dos archivos vacíos generados anteriormente con los nombres `20261030165305_fixora_identity_and_businesses.sql` y `20261030170034_fixora_identity_and_businesses.sql`, respáldalos/muévelos antes de hacer pull para evitar conflicto con el archivo ya versionado. Conserva `supabase/.gitignore`, `supabase/config.toml` y `supabase/supabase.lock`.
+
+Después de sincronizar:
+1. Inspeccionar el SQL completo y el estado del stack nativo.
+2. Ejecutar una reconstrucción exclusivamente local con el comando confirmado por `pnpm dlx supabase db reset --help`.
+3. Ejecutar `supabase test db` local y revisar el resultado pgTAP.
+4. Completar pruebas de aislamiento A/B con dos usuarios y dos negocios; la prueba inicial solo cubre estructura, RLS y grants.
 5. Ejecutar typecheck, tests y build.
 6. Revisar grants efectivos, políticas RLS, funciones, triggers y advisors.
 
