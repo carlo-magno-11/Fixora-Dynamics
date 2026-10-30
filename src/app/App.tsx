@@ -5,7 +5,7 @@ import type { BreakEvenInput } from "../modules/break-even/domain/break-even";
 import type { PricingInput, PricingResult } from "../modules/pricing/domain/pricing";
 
 type View = "essentials" | "calculator" | "breakEven" | "kits" | "history" | "guide";
-type BusinessType = "general" | "retail" | "food" | "services" | "digital" | "workshop";
+type BusinessType = "general" | "retail" | "food" | "services_beauty" | "digital_products" | "workshop";
 type CurrencyCode = "MXN" | "USD";
 type SavedCalculation = {
   id: string;
@@ -22,8 +22,8 @@ const businessTypes: { id: BusinessType; title: string; subtitle: string; detail
   { id: "general", title: "Aún estoy definiendo mi negocio", subtitle: "Perfil general", detail: "Empieza con las herramientas comunes." },
   { id: "retail", title: "Comercio y reventa", subtitle: "Productos físicos", detail: "Compras, envío, empaque, comisiones e inventario." },
   { id: "food", title: "Alimentos y repostería", subtitle: "Recetas y producción", detail: "Ingredientes, rendimiento por lote, porciones y merma." },
-  { id: "services", title: "Servicios y belleza", subtitle: "Tiempo y consumibles", detail: "Duración, materiales, capacidad y precio por cita." },
-  { id: "digital", title: "Productos digitales y creativos", subtitle: "Creación y plataformas", detail: "Tiempo de creación, comisiones y costes recurrentes." },
+  { id: "services_beauty", title: "Servicios y belleza", subtitle: "Tiempo y consumibles", detail: "Duración, materiales, capacidad y precio por cita." },
+  { id: "digital_products", title: "Productos digitales y creativos", subtitle: "Creación y plataformas", detail: "Tiempo de creación, comisiones y costes recurrentes." },
   { id: "workshop", title: "Taller y manufactura", subtitle: "Producción por etapas", detail: "Materiales, operaciones, lotes y desperdicio." },
 ];
 function readBusinessType(): BusinessType {
