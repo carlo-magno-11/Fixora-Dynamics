@@ -7,7 +7,7 @@ Este documento separa entregables de diseño, código, infraestructura y validac
 - [x] Repositorio y rama de trabajo aislada; PR #1 abierto como borrador contra `main`.
 - [x] Base React + TypeScript + Vite y motor financiero Decimal.js.
 - [x] Calculadora general: materiales, mano de obra, merma, gastos fijos por unidad, comisiones, descuentos y margen.
-- [x] Corrección de redondeo: el precio visible se redondea hacia arriba al centavo y la ganancia/margen se calculan usando ese mismo precio.
+- [x] El precio visible se redondea hacia arriba al centavo y ganancia/margen se calculan usando ese mismo precio.
 - [x] Punto de equilibrio: contribución unitaria, unidades enteras mínimas y venta mínima estimada.
 - [x] Selector MXN/USD en calculadora, historial local y guía de uso.
 - [x] Identidad visual prémium: petróleo, marfil, champagne y verde salvia.
@@ -15,16 +15,19 @@ Este documento separa entregables de diseño, código, infraestructura y validac
 - [x] Definición de producto modular: Fixora Essentials + kits sectoriales (ADR-003).
 - [x] Pantalla inicial Fixora Essentials y selector persistente local de perfil de negocio.
 - [x] Registro local de gastos fijos y costes variables, unidades esperadas y asignación por unidad.
+- [x] Los gastos guardan su propia moneda; los registros antiguos sin moneda requieren confirmación explícita.
+- [x] La interfaz advierte que cambiar moneda no convierte importes y que cambiar periodo tampoco convierte cantidades.
 - [x] Dominio de gastos con Decimal.js, periodos explícitos semanal/mensual/trimestral/anual, validación y prevención documentada del doble conteo.
 - [x] Catálogo local de productos/servicios con unidad, SKU opcional único, moneda y coste de referencia.
 - [x] Flujo catálogo → costeo: conserva una referencia descriptiva; el coste de referencia no se incorpora automáticamente.
 - [x] Snapshots inmutables con versión de esquema y fórmula, entradas, resultado, moneda y fecha.
 - [x] `pnpm-lock.yaml` versionado y CI usando `pnpm install --frozen-lockfile`.
-- [x] CI GitHub aprobada en el commit `5efdda22aaa87c0b86cc531129fab625a4198054` (run #201).
-- [x] CI GitHub aprobada en el HEAD `f124ec142cd369d1e8f255a33988608339b819ac` (run #206): instalación congelada, typecheck, tests y build.
+- [x] CI #201 aprobada en `5efdda22aaa87c0b86cc531129fab625a4198054`.
+- [x] CI #206 aprobada después de la corrección del redondeo.
+- [x] CI #209 aprobada en el HEAD `e77832b5879cc89bdea270540f12ff719887b88f`: instalación congelada, typecheck, tests y build.
 - [ ] Validación manual de interfaz y flujos en navegador/Windows; no hay evidencia de prueba física confirmada.
-- [ ] Corregir y probar el almacenamiento de moneda de gastos: los registros actuales no guardan su moneda y podrían reinterpretarse al cambiar el selector global.
-- [ ] Aclarar el cambio de periodo de gastos: cambiar semanal/mensual/trimestral/anual no convierte automáticamente los importes existentes.
+- [ ] Probar explícitamente los registros antiguos de gastos sin moneda y la asignación de moneda elegida.
+- [ ] Probar que cambiar moneda/periodo no se interpreta como conversión de importes.
 - [ ] Completar pruebas manuales de cálculo, redondeo, comisiones, descuentos, historial, catálogo y responsive.
 - [ ] Inicializar Supabase CLI en entorno local y reconciliar las tres migraciones heredadas remotas.
 - [ ] Generar migraciones solo con `supabase migration new`; no inventar timestamps ni aplicar SQL directo en remoto.
