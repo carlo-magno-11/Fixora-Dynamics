@@ -76,6 +76,14 @@ describe("browser calculation history repository", () => {
     expect(JSON.parse(storage.getItem(CALCULATION_HISTORY_STORAGE_KEY) ?? "[]")).toHaveLength(100);
   });
 
+  it("handles storage access failures without breaking history loading", () => {
+    const repository = createCalculationHistoryRepository(() => {
+      throw new Error("Storage is blocked");
+    });
+    expect(repository.load()).toEqual([]);
+    expect(() => repository.save([validRecord])).toThrow("Storage is blocked");
+  });
+
   it("keeps persistence injectable and does not access window or localStorage", () => {
     const storage = createMemoryStorage();
     const repository = createCalculationHistoryRepository(storage);
