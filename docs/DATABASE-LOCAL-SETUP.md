@@ -140,3 +140,24 @@ RLS restringe filas/acciones; los grants y la exposición de esquema controlan s
 ## Registro obligatorio
 
 Cada entrega debe anotar: fecha, rama, commit, nombre de migración real, pruebas locales, resultado de revisión y si hubo o no operación remota. El estado remoto solo puede cambiar después de una revisión final explícita y un plan de despliegue aprobado.
+
+
+## Estado actualizado — 2026-10-30
+
+El usuario ya ejecutó `supabase init` en Codespaces. La CLI observada fue 2.122.0 y Docker estaba disponible. Los archivos generados son `supabase/config.toml` y `supabase/.gitignore`; al último estado comunicado, ambos siguen sin seguimiento Git.
+
+El TOML local fue editado y validado con estos valores:
+
+- `api.auto_expose_new_tables = false`
+- `db.seed.enabled = false` y `db.seed.sql_paths = []`
+- `auth.site_url = "http://127.0.0.1:5173"`
+- Redirects: `http://127.0.0.1:5173` y `http://localhost:5173`
+- `auth.enable_signup = false`
+
+No se ha ejecutado `supabase start`, no se ha enlazado el proyecto remoto y no se ha creado ninguna migración Fixora. La CLI todavía debe probarse localmente con `supabase start` y `supabase status` antes de generar el bootstrap.
+
+La inspección de solo lectura recuperó las tres definiciones SQL históricas desde `supabase_migrations.schema_migrations.statements`. Véase `SUPABASE-LEGACY-RECOVERY-20261030.md`. No se deben volver a ejecutar esos SQL heredados.
+
+El proyecto remoto conserva privilegios amplios para `anon`/`authenticated`, cuatro funciones SECURITY DEFINER expuestas y un trigger Auth heredado. Security Advisor reporta ocho hallazgos relacionados. La rama de base de datos `main` está en estado `MIGRATIONS_FAILED`. Ninguna de estas condiciones ha sido modificada.
+
+**Bloqueo:** no habilitar Auth ni desplegar hasta que el stack local funcione, se inspeccionen dependencias y backup, y exista una migración Fixora revisada y probada.
