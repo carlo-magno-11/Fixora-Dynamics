@@ -403,3 +403,10 @@ El panel de administración es parte obligatoria del primer producto comercial. 
 El primer módulo TypeScript de política de acceso y sus pruebas solo sirven para presentación/UX. No conceden acceso real. La producción exige roles internos no editables por usuarios, sesión autenticada, AAL2, estado administrativo activo, autorización por permiso en cada operación, RLS/funciones server-side y auditoría transaccional. No habilitar el panel ni mostrar datos ficticios hasta conectar esos controles.
 
 Estado real: el shell de la aplicación todavía concentra parte de la navegación y persistencia local; gastos, catálogo e historial no son todavía multiusuario. El refactor será incremental y respaldado por pruebas. El diseño del panel no se considera implementado por la sola existencia de la matriz de permisos.
+
+
+### Avance adicional — licencias y consola administrativa
+
+El módulo `src/modules/licensing/domain/license-policy.ts` establece reglas puras de vigencia anual, conservación de historial/exportación, acceso premium, límite lógico de tres dispositivos y requisitos de canje. Las pruebas cubren vencimiento exacto, año bisiesto, fechas inválidas, suspensión/revocación y códigos ya consumidos.
+
+La consola administrativa tiene ahora un shell de presentación en `src/modules/admin/ui/AdminConsolePage.tsx`, contratos de datos tipados y navegación filtrada por permiso. Solo renderiza métricas cuando recibe un snapshot del servidor; no contiene datos de demostración. Aún no está integrada en la navegación ni conectada a backend, porque hacerlo sin Auth/RLS/roles reales sería inseguro.
