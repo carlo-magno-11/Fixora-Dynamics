@@ -8,6 +8,7 @@ Este documento separa entregables de diseño, código, infraestructura y validac
 - [x] Base React + TypeScript + Vite y motor financiero Decimal.js.
 - [x] Pruebas unitarias iniciales del motor y CI remoto de la fundación anterior.
 - [x] Primera calculadora general: materiales, mano de obra, merma, gastos fijos por unidad, comisiones, descuento y margen.
+- [x] Punto de equilibrio por periodo: margen de contribución, unidades enteras necesarias y venta mínima estimada, con pruebas de límites.
 - [x] Selector MXN/USD, historial local y guía de uso.
 - [x] Identidad visual prémium: petróleo, marfil, champagne y verde salvia.
 - [x] Investigación de repositorios GitHub de más de 1,000 estrellas y revisión de candidatos/licencias; decisión registrada en `docs/OPEN-SOURCE-RESEARCH.md`.
@@ -22,7 +23,7 @@ Este documento separa entregables de diseño, código, infraestructura y validac
 - [ ] Crear perfiles, negocios y membresías con RLS, grants Data API explícitos y pruebas multiusuario.
 - [ ] Conectar Auth y persistencia cloud; reemplazar historial local.
 - [ ] Implementar catálogo de productos/servicios y snapshots de cálculos versionados.
-- [ ] Completar Essentials: gastos de periodo, punto de equilibrio, escenarios y exportación CSV/PDF.
+- [ ] Completar Essentials: registro de gastos de periodo, escenarios y exportación CSV/PDF.
 - [ ] Prioridad de kits: comercio/reventa; servicios/belleza; alimentos/repostería; taller/manufactura; productos digitales.
 - [ ] Implementar licencias anuales, activación transaccional y límite de tres dispositivos.
 - [ ] Construir administración de pedidos Etsy, emisión/revocación de códigos, MFA y auditoría.
