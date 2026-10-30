@@ -183,3 +183,14 @@ No conectar ni habilitar signup. Primero completar backup verificable, inspecci�
 
 - `16025da` / `8bf2e78`: política de elegibilidad de compra y pruebas para pago pendiente, SKU incorrecto, referencia ausente, verificación incompleta, reembolso, disputa y contracargo.
 - `fe1b6d3` / `3563bce`: documenta frontera entre política de dominio y verificación real del proveedor/servidor.
+
+
+## 2026-10-30 — Primera migración Fixora versionada en GitHub
+
+- `360a278`: incorpora la migración inicial generada por CLI con timestamp `20261030165305`, con perfiles Fixora, negocios, membresías, trigger de perfil, RPC transaccional, RLS y grants mínimos.
+- `e1c9c29` / `bc4a259`: añade prueba pgTAP para existencia de tablas, RLS, grants y permisos de RPC/esquema privado.
+- `1c25154` / `082d9cf`: valida campos obligatorios y alinea límites de negocio con la especificación.
+- `f371b51` / `7953963`: actualiza guía para reconocer la migración canónica y evitar duplicados locales.
+- Estado: versionada en GitHub, pero todavía NO aplicada ni probada en el PostgreSQL local. La prueba pgTAP inicial no sustituye la matriz A/B de aislamiento multiusuario.
+- El Codespace del usuario tenía dos archivos de migración vacíos sin seguimiento Git. Antes de sincronizar, moverlos a respaldo solo si siguen vacíos; preservar los archivos de configuración local.
+- No se ha vinculado ni modificado Supabase remoto.
