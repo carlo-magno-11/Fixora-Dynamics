@@ -82,6 +82,17 @@ function isSavedCalculation(value: unknown): value is SavedCalculation {
   ];
   if (!inputKeys.every((key) => typeof input[key] === "number" && Number.isFinite(input[key]) && (input[key] as number) >= 0)) return false;
 
+  if (record.formulaVersion !== undefined && record.formulaVersion !== PRICING_FORMULA_VERSION) return false;
+  if (record.snapshotVersion !== undefined && record.snapshotVersion !== 1) return false;
+  if (record.catalogItem !== undefined) {
+    if (!record.catalogItem || typeof record.catalogItem !== "object") return false;
+    const item = record.catalogItem as Record<string, unknown>;
+    if (typeof item.id !== "string" || typeof item.name !== "string" ||
+      (item.kind !== "product" && item.kind !== "service") || typeof item.unit !== "string" ||
+      typeof item.sku !== "string" || (item.currency !== "MXN" && item.currency !== "USD") ||
+      typeof item.referenceCost !== "number" || !Number.isFinite(item.referenceCost) || item.referenceCost < 0) return false;
+  }
+
   const result = record.result as Record<string, unknown>;
   const resultKeys: (keyof PricingResult)[] = [
     "materialCost", "laborCost", "wasteCost", "directCost",
