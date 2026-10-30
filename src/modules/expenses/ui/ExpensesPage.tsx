@@ -1,77 +1,19 @@
 import { useEffect, useMemo, useState } from "react";
 import { summarizeExpenses } from "../domain/expenses";
 import type { ExpensePeriod, FixedExpense, VariableExpense } from "../domain/expenses";
+import { createExpensesRepository, type ExpenseCurrency } from "../infrastructure/browser-expenses-repository";
 
-const STORAGE_KEY = "fixora.expenses.v1";
-type CurrencyCode = "MXN" | "USD";
-
-type StoredExpenses = {
-  fixed: FixedExpense[];
-  variable: VariableExpense[];
-  expectedUnits: number;
-  period: ExpensePeriod;
-  currency: CurrencyCode;
-  needsCurrencyReview: boolean;
-};
-
-function readExpenses(defaultCurrency: CurrencyCode): StoredExpenses {
-  const empty: StoredExpenses = {
-    fixed: [],
-    variable: [],
-    expectedUnits: 100,
-    period: "month",
-    currency: defaultCurrency,
-    needsCurrencyReview: false,
-  };
-
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return empty;
-    const parsed: unknown = JSON.parse(raw);
-    if (!parsed || typeof parsed !== "object") throw new Error("Invalid expenses");
-    const value = parsed as Record<string, unknown>;
-    const validFixed = Array.isArray(value.fixed) && value.fixed.every((item) =>
-      item && typeof item === "object" &&
-      typeof (item as FixedExpense).id === "string" &&
-      typeof (item as FixedExpense).name === "string" &&
-      typeof (item as FixedExpense).amount === "number" &&
-      Number.isFinite((item as FixedExpense).amount) && (item as FixedExpense).amount >= 0
-    );
-    const validVariable = Array.isArray(value.variable) && value.variable.every((item) =>
-      item && typeof item === "object" &&
-      typeof (item as VariableExpense).id === "string" &&
-      typeof (item as VariableExpense).name === "string" &&
-      typeof (item as VariableExpense).costPerUnit === "number" &&
-      Number.isFinite((item as VariableExpense).costPerUnit) && (item as VariableExpense).costPerUnit >= 0
-    );
-    if (!validFixed || !validVariable || typeof value.expectedUnits !== "number" ||
-      !Number.isFinite(value.expectedUnits) || value.expectedUnits <= 0) {
-      throw new Error("Invalid expenses");
-    }
-
-    const period = ["week", "month", "quarter", "year"].includes(value.period as string)
-      ? value.period as ExpensePeriod
-      : "month";
-    const hasCurrency = value.currency === "MXN" || value.currency === "USD";
-
-    return {
-      fixed: value.fixed as FixedExpense[],
-      variable: value.variable as VariableExpense[],
-      expectedUnits: value.expectedUnits,
-      period,
-      currency: hasCurrency ? value.currency as CurrencyCode : defaultCurrency,
-      needsCurrencyReview: !hasCurrency,
-    };
-  } catch {
-    return empty;
-  }
-}
+type CurrencyCode = ExpenseCurrency;
 
 export function ExpensesPage({ currency, formatMoney }: {
   currency: CurrencyCode;
   formatMoney: (value: number, currency: CurrencyCode) => string;
 }) {
-  const [saved] = useState(() => readExpenses(currency));
+  const repository = useMemo(
+    () => createExpensesRepository(() => window.localStorage),
+    [],
+  );
+  const [saved] = useState(() => repository.load(currency));
   const [fixed, setFixed] = useState(saved.fixed);
   const [variable, setVariable] = useState(saved.variable);
   const [expectedUnits, setExpectedUnits] = useState(saved.expectedUnits);
@@ -94,18 +36,18 @@ export function ExpensesPage({ currency, formatMoney }: {
       return;
     }
     try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      repository.save({
         fixed,
         variable,
         expectedUnits,
         period,
         currency: expenseCurrency,
-      }));
+      });
       setMessage("Cambios guardados en este navegador.");
     } catch {
       setMessage("No fue posible guardar los gastos en este navegador.");
     }
-  }, [fixed, variable, expectedUnits, period, expenseCurrency, needsCurrencyReview]);
+  }, [fixed, variable, expectedUnits, period, expenseCurrency, needsCurrencyReview, repository]);
 
   function updateFixed(id: string, key: "name" | "amount", value: string) {
     setFixed((current) => current.map((item) => item.id === id
