@@ -19,7 +19,7 @@ Este documento separa entregables de diseño, código, infraestructura y validac
 - [x] Dominio de gastos con Decimal.js, periodos explícitos semanal/mensual/trimestral/anual, validación de importes/nombres/rango numérico y prevención de doble conteo en punto de equilibrio; siete pruebas unitarias.
 - [x] Catálogo local compartido de productos/servicios: unidad explícita, SKU opcional único, moneda y coste de referencia; validación de dominio y seis pruebas unitarias. El coste de referencia no altera snapshots históricos.
 - [x] CI remoto valida gastos, catálogo y snapshots en el HEAD `ce93741fdebe05eb7f6c9a069b82549273cfe3c1` (32/32 pruebas).
-- [ ] Validar manualmente en Windows la experiencia de gastos y catálogo; la sincronización cloud sigue pendiente.
+- [ ] Validar manualmente en Windows la experiencia de gastos, catálogo y costeo vinculado; la sincronización cloud sigue pendiente.
 - [ ] Generar y versionar `pnpm-lock.yaml`; después cambiar CI a `pnpm install --frozen-lockfile`.
 - [ ] Inicializar Supabase CLI y reconciliar las tres migraciones heredadas remotas.
 - [ ] Generar migraciones solo con `supabase migration new`; no inventar timestamps.
