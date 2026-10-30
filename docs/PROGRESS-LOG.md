@@ -179,3 +179,7 @@ No conectar ni habilitar signup. Primero completar backup verificable, inspecci�
 - `9d85649` / `414b322`: añade permiso independiente `admins.manage`, reservado a `platform_owner`, con prueba negativa para soporte.
 - `3f4e820` / `44f1046`: añade sección de gestión de administradores filtrada por ese permiso.
 - `6286350`: documenta la exigencia de MFA reciente, motivo y auditoría reforzada para cambios de administradores.
+
+
+- `16025da` / `8bf2e78`: política de elegibilidad de compra y pruebas para pago pendiente, SKU incorrecto, referencia ausente, verificación incompleta, reembolso, disputa y contracargo.
+- `fe1b6d3` / `3563bce`: documenta frontera entre política de dominio y verificación real del proveedor/servidor.
