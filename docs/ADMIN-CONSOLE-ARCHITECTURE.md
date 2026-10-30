@@ -84,3 +84,6 @@ Cada operación debe validar sesión, AAL2, membresía administrativa activa, pe
 - Un código de activación solo puede canjearse una vez, incluso con solicitudes concurrentes.
 - Toda acción sensible queda auditada; no se registran secretos ni datos personales innecesarios.
 - Pruebas negativas de autorización son obligatorias antes de habilitar producción.
+
+
+La gestión de otros administradores es un permiso separado (`admins.manage`) reservado al rol `platform_owner`. Debe exigir MFA reciente, motivo y auditoría reforzada; los roles de soporte, licencias, revisión de compras y auditoría nunca pueden asignar privilegios de plataforma.
