@@ -51,6 +51,13 @@ describe("platform admin authorization policy", () => {
     }
   });
 
+  it("reserves platform administrator management for the platform owner", () => {
+    const owner = resolveAdminAccess(activeOwner);
+    const support = resolveAdminAccess({ ...activeOwner, roles: ["support_agent"] });
+    expect(hasAdminPermission(owner, "admins.manage")).toBe(true);
+    expect(hasAdminPermission(support, "admins.manage")).toBe(false);
+  });
+
   it("keeps support agents away from purchase verification and settings", () => {
     const decision = resolveAdminAccess({ ...activeOwner, roles: ["support_agent"] });
     expect(hasAdminPermission(decision, "support.respond")).toBe(true);
