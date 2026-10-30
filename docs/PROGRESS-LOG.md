@@ -171,3 +171,6 @@ No conectar ni habilitar signup. Primero completar backup verificable, inspecci�
 
 - `7a37548`: README enlaza la arquitectura del panel administrativo.
 - `bedc1e2`: aclara que los estados TypeScript son una proyección de UX; compra, reembolso, contracargo, vigencia y cupos de dispositivo deben resolverse transaccionalmente en servidor.
+
+
+- `1c25154` / `082d9cf`: corrige la validación de nombre de negocio (2–100 caracteres), rechaza valores NULL para tipo/moneda y alinea el borrador SQL con la especificación.
