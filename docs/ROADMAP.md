@@ -16,7 +16,9 @@ Este documento separa entregables de diseño, código, infraestructura y validac
 - [x] Implementar la pantalla inicial Fixora Essentials y selector persistente de perfil de negocio (preferencia local, aún no sincronizada).
 - [x] CI GitHub para el HEAD `4e69a495b62d74e8948c8883e259737336a17aae`: typecheck, 12 pruebas Vitest y build completados correctamente.
 - [x] Identificadores de perfiles de negocio alineados con el modelo de dominio (`services_beauty` y `digital_products`) en el commit `ad2851234e7285d61fe5d1342aa0e7e6991e1622`; CI de este commit pendiente.
-- [x] Primera capa de dominio para gastos: separación entre total fijo del periodo, variable por unidad y asignación analítica por unidad; pruebas de límites y prevención de doble conteo (`src/modules/expenses/domain`). No hay todavía pantalla ni persistencia de gastos.
+- [x] Registro local de gastos en Essentials: alta/eliminación de gastos fijos y costes variables, unidades esperadas, resumen de asignación por unidad y persistencia en `localStorage`.
+- [x] Dominio de gastos con Decimal.js, validación de importes/nombres/rango numérico y prevención de doble conteo en el punto de equilibrio; seis pruebas unitarias añadidas.
+- [ ] Validar en Windows y CI la pantalla y el dominio de gastos; la sincronización cloud sigue pendiente.
 - [ ] Generar y versionar `pnpm-lock.yaml`; después cambiar CI a `pnpm install --frozen-lockfile`.
 - [ ] Inicializar Supabase CLI y reconciliar las tres migraciones heredadas remotas.
 - [ ] Generar migraciones solo con `supabase migration new`; no inventar timestamps.
@@ -24,7 +26,7 @@ Este documento separa entregables de diseño, código, infraestructura y validac
 - [ ] Crear perfiles, negocios y membresías con RLS, grants Data API explícitos y pruebas multiusuario.
 - [ ] Conectar Auth y persistencia cloud; reemplazar historial local.
 - [ ] Implementar catálogo de productos/servicios y snapshots de cálculos versionados.
-- [ ] Completar Essentials: registro de gastos de periodo, escenarios y exportación CSV/PDF.
+- [ ] Completar Essentials: escenarios, catálogo de productos/servicios y exportación CSV/PDF.
 - [ ] Prioridad de kits: comercio/reventa; servicios/belleza; alimentos/repostería; taller/manufactura; productos digitales.
 - [ ] Implementar licencias anuales, activación transaccional y límite de tres dispositivos.
 - [ ] Construir administración de pedidos Etsy, emisión/revocación de códigos, MFA y auditoría.
