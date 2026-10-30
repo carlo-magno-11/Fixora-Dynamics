@@ -3,6 +3,8 @@ import { calculatePrice } from "../modules/pricing/domain/pricing";
 import { ExpensesPage } from "../modules/expenses/ui/ExpensesPage";
 import { CatalogPage } from "../modules/catalog/ui/CatalogPage";
 import { createPricingSnapshot } from "../modules/snapshots/domain/calculation-snapshot";
+import type { CatalogItem } from "../modules/catalog/domain/catalog";
+import type { CatalogItemSnapshot } from "../modules/snapshots/domain/calculation-snapshot";
 import { PRICING_FORMULA_VERSION } from "../modules/pricing/domain/pricing";
 import { calculateBreakEven } from "../modules/break-even/domain/break-even";
 import type { BreakEvenInput } from "../modules/break-even/domain/break-even";
@@ -20,6 +22,7 @@ type SavedCalculation = {
   result: PricingResult;
   formulaVersion?: typeof PRICING_FORMULA_VERSION;
   snapshotVersion?: 1;
+  catalogItem?: CatalogItemSnapshot;
 };
 
 const STORAGE_KEY = "fixora.calculations.v1";
@@ -125,6 +128,7 @@ export function App() {
   const [profileMessage, setProfileMessage] = useState("");
   const [breakEvenInput, setBreakEvenInput] = useState<BreakEvenInput>(initialBreakEven);
   const [name, setName] = useState("Mi primer producto");
+  const [selectedCatalogItem, setSelectedCatalogItem] = useState<CatalogItemSnapshot | undefined>();
   const [history, setHistory] = useState<SavedCalculation[]>(readHistory);
   const [savedMessage, setSavedMessage] = useState("");
 
@@ -182,6 +186,23 @@ export function App() {
     setSavedMessage("");
   }
 
+  function useCatalogItem(item: CatalogItem) {
+    const catalogSnapshot: CatalogItemSnapshot = {
+      id: item.id,
+      name: item.name,
+      kind: item.kind,
+      unit: item.unit,
+      sku: item.sku,
+      currency: item.currency,
+      referenceCost: item.referenceCost,
+    };
+    setSelectedCatalogItem(catalogSnapshot);
+    setCurrency(item.currency);
+    setName(item.name);
+    setView("calculator");
+    setSavedMessage("Elemento del catálogo vinculado. Completa y revisa los costes antes de guardar.");
+  }
+
   function saveCalculation() {
     if (!calculation.result) return;
     const snapshot = createPricingSnapshot({
@@ -189,6 +210,7 @@ export function App() {
       createdAt: new Date().toISOString(),
       currency,
       pricingInput: input,
+      catalogItem: selectedCatalogItem,
     });
     const record: SavedCalculation = {
       id: snapshot.id,
@@ -199,6 +221,7 @@ export function App() {
       result: { ...snapshot.pricingResult },
       formulaVersion: snapshot.formulaVersion,
       snapshotVersion: snapshot.schemaVersion,
+      catalogItem: snapshot.catalogItem,
     };
     setHistory((current) => [record, ...current].slice(0, 100));
     setSavedMessage("Cálculo guardado en este dispositivo.");
@@ -208,6 +231,7 @@ export function App() {
     setInput(record.input);
     setCurrency(record.currency);
     setName(record.name);
+    setSelectedCatalogItem(record.catalogItem);
     setView("calculator");
     setSavedMessage("Abriste una copia de tu cálculo guardado.");
   }
@@ -215,6 +239,7 @@ export function App() {
   function resetCalculation() {
     setInput(initial);
     setName("Mi primer producto");
+    setSelectedCatalogItem(undefined);
     setSavedMessage("");
   }
 
@@ -350,6 +375,8 @@ export function App() {
                 <button className="text-button" onClick={resetCalculation}>Restablecer valores</button>
               </div>
 
+              {selectedCatalogItem && <p className="catalog-source-note">Desde catálogo: <strong>{selectedCatalogItem.name}</strong> · unidad {selectedCatalogItem.unit}{selectedCatalogItem.sku ? ` · SKU ${selectedCatalogItem.sku}` : ""}. El coste de referencia no se incorpora automáticamente; revisa tus partidas.</p>}
+
               <div className="calculator-grid">
                 <div className="form-column">
                   <section className="surface-card">
@@ -457,7 +484,7 @@ export function App() {
           )}
 
           {view === "expenses" && <ExpensesPage currency={currency} formatMoney={formatMoney} />}
-          {view === "catalog" && <CatalogPage currency={currency} formatMoney={formatMoney} />}
+          {view === "catalog" && <CatalogPage currency={currency} formatMoney={formatMoney} onUseInCalculator={useCatalogItem} />}
 
           {view === "history" && (
             <div className="secondary-page">
