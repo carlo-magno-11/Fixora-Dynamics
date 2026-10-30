@@ -66,3 +66,26 @@ export function createCatalogItem(
     active: true,
   };
 }
+
+export function updateCatalogItem(
+  id: string,
+  draft: CatalogDraft,
+  existing: CatalogItem[],
+): CatalogItem {
+  const current = existing.find((item) => item.id === id);
+  if (!current) {
+    throw new Error("No se encontró el elemento que quieres editar.");
+  }
+  const errors = validateCatalogDraft(draft, existing.filter((item) => item.id !== id));
+  if (errors.length > 0) {
+    throw new Error(errors[0]);
+  }
+  return {
+    ...current,
+    ...draft,
+    name: draft.name.trim(),
+    unit: draft.unit.trim(),
+    sku: draft.sku.trim(),
+    referenceCost: new Decimal(draft.referenceCost).toDecimalPlaces(2).toNumber(),
+  };
+}
