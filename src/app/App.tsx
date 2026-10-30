@@ -227,6 +227,51 @@ export function App() {
         </aside>
 
         <section className="main-content">
+          {view === "essentials" && (
+            <div className="essentials-page">
+              <div className="page-heading essentials-heading">
+                <div>
+                  <p className="eyebrow">TU CENTRO DE NEGOCIO <span> / </span> FIXORA 01</p>
+                  <h1>Tu negocio, con números claros.</h1>
+                  <p className="page-lead">Empieza por entender cuánto te cuesta producir, cuánto necesitas cobrar y qué deja cada venta. Después, adapta tu espacio al tipo de emprendimiento.</p>
+                </div>
+                <span className="essentials-seal">F<span>·</span>D</span>
+              </div>
+              <section className="essentials-welcome">
+                <div><span className="welcome-kicker">TU KIT DE ACCESO GENERAL</span><h2>Fixora Essentials</h2><p>La base común para cualquier emprendimiento: costes, precios y rentabilidad sin complicaciones.</p></div>
+                <div className="welcome-actions"><button className="welcome-primary" onClick={() => setView("calculator")}>Abrir calculadora <span>↗</span></button><button className="welcome-secondary" onClick={() => setView("kits")}>Personalizar mi negocio</button></div>
+              </section>
+              <div className="essentials-section-title"><div><p className="eyebrow">HERRAMIENTAS ESENCIALES</p><h2>Lo que puedes hacer desde hoy.</h2></div><span className="profile-chip">{businessTypes.find((item) => item.id === businessType)?.subtitle ?? "Perfil general"}</span></div>
+              <div className="essentials-grid">
+                <article className="essential-tile"><span className="tile-index">01 / COSTES</span><div className="tile-symbol">⌗</div><h3>Costear productos y servicios</h3><p>Integra materiales, tiempo de trabajo, merma y otros costes directos en un coste unitario.</p><button onClick={() => setView("calculator")}>Calcular ahora <span>→</span></button></article>
+                <article className="essential-tile"><span className="tile-index">02 / PRECIOS</span><div className="tile-symbol">◇</div><h3>Definir un precio sostenible</h3><p>Considera comisiones, descuentos y margen objetivo antes de publicar o cotizar.</p><button onClick={() => setView("calculator")}>Definir precio <span>→</span></button></article>
+                <article className="essential-tile"><span className="tile-index">03 / CONTROL</span><div className="tile-symbol">◷</div><h3>Conservar tus análisis</h3><p>Guarda cálculos, vuelve a abrirlos y compara tus decisiones de precio.</p><button onClick={() => setView("history")}>Ver mis cálculos <span>→</span></button></article>
+              </div>
+              <section className="business-profile-panel"><div><p className="eyebrow">CONFIGURA TU EXPERIENCIA</p><h2>¿A qué te dedicas?</h2><p>Tu elección orientará las plantillas y herramientas especializadas que añadiremos. No cambia ni sustituye el motor de cálculo general.</p></div><div className="business-profile-actions"><strong>{businessTypes.find((item) => item.id === businessType)?.title}</strong><button className="outline-button" onClick={() => setView("kits")}>Ver opciones de emprendimiento</button></div></section>
+              {profileMessage && <p className="profile-message" role="status">{profileMessage}</p>}
+              <p className="essentials-footnote">ESSENTIALS ES EL NÚCLEO COMPARTIDO. LOS KITS ESPECIALIZADOS SE CONECTAN A ESTE MISMO ESPACIO, CUENTA E HISTORIAL.</p>
+            </div>
+          )}
+
+          {view === "kits" && (
+            <div className="secondary-page kits-page">
+              <p className="eyebrow">CONFIGURACIÓN DEL NEGOCIO <span> / </span> 02</p>
+              <h1>Elige tu tipo de emprendimiento.</h1>
+              <p className="page-lead">Fixora Essentials siempre estará disponible. Los kits añaden plantillas y flujos específicos sin duplicar tus datos ni tus cálculos.</p>
+              <div className="kit-list">
+                {businessTypes.filter((item) => item.id !== "general").map((item, index) => (
+                  <article className={businessType === item.id ? "kit-option selected" : "kit-option"} key={item.id}>
+                    <div className="kit-option-top"><span className="kit-number">0{index + 1}</span><span className="kit-status">{businessType === item.id ? "PERFIL SELECCIONADO" : "MÓDULO EN PLANIFICACIÓN"}</span></div>
+                    <h2>{item.title}</h2><p className="kit-subtitle">{item.subtitle}</p><p className="kit-description">{item.detail}</p>
+                    <button className="outline-button" onClick={() => chooseBusinessType(item.id)}>{businessType === item.id ? "Perfil seleccionado" : "Usar este perfil"}</button>
+                  </article>
+                ))}
+              </div>
+              <div className="guide-callout"><strong>¿Todavía no tienes un sector definido?</strong><p>Conserva el perfil general. Fixora Essentials funciona como base y no necesitas elegir un kit especializado para calcular costes y precios.</p><button className="text-button" onClick={() => chooseBusinessType("general")}>Mantener perfil general</button></div>
+              <p className="local-storage-note">La selección del perfil se guarda únicamente en este navegador por ahora. Todavía no crea una cuenta ni sincroniza datos.</p>
+            </div>
+          )}
+
           {view === "calculator" && (
             <>
               <div className="page-heading">
