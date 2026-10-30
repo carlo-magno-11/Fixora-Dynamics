@@ -8,7 +8,8 @@ Este documento separa entregables de diseño, código, infraestructura y validac
 - [x] Base React + TypeScript + Vite y motor financiero Decimal.js.
 - [x] Calculadora general: materiales, mano de obra, merma, gastos fijos por unidad, comisiones, descuentos y margen.
 - [x] El precio visible se redondea hacia arriba al centavo y ganancia/margen se calculan usando ese mismo precio.
-- [x] Punto de equilibrio: contribución unitaria, unidades enteras mínimas y venta mínima estimada.
+- [x] Motor de precios rechaza resultados fuera del rango numérico representable.
+- [x] Punto de equilibrio: contribución unitaria, unidades enteras mínimas y venta mínima estimada; rechaza cantidades no representables o enteros inseguros.
 - [x] Selector MXN/USD en calculadora, historial local y guía de uso.
 - [x] Identidad visual prémium: petróleo, marfil, champagne y verde salvia.
 - [x] Investigación open source y revisión de licencias; decisión registrada en `docs/OPEN-SOURCE-RESEARCH.md`.
@@ -24,9 +25,10 @@ Este documento separa entregables de diseño, código, infraestructura y validac
 - [x] `pnpm-lock.yaml` versionado y CI usando `pnpm install --frozen-lockfile`.
 - [x] CI #201 aprobada en `5efdda22aaa87c0b86cc531129fab625a4198054`.
 - [x] CI #206 aprobada después de la corrección del redondeo.
-- [x] CI #209 aprobada en el HEAD `e77832b5879cc89bdea270540f12ff719887b88f`: instalación congelada, typecheck, tests y build.
+- [x] CI #209 aprobada después de persistir la moneda de gastos.
+- [x] CI #217 (push) y #218 (pull_request) aprobadas en el HEAD `662f627726374351863429cc0267c5c791a6d00c`.
 - [ ] Validación manual de interfaz y flujos en navegador/Windows; no hay evidencia de prueba física confirmada.
-- [ ] Probar explícitamente los registros antiguos de gastos sin moneda y la asignación de moneda elegida.
+- [ ] Probar explícitamente registros antiguos de gastos sin moneda y la asignación elegida.
 - [ ] Probar que cambiar moneda/periodo no se interpreta como conversión de importes.
 - [ ] Completar pruebas manuales de cálculo, redondeo, comisiones, descuentos, historial, catálogo y responsive.
 - [ ] Inicializar Supabase CLI en entorno local y reconciliar las tres migraciones heredadas remotas.
