@@ -44,3 +44,14 @@ Los estados definitivos y sus transiciones deben modelarse en el backend y docum
 Compra válida, pedido inexistente, pago pendiente, código erróneo, código consumido, mismo pedido usado por otra cuenta, reembolso, chargeback, webhook duplicado, evento fuera de orden, cuarto dispositivo, revocación, recuperación, renovación y expiración.
 
 La implementación no comienza hasta cerrar las decisiones comerciales que afecten el comportamiento y los términos.
+
+
+## Separación entre política de dominio y estado comercial
+
+El módulo TypeScript de dominio usa una proyección reducida (`pending`, `active`, `expired`, `suspended`, `revoked`) para que la interfaz pueda decidir qué capacidades mostrar. No reemplaza el estado transaccional del backend.
+
+Los eventos de compra y proveedor deberán conservar estados específicos como pago pendiente, aprobado, reembolsado y contracargo. El backend resolverá esos eventos en una licencia efectiva y sus entitlements. Una disputa o reembolso no se debe convertir en una simple expiración ni perder su trazabilidad.
+
+La regla de tres dispositivos en frontend es solo una ayuda de UX. El servidor debe comprobar y reservar cupo dentro de una transacción, con restricción/serialización suficiente para que dos activaciones simultáneas no permitan un cuarto dispositivo.
+
+La fecha anual se calcula desde la primera activación verificada, no desde la compra, la creación de la cuenta ni la impresión del QR. El inicio y vencimiento definitivos se guardan en servidor y no se aceptan del navegador.
