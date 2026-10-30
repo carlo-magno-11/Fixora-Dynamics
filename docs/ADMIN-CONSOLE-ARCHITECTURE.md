@@ -87,3 +87,6 @@ Cada operación debe validar sesión, AAL2, membresía administrativa activa, pe
 
 
 La gestión de otros administradores es un permiso separado (`admins.manage`) reservado al rol `platform_owner`. Debe exigir MFA reciente, motivo y auditoría reforzada; los roles de soporte, licencias, revisión de compras y auditoría nunca pueden asignar privilegios de plataforma.
+
+
+La elegibilidad de compra tiene una política pura inicial en `src/modules/licensing/domain/purchase-verification.ts`: exige referencia de pedido, SKU correcto, pago aprobado, verificación fechada y método de verificación; rechaza reembolso, disputa y contracargo. La función no autentica webhooks ni valida por sí sola una tienda: el backend debe obtener la evidencia directamente del proveedor o de una revisión manual del vendedor, registrar actor/evidencia mínima y proteger la operación contra duplicados.
