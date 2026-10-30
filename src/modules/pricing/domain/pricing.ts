@@ -27,8 +27,17 @@ export interface PricingResult {
 }
 
 const D = (value: number) => new Decimal(value);
+
+function finiteNumber(value: Decimal): number {
+  const result = value.toNumber();
+  if (!Number.isFinite(result)) {
+    throw new RangeError("El resultado excede el rango numérico permitido.");
+  }
+  return result;
+}
+
 const money = (value: Decimal) =>
-  value.toDecimalPlaces(2, Decimal.ROUND_HALF_UP).toNumber();
+  finiteNumber(value.toDecimalPlaces(2, Decimal.ROUND_HALF_UP));
 
 export function calculatePrice(input: PricingInput): PricingResult {
   if (Object.values(input).some((value) => !Number.isFinite(value) || value < 0)) {
@@ -62,6 +71,10 @@ export function calculatePrice(input: PricingInput): PricingResult {
   const netRevenue = price.mul(D(1).minus(input.discountRate));
   const revenueAfterFee = netRevenue.mul(D(1).minus(input.variableFeeRate));
   const profit = revenueAfterFee.minus(total);
+  const effectiveMargin = revenueAfterFee.eq(0)
+    ? D(0)
+    : profit.div(revenueAfterFee);
+  const markup = total.eq(0) ? D(0) : profit.div(total);
 
   return {
     materialCost: money(materials),
@@ -69,11 +82,9 @@ export function calculatePrice(input: PricingInput): PricingResult {
     wasteCost: money(waste),
     directCost: money(direct),
     totalUnitCost: money(total),
-    suggestedPrice: price.toNumber(),
+    suggestedPrice: finiteNumber(price),
     profitAtSuggestedPrice: money(profit),
-    effectiveMargin: revenueAfterFee.eq(0)
-      ? 0
-      : profit.div(revenueAfterFee).toNumber(),
-    markup: total.eq(0) ? 0 : profit.div(total).toNumber(),
+    effectiveMargin: finiteNumber(effectiveMargin),
+    markup: finiteNumber(markup),
   };
 }
