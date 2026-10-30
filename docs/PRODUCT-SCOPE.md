@@ -15,13 +15,13 @@ Fixora Essentials es la primera sección comercial y el acceso general para cual
 1. **Mi espacio:** perfil básico del emprendimiento, moneda de trabajo y preferencias.
 2. **Costeo:** coste por producto o servicio, materiales, consumibles, tiempo de trabajo, merma y costes directos.
 3. **Precio:** margen objetivo, comisiones, descuentos y precio sugerido.
-4. **Rentabilidad:** coste unitario, ganancia estimada, margen, recargo y punto de equilibrio en una fase posterior.
+4. **Rentabilidad:** coste unitario, ganancia estimada, margen, recargo y punto de equilibrio por unidades y periodo.
 5. **Registros:** catálogo de productos/servicios y cálculos guardados con historial de versiones.
 6. **Gastos:** gastos fijos y variables, separación entre gasto de periodo y asignación por unidad.
 7. **Reportes:** resumen de costes, comparación de escenarios y exportación de información en una fase posterior.
 8. **Aprendizaje:** guías cortas y ejemplos para personas sin experiencia contable.
 
-El primer corte funcional ya contiene calculadora general, selector MXN/USD, historial local y guía. No debe describirse como sincronizado, autenticado ni licenciado hasta conectar y probar esas funciones.
+El primer corte funcional ya contiene calculadora general, calculadora de punto de equilibrio, selector MXN/USD, historial local y guía. No debe describirse como sincronizado, autenticado ni licenciado hasta conectar y probar esas funciones.
 
 ### Fuera del primer corte de Essentials
 
