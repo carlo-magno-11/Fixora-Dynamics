@@ -1,5 +1,7 @@
 BEGIN;
 
+CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
+
 SELECT plan(12);
 
 SELECT has_table('public', 'fixora_profiles', 'Fixora profiles table exists');
