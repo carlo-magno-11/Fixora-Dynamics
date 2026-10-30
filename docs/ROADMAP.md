@@ -120,3 +120,12 @@ ERP completo, contabilidad fiscal, declaraciones, nómina, sincronización banca
 - [x] Política de dominio de compra: SKU esperado, referencia, pago aprobado, método/fecha de verificación y rechazo de reembolso, disputa o contracargo.
 - [ ] Verificación real de Etsy/Gumroad/Hotmart o revisión manual desde servidor; la función TypeScript no valida credenciales ni webhooks.
 - [ ] Idempotencia por proveedor/evento/pedido y restricción única de emisión de licencia.
+
+
+## Refactor de arquitectura incremental
+
+- [x] Extraer el contrato/validador de snapshots de historial desde App.tsx.
+- [x] Encapsular lectura/escritura de historial local detrás de un repositorio inyectable.
+- [x] Probar datos corruptos, versiones retrocompatibles, límite de 100 registros y storage bloqueado.
+- [ ] Extraer estado/navegación del shell App.tsx y aplicar el mismo patrón a catálogo y gastos.
+- [ ] Sustituir el adaptador local por Supabase sin alterar los contratos de dominio.
