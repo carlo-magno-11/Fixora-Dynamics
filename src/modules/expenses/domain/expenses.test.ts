@@ -72,4 +72,15 @@ describe("summarizeExpenses", () => {
       })).toThrow("Los importes deben ser finitos y no negativos.");
     }
   });
+ 
+  it("rejects totals outside the supported numeric range", () => {
+    expect(() => summarizeExpenses({
+      fixedExpenses: [
+        { id: "a", name: "A", amount: Number.MAX_VALUE },
+        { id: "b", name: "B", amount: Number.MAX_VALUE },
+      ],
+      variableExpenses: [],
+      expectedUnits: 1,
+    })).toThrow("El total de gastos excede el rango numérico permitido.");
+  });
 });
