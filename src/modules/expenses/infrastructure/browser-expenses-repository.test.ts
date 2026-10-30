@@ -1,0 +1,79 @@
+import { describe, expect, it } from "vitest";
+import { createExpensesRepository, EXPENSES_STORAGE_KEY } from "./browser-expenses-repository";
+import type { KeyValueStorage } from "../../../shared/infrastructure/key-value-storage";
+
+function memoryStorage(initial: Record<string, string> = {}): KeyValueStorage {
+  const values = new Map(Object.entries(initial));
+  return {
+    getItem: (key) => values.get(key) ?? null,
+    setItem: (key, value) => { values.set(key, value); },
+  };
+}
+
+const oldExpenses = {
+  fixed: [{ id: "fixed-1", name: "Renta", amount: 1000 }],
+  variable: [{ id: "variable-1", name: "Empaque", costPerUnit: 5 }],
+  expectedUnits: 100,
+  period: "month",
+};
+
+describe("browser expenses repository", () => {
+  it("loads expenses with their saved currency", () => {
+    const repository = createExpensesRepository(memoryStorage({
+      [EXPENSES_STORAGE_KEY]: JSON.stringify({ ...oldExpenses, currency: "USD" }),
+    }));
+    expect(repository.load("MXN")).toMatchObject({
+      currency: "USD",
+      needsCurrencyReview: false,
+      fixed: oldExpenses.fixed,
+    });
+  });
+
+  it("requires currency confirmation for legacy records without currency", () => {
+    expect(createExpensesRepository(memoryStorage({
+      [EXPENSES_STORAGE_KEY]: JSON.stringify(oldExpenses),
+    })).load("MXN")).toMatchObject({
+      currency: "MXN",
+      needsCurrencyReview: true,
+    });
+  });
+
+  it("returns safe defaults for malformed data or blocked storage", () => {
+    expect(createExpensesRepository(memoryStorage({
+      [EXPENSES_STORAGE_KEY]: "{",
+    })).load("USD")).toMatchObject({
+      fixed: [],
+      variable: [],
+      currency: "USD",
+      needsCurrencyReview: false,
+    });
+    expect(createExpensesRepository(() => {
+      throw new Error("blocked");
+    }).load("MXN").fixed).toEqual([]);
+  });
+
+  it("rejects invalid expense rows rather than partially trusting them", () => {
+    expect(createExpensesRepository(memoryStorage({
+      [EXPENSES_STORAGE_KEY]: JSON.stringify({
+        ...oldExpenses,
+        currency: "MXN",
+        fixed: [{ id: "bad", name: "Renta", amount: -1 }],
+      }),
+    })).load("MXN").fixed).toEqual([]);
+  });
+
+  it("persists currency and period without converting values", () => {
+    const storage = memoryStorage();
+    const repository = createExpensesRepository(storage);
+    repository.save({
+      ...oldExpenses,
+      currency: "USD",
+      period: "quarter",
+    });
+    expect(JSON.parse(storage.getItem(EXPENSES_STORAGE_KEY) ?? "{}")).toMatchObject({
+      currency: "USD",
+      period: "quarter",
+      fixed: oldExpenses.fixed,
+    });
+  });
+});
