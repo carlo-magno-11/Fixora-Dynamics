@@ -3,11 +3,30 @@ import { summarizeExpenses } from "../domain/expenses";
 import type { ExpensePeriod, FixedExpense, VariableExpense } from "../domain/expenses";
 
 const STORAGE_KEY = "fixora.expenses.v1";
+type CurrencyCode = "MXN" | "USD";
 
-function readExpenses(): { fixed: FixedExpense[]; variable: VariableExpense[]; expectedUnits: number; period: ExpensePeriod } {
+type StoredExpenses = {
+  fixed: FixedExpense[];
+  variable: VariableExpense[];
+  expectedUnits: number;
+  period: ExpensePeriod;
+  currency: CurrencyCode;
+  needsCurrencyReview: boolean;
+};
+
+function readExpenses(defaultCurrency: CurrencyCode): StoredExpenses {
+  const empty: StoredExpenses = {
+    fixed: [],
+    variable: [],
+    expectedUnits: 100,
+    period: "month",
+    currency: defaultCurrency,
+    needsCurrencyReview: false,
+  };
+
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return { fixed: [], variable: [], expectedUnits: 100, period: "month" };
+    if (!raw) return empty;
     const parsed: unknown = JSON.parse(raw);
     if (!parsed || typeof parsed !== "object") throw new Error("Invalid expenses");
     const value = parsed as Record<string, unknown>;
@@ -29,22 +48,36 @@ function readExpenses(): { fixed: FixedExpense[]; variable: VariableExpense[]; e
       !Number.isFinite(value.expectedUnits) || value.expectedUnits <= 0) {
       throw new Error("Invalid expenses");
     }
-    const period = ["week", "month", "quarter", "year"].includes(value.period as string) ? value.period as ExpensePeriod : "month";
-    return { fixed: value.fixed as FixedExpense[], variable: value.variable as VariableExpense[], expectedUnits: value.expectedUnits, period };
+
+    const period = ["week", "month", "quarter", "year"].includes(value.period as string)
+      ? value.period as ExpensePeriod
+      : "month";
+    const hasCurrency = value.currency === "MXN" || value.currency === "USD";
+
+    return {
+      fixed: value.fixed as FixedExpense[],
+      variable: value.variable as VariableExpense[],
+      expectedUnits: value.expectedUnits,
+      period,
+      currency: hasCurrency ? value.currency as CurrencyCode : defaultCurrency,
+      needsCurrencyReview: !hasCurrency,
+    };
   } catch {
-    return { fixed: [], variable: [], expectedUnits: 100, period: "month" };
+    return empty;
   }
 }
 
 export function ExpensesPage({ currency, formatMoney }: {
-  currency: "MXN" | "USD";
-  formatMoney: (value: number, currency: "MXN" | "USD") => string;
+  currency: CurrencyCode;
+  formatMoney: (value: number, currency: CurrencyCode) => string;
 }) {
-  const [saved] = useState(readExpenses);
+  const [saved] = useState(() => readExpenses(currency));
   const [fixed, setFixed] = useState(saved.fixed);
   const [variable, setVariable] = useState(saved.variable);
   const [expectedUnits, setExpectedUnits] = useState(saved.expectedUnits);
   const [period, setPeriod] = useState<ExpensePeriod>(saved.period);
+  const [expenseCurrency, setExpenseCurrency] = useState<CurrencyCode>(saved.currency);
+  const [needsCurrencyReview, setNeedsCurrencyReview] = useState(saved.needsCurrencyReview);
   const [message, setMessage] = useState("");
 
   const summary = useMemo(() => {
@@ -56,13 +89,23 @@ export function ExpensesPage({ currency, formatMoney }: {
   }, [fixed, variable, expectedUnits, period]);
 
   useEffect(() => {
+    if (needsCurrencyReview) {
+      setMessage("Confirma la moneda de tus registros anteriores antes de guardarlos.");
+      return;
+    }
     try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ fixed, variable, expectedUnits, period }));
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        fixed,
+        variable,
+        expectedUnits,
+        period,
+        currency: expenseCurrency,
+      }));
       setMessage("Cambios guardados en este navegador.");
     } catch {
       setMessage("No fue posible guardar los gastos en este navegador.");
     }
-  }, [fixed, variable, expectedUnits, period]);
+  }, [fixed, variable, expectedUnits, period, expenseCurrency, needsCurrencyReview]);
 
   function updateFixed(id: string, key: "name" | "amount", value: string) {
     setFixed((current) => current.map((item) => item.id === id
@@ -87,7 +130,7 @@ export function ExpensesPage({ currency, formatMoney }: {
           {fixed.map((item) => (
             <div className="expense-entry" key={item.id}>
               <label className="field"><span>Concepto</span><input value={item.name} maxLength={80} placeholder="Ej. renta del local" onChange={(event) => updateFixed(item.id, "name", event.target.value)} /></label>
-              <label className="field"><span>Importe ({currency})</span><input type="number" min="0" step="0.01" value={item.amount} onChange={(event) => updateFixed(item.id, "amount", event.target.value)} /></label>
+              <label className="field"><span>Importe ({expenseCurrency})</span><input type="number" min="0" step="0.01" value={item.amount} onChange={(event) => updateFixed(item.id, "amount", event.target.value)} /></label>
               <button className="delete-button" aria-label={`Eliminar ${item.name || "gasto fijo"}`} onClick={() => setFixed((current) => current.filter((entry) => entry.id !== item.id))}>×</button>
             </div>
           ))}
@@ -98,7 +141,7 @@ export function ExpensesPage({ currency, formatMoney }: {
           {variable.map((item) => (
             <div className="expense-entry" key={item.id}>
               <label className="field"><span>Concepto</span><input value={item.name} maxLength={80} placeholder="Ej. empaque por unidad" onChange={(event) => updateVariable(item.id, "name", event.target.value)} /></label>
-              <label className="field"><span>Coste ({currency})</span><input type="number" min="0" step="0.01" value={item.costPerUnit} onChange={(event) => updateVariable(item.id, "costPerUnit", event.target.value)} /></label>
+              <label className="field"><span>Coste ({expenseCurrency})</span><input type="number" min="0" step="0.01" value={item.costPerUnit} onChange={(event) => updateVariable(item.id, "costPerUnit", event.target.value)} /></label>
               <button className="delete-button" aria-label={`Eliminar ${item.name || "coste variable"}`} onClick={() => setVariable((current) => current.filter((entry) => entry.id !== item.id))}>×</button>
             </div>
           ))}
@@ -106,15 +149,34 @@ export function ExpensesPage({ currency, formatMoney }: {
         </section>
       </div>
       <section className="surface-card expense-allocation">
-        <div className="section-heading"><div className="section-number">03</div><div><h2>Periodo y asignación analítica</h2><p>Define el periodo de tus gastos fijos y distribúyelos entre el volumen esperado.</p></div></div>
+        <div className="section-heading"><div className="section-number">03</div><div><h2>Periodo y asignación analítica</h2><p>Define la moneda y el periodo de estos registros; distribuye los gastos fijos entre el volumen esperado.</p></div></div>
+        <label className="field expected-units-field">
+          <span>Moneda de estos gastos</span>
+          <select value={expenseCurrency} onChange={(event) => {
+            setExpenseCurrency(event.target.value as CurrencyCode);
+            setNeedsCurrencyReview(false);
+          }}>
+            <option value="MXN">MXN — Peso mexicano</option>
+            <option value="USD">USD — Dólar estadounidense</option>
+          </select>
+        </label>
+        <p className="field-hint">La moneda queda guardada con los gastos y es independiente del selector de la calculadora. Cambiarla no convierte los importes: revisa y actualiza las cantidades si corresponde.</p>
+        {needsCurrencyReview && (
+          <div className="guide-callout" role="alert">
+            <strong>Confirma la moneda de tus registros anteriores.</strong>
+            <p>Estos gastos se guardaron antes de que Fixora registrara su moneda. Se muestra {expenseCurrency} como referencia provisional. Comprueba que sea correcta; al confirmar, se guardará esa moneda sin convertir los importes.</p>
+            <button className="outline-button" onClick={() => setNeedsCurrencyReview(false)}>Confirmar {expenseCurrency}</button>
+          </div>
+        )}
         <label className="field expected-units-field"><span>Periodo de registro</span><select value={period} onChange={(event) => setPeriod(event.target.value as ExpensePeriod)}><option value="week">Semanal</option><option value="month">Mensual</option><option value="quarter">Trimestral</option><option value="year">Anual</option></select></label>
+        <p className="field-hint">Cambiar el periodo no convierte automáticamente los importes. Antes de analizar, ajusta cada gasto al periodo que hayas seleccionado.</p>
         <label className="field expected-units-field"><span>Unidades estimadas en el periodo</span><input type="number" min="1" step="1" value={expectedUnits} onChange={(event) => setExpectedUnits(Math.max(1, Math.floor(Number(event.target.value) || 1)))} /></label>
         {summary.error ? <p className="error-state" role="alert">{summary.error}</p> : summary.result && (
           <div className="expense-summary">
-            <div><span>Gastos fijos del periodo ({period === "week" ? "semanal" : period === "month" ? "mensual" : period === "quarter" ? "trimestral" : "anual"})</span><strong>{formatMoney(summary.result.fixedCostsForPeriod, currency)}</strong></div>
-            <div><span>Costes variables por unidad</span><strong>{formatMoney(summary.result.variableCostPerUnit, currency)}</strong></div>
-            <div><span>Gasto fijo asignado por unidad</span><strong>{formatMoney(summary.result.fixedCostAllocationPerUnit, currency)}</strong></div>
-            <div className="expense-summary-total"><span>Coste analítico total por unidad</span><strong>{formatMoney(summary.result.fullyAllocatedCostPerUnit, currency)}</strong></div>
+            <div><span>Gastos fijos del periodo ({period === "week" ? "semanal" : period === "month" ? "mensual" : period === "quarter" ? "trimestral" : "anual"})</span><strong>{formatMoney(summary.result.fixedCostsForPeriod, expenseCurrency)}</strong></div>
+            <div><span>Costes variables por unidad</span><strong>{formatMoney(summary.result.variableCostPerUnit, expenseCurrency)}</strong></div>
+            <div><span>Gasto fijo asignado por unidad</span><strong>{formatMoney(summary.result.fixedCostAllocationPerUnit, expenseCurrency)}</strong></div>
+            <div className="expense-summary-total"><span>Coste analítico total por unidad</span><strong>{formatMoney(summary.result.fullyAllocatedCostPerUnit, expenseCurrency)}</strong></div>
           </div>
         )}
         <p className="field-hint">Importante: para calcular el punto de equilibrio usa el total fijo del periodo y los costes variables por unidad. No agregues de nuevo el gasto fijo asignado por unidad.</p>
