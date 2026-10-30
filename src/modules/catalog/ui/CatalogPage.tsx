@@ -29,9 +29,10 @@ function readCatalog(): CatalogItem[] {
   }
 }
 
-export function CatalogPage({ currency, formatMoney }: {
+export function CatalogPage({ currency, formatMoney, onUseInCalculator }: {
   currency: CatalogCurrency;
   formatMoney: (value: number, currency: CatalogCurrency) => string;
+  onUseInCalculator: (item: CatalogItem) => void;
 }) {
   const [items, setItems] = useState<CatalogItem[]>(readCatalog);
   const [name, setName] = useState("");
@@ -93,6 +94,7 @@ export function CatalogPage({ currency, formatMoney }: {
                 <div className="catalog-kind">{item.kind === "product" ? "PRODUCTO" : "SERVICIO"}</div>
                 <div className="catalog-main"><strong>{item.name}</strong><span>{item.sku ? `SKU ${item.sku} · ` : ""}Por {item.unit}</span></div>
                 <div className="catalog-cost"><span>COSTE REFERENCIA</span><strong>{formatMoney(item.referenceCost, item.currency)}</strong></div>
+                <button className="outline-button catalog-use-button" onClick={() => onUseInCalculator(item)}>Costear</button>
                 <button className="delete-button" aria-label={`Eliminar ${item.name}`} onClick={() => setItems((current) => current.filter((entry) => entry.id !== item.id))}>×</button>
               </article>
             ))}
