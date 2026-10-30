@@ -15,12 +15,15 @@ export interface CalculationHistoryRepository {
 }
 
 export function createCalculationHistoryRepository(
-  storage: KeyValueStorage,
+  storageSource: KeyValueStorage | (() => KeyValueStorage),
 ): CalculationHistoryRepository {
+  const resolveStorage = () =>
+    typeof storageSource === "function" ? storageSource() : storageSource;
+
   return {
     load() {
       try {
-        const raw = storage.getItem(CALCULATION_HISTORY_STORAGE_KEY);
+        const raw = resolveStorage().getItem(CALCULATION_HISTORY_STORAGE_KEY);
         if (!raw) return [];
         const parsed: unknown = JSON.parse(raw);
         return Array.isArray(parsed)
@@ -35,7 +38,7 @@ export function createCalculationHistoryRepository(
       }
     },
     save(records) {
-      storage.setItem(
+      resolveStorage().setItem(
         CALCULATION_HISTORY_STORAGE_KEY,
         JSON.stringify(records.slice(0, MAX_HISTORY_RECORDS)),
       );
