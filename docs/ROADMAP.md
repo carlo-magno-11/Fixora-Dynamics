@@ -129,3 +129,13 @@ ERP completo, contabilidad fiscal, declaraciones, nómina, sincronización banca
 - [x] Probar datos corruptos, versiones retrocompatibles, límite de 100 registros y storage bloqueado.
 - [ ] Extraer estado/navegación del shell App.tsx y aplicar el mismo patrón a catálogo y gastos.
 - [ ] Sustituir el adaptador local por Supabase sin alterar los contratos de dominio.
+
+
+## Repositorios por módulo
+
+- [x] Contrato compartido de almacenamiento inyectable.
+- [x] Repositorio de historial extraído de App.tsx.
+- [x] Repositorio de catálogo separado de CatalogPage.
+- [x] Repositorio de gastos separado de ExpensesPage; conserva confirmación de moneda de registros heredados.
+- [ ] Crear puertos de aplicación orientados a negocio/tenant y adaptadores Supabase.
+- [ ] Migrar los datos locales existentes con una experiencia explícita de importación; no asumir sincronización automática.
