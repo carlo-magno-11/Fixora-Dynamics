@@ -43,6 +43,14 @@ describe("calculateBreakEven", () => {
     })).toThrow("El precio de venta debe ser mayor que el coste variable por unidad.");
   });
 
+  it("rejects a result outside the supported numeric range", () => {
+    expect(() => calculateBreakEven({
+      fixedCosts: 1e308,
+      sellingPrice: 1,
+      variableCostPerUnit: 0.9999999999999999,
+    })).toThrow("El resultado excede el rango numérico permitido.");
+  });
+
   it("rejects negative, NaN and infinite inputs", () => {
     for (const invalid of [-1, Number.NaN, Number.POSITIVE_INFINITY]) {
       expect(() => calculateBreakEven({
