@@ -140,3 +140,16 @@ No conectar ni habilitar signup. Primero completar backup verificable, inspecci�
 - La exportación se genera localmente desde el historial del navegador; no implica persistencia cloud ni transmisión de datos.
 - La descarga incluye BOM UTF-8 para mejorar la apertura de caracteres españoles en hojas de cálculo.
 - Validación CI del commit final pendiente de confirmación; no se declara typecheck/tests/build aprobados en esta entrega.
+
+
+## 2026-10-30 — Arquitectura modular y base de permisos administrativos
+
+- `4af3de0`: política de permisos de plataforma separada de roles de negocio; acceso condicionado a autenticación, cuenta activa y AAL2.
+- `179bee6`: pruebas unitarias para sesión ausente, MFA insuficiente, suspensión, rol ausente, separación de permisos de soporte/auditor y combinación explícita de roles.
+- `e363177`: especificación del panel administrativo, roles, operaciones, auditoría y criterios de aceptación.
+- `b7f9bff`: amplía arquitectura de software con capas, fronteras de módulos, persistencia temporal y transición incremental.
+- `313a5cf` / `ab0a603`: actualiza roadmap y plan maestro para que el panel de administración y la arquitectura modular sean entregables obligatorios.
+- `6e9eb6a`: alinea prueba de exportación CSV con sus columnas completas.
+- `ad55b64`: corrige la marca BOM UTF-8 de la descarga CSV para que sea un carácter real y no texto escapado.
+- Importante: política frontend no sustituye autorización server-side. El panel no está conectado; faltan roles internos, RLS, RPC/Edge Functions, MFA real y auditoría.
+- CI de estos commits pendiente de confirmación.
