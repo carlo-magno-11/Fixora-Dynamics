@@ -194,3 +194,13 @@ No conectar ni habilitar signup. Primero completar backup verificable, inspecci�
 - Estado: versionada en GitHub, pero todavía NO aplicada ni probada en el PostgreSQL local. La prueba pgTAP inicial no sustituye la matriz A/B de aislamiento multiusuario.
 - El Codespace del usuario tenía dos archivos de migración vacíos sin seguimiento Git. Antes de sincronizar, moverlos a respaldo solo si siguen vacíos; preservar los archivos de configuración local.
 - No se ha vinculado ni modificado Supabase remoto.
+
+
+## 2026-10-30 — Extracción de persistencia de historial
+
+- `1a1c40a`: mueve el contrato y validador de cálculos guardados a snapshots/domain.
+- `6503f47` / `c512cd3`: crea repositorio de historial con almacenamiento inyectable y pruebas de carga/guardado, JSON corrupto, retrocompatibilidad y límite de 100.
+- `f17e07d`: App.tsx consume el repositorio en lugar de validar/leer/escribir directamente el historial.
+- `ff020db` / `18daafe` / `d02c98e`: difiere acceso a localStorage y cubre almacenamiento bloqueado.
+- `bca68e8`: actualiza roadmap para el refactor incremental.
+- El historial sigue siendo local; el repositorio prepara el puerto para añadir Supabase sin mezclar reglas de dominio y navegador.
