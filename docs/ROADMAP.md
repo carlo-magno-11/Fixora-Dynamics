@@ -2,48 +2,53 @@
 
 Este documento separa entregables de diseño, código, infraestructura y validación. Un componente no se considera terminado por existir su interfaz.
 
-## Estado actual (30 de octubre de 2026)
+## Estado actual (29 de octubre de 2026)
 
-- [x] Repositorio y rama de trabajo aislada; PR #1 abierto como borrador.
+- [x] Repositorio y rama de trabajo aislada; PR #1 abierto como borrador contra `main`.
 - [x] Base React + TypeScript + Vite y motor financiero Decimal.js.
-- [x] Pruebas unitarias iniciales del motor y CI remoto de la fundación anterior.
-- [x] Primera calculadora general: materiales, mano de obra, merma, gastos fijos por unidad, comisiones, descuento y margen.
-- [x] Punto de equilibrio por periodo: margen de contribución, unidades enteras necesarias y venta mínima estimada, con pruebas de límites.
-- [x] Selector MXN/USD, historial local y guía de uso.
+- [x] Calculadora general: materiales, mano de obra, merma, gastos fijos por unidad, comisiones, descuentos y margen.
+- [x] Corrección de redondeo: el precio visible se redondea hacia arriba al centavo y la ganancia/margen se calculan usando ese mismo precio.
+- [x] Punto de equilibrio: contribución unitaria, unidades enteras mínimas y venta mínima estimada.
+- [x] Selector MXN/USD en calculadora, historial local y guía de uso.
 - [x] Identidad visual prémium: petróleo, marfil, champagne y verde salvia.
-- [x] Investigación de repositorios GitHub de más de 1,000 estrellas y revisión de candidatos/licencias; decisión registrada en `docs/OPEN-SOURCE-RESEARCH.md`.
-- [x] Definición de producto modular: Fixora Essentials + kits por tipo de emprendimiento (ADR-003).
-- [x] Implementar la pantalla inicial Fixora Essentials y selector persistente de perfil de negocio (preferencia local, aún no sincronizada).
-- [x] CI GitHub para el HEAD `648a6f5f6bc3568e74bc7c250cd20ad7a6a71df3` (run #197): typecheck, 32 pruebas Vitest en cinco archivos y build completados correctamente.
-- [x] Registro local de gastos en Essentials: alta/eliminación de gastos fijos y costes variables, unidades esperadas, resumen de asignación por unidad y persistencia en `localStorage`.
-- [x] Dominio de gastos con Decimal.js, periodos explícitos semanal/mensual/trimestral/anual, validación de importes/nombres/rango numérico y prevención de doble conteo en punto de equilibrio; siete pruebas unitarias.
-- [x] Catálogo local compartido de productos/servicios: unidad explícita, SKU opcional único, moneda y coste de referencia; validación de dominio y seis pruebas unitarias. El coste de referencia no altera snapshots históricos.
-- [x] CI remoto valida gastos, catálogo, snapshots y enlace catálogo → costeo en el HEAD `648a6f5f6bc3568e74bc7c250cd20ad7a6a71df3` (32/32 pruebas).
-- [ ] Validar manualmente en Windows la experiencia de gastos, catálogo y costeo vinculado; la sincronización cloud sigue pendiente.
-- [ ] Generar y versionar `pnpm-lock.yaml`; después cambiar CI a `pnpm install --frozen-lockfile`.
-- [ ] Inicializar Supabase CLI y reconciliar las tres migraciones heredadas remotas.
-- [ ] Generar migraciones solo con `supabase migration new`; no inventar timestamps.
+- [x] Investigación open source y revisión de licencias; decisión registrada en `docs/OPEN-SOURCE-RESEARCH.md`.
+- [x] Definición de producto modular: Fixora Essentials + kits sectoriales (ADR-003).
+- [x] Pantalla inicial Fixora Essentials y selector persistente local de perfil de negocio.
+- [x] Registro local de gastos fijos y costes variables, unidades esperadas y asignación por unidad.
+- [x] Dominio de gastos con Decimal.js, periodos explícitos semanal/mensual/trimestral/anual, validación y prevención documentada del doble conteo.
+- [x] Catálogo local de productos/servicios con unidad, SKU opcional único, moneda y coste de referencia.
+- [x] Flujo catálogo → costeo: conserva una referencia descriptiva; el coste de referencia no se incorpora automáticamente.
+- [x] Snapshots inmutables con versión de esquema y fórmula, entradas, resultado, moneda y fecha.
+- [x] `pnpm-lock.yaml` versionado y CI usando `pnpm install --frozen-lockfile`.
+- [x] CI GitHub aprobada en el commit `5efdda22aaa87c0b86cc531129fab625a4198054` (run #201).
+- [x] CI GitHub aprobada en el HEAD `f124ec142cd369d1e8f255a33988608339b819ac` (run #206): instalación congelada, typecheck, tests y build.
+- [ ] Validación manual de interfaz y flujos en navegador/Windows; no hay evidencia de prueba física confirmada.
+- [ ] Corregir y probar el almacenamiento de moneda de gastos: los registros actuales no guardan su moneda y podrían reinterpretarse al cambiar el selector global.
+- [ ] Aclarar el cambio de periodo de gastos: cambiar semanal/mensual/trimestral/anual no convierte automáticamente los importes existentes.
+- [ ] Completar pruebas manuales de cálculo, redondeo, comisiones, descuentos, historial, catálogo y responsive.
+- [ ] Inicializar Supabase CLI en entorno local y reconciliar las tres migraciones heredadas remotas.
+- [ ] Generar migraciones solo con `supabase migration new`; no inventar timestamps ni aplicar SQL directo en remoto.
 - [ ] Aislar objetos heredados EYESITE y reemplazar con seguridad el trigger Auth.
 - [ ] Crear perfiles, negocios y membresías con RLS, grants Data API explícitos y pruebas multiusuario.
-- [ ] Conectar Auth y persistencia cloud; reemplazar historial local.
-- [ ] Implementar catálogo de productos/servicios y snapshots de cálculos versionados.
-- [ ] Completar Essentials: escenarios, catálogo de productos/servicios y exportación CSV/PDF.
-- [ ] Prioridad de kits: comercio/reventa; servicios/belleza; alimentos/repostería; taller/manufactura; productos digitales.
-- [ ] Implementar licencias anuales, activación transaccional y límite de tres dispositivos.
+- [ ] Conectar Auth y persistencia cloud; reemplazar almacenamiento local.
+- [ ] Completar escenarios y exportación CSV/PDF.
+- [ ] Implementar licencias anuales, activación transaccional, límite de tres dispositivos, renovación y revocación.
 - [ ] Construir administración de pedidos Etsy, emisión/revocación de códigos, MFA y auditoría.
+- [ ] Implementar y validar cada kit sectorial antes de ofrecerlo comercialmente.
 - [ ] Añadir pruebas E2E, accesibilidad, seguridad, recuperación y rendimiento.
-- [ ] Publicar staging, verificar dominio/HTTPS y completar pruebas reales en Mac, Windows, móvil.
+- [ ] Publicar staging, verificar dominio/HTTPS y completar pruebas reales en Windows, Mac y móvil.
 - [ ] Preparar lanzamiento comercial, soporte, privacidad, términos y reembolsos.
 
 ## Secuencia obligatoria
 
-1. **Essentials:** finalizar el acceso general, perfil de emprendimiento y experiencia común.
-2. **Validación técnica:** lockfile, typecheck, tests, build y CI verde en el HEAD actual.
-3. **Infraestructura segura:** CLI local, reconciliación de historial, migraciones, grants, RLS y Auth.
-4. **Persistencia:** negocios, membresías, catálogo e historial cloud.
-5. **MVP vendible:** reportes y licencia/activación verificadas.
-6. **Kits verticales:** construir uno por uno, validar con usuarios y no anunciar capacidades incompletas.
-7. **Publicación:** E2E, accesibilidad, seguridad, staging y pruebas físicas.
+1. **Essentials:** finalizar la experiencia común y corregir los hallazgos funcionales antes de ampliar alcance.
+2. **Validación técnica:** lockfile, typecheck, tests y build en CI verde para el HEAD actual.
+3. **Validación de producto:** pruebas manuales en navegador y revisión responsive con datos ficticios.
+4. **Infraestructura segura:** CLI local, reconciliación del historial remoto, migraciones, grants, RLS y Auth.
+5. **Persistencia:** negocios, membresías, catálogo, gastos e historial cloud.
+6. **MVP vendible:** reportes y licencia/activación verificadas.
+7. **Kits sectoriales:** construir uno por uno, validar con usuarios y no anunciar capacidades incompletas.
+8. **Publicación:** E2E, accesibilidad, seguridad, staging y pruebas físicas.
 
 ## Regla de alcance
 
