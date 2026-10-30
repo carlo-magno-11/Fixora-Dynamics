@@ -14,11 +14,11 @@ Este documento separa entregables de diseño, código, infraestructura y validac
 - [x] Investigación de repositorios GitHub de más de 1,000 estrellas y revisión de candidatos/licencias; decisión registrada en `docs/OPEN-SOURCE-RESEARCH.md`.
 - [x] Definición de producto modular: Fixora Essentials + kits por tipo de emprendimiento (ADR-003).
 - [x] Implementar la pantalla inicial Fixora Essentials y selector persistente de perfil de negocio (preferencia local, aún no sincronizada).
-- [x] CI GitHub para el HEAD `3e9d2526c28199940e3fe878e8acd4dd3d7761dc` (run #166): typecheck, 25 pruebas Vitest en cuatro archivos y build completados correctamente.
+- [x] CI GitHub para el HEAD `ce93741fdebe05eb7f6c9a069b82549273cfe3c1` (run #179): typecheck, 32 pruebas Vitest en cinco archivos y build completados correctamente.
 - [x] Registro local de gastos en Essentials: alta/eliminación de gastos fijos y costes variables, unidades esperadas, resumen de asignación por unidad y persistencia en `localStorage`.
 - [x] Dominio de gastos con Decimal.js, periodos explícitos semanal/mensual/trimestral/anual, validación de importes/nombres/rango numérico y prevención de doble conteo en punto de equilibrio; siete pruebas unitarias.
 - [x] Catálogo local compartido de productos/servicios: unidad explícita, SKU opcional único, moneda y coste de referencia; validación de dominio y seis pruebas unitarias. El coste de referencia no altera snapshots históricos.
-- [x] CI remoto valida gastos y catálogo en el HEAD `3e9d2526c28199940e3fe878e8acd4dd3d7761dc` (25/25 pruebas).
+- [x] CI remoto valida gastos, catálogo y snapshots en el HEAD `ce93741fdebe05eb7f6c9a069b82549273cfe3c1` (32/32 pruebas).
 - [ ] Validar manualmente en Windows la experiencia de gastos y catálogo; la sincronización cloud sigue pendiente.
 - [ ] Generar y versionar `pnpm-lock.yaml`; después cambiar CI a `pnpm install --frozen-lockfile`.
 - [ ] Inicializar Supabase CLI y reconciliar las tres migraciones heredadas remotas.
