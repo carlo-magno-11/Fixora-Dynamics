@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { calculatePrice } from "../modules/pricing/domain/pricing";
 import type { PricingInput, PricingResult } from "../modules/pricing/domain/pricing";
 
-type View = "calculator" | "history" | "guide";
+type View = "essentials" | "calculator" | "kits" | "history" | "guide";
+type BusinessType = "general" | "retail" | "food" | "services" | "digital" | "workshop";
 type CurrencyCode = "MXN" | "USD";
 type SavedCalculation = {
   id: string;
@@ -14,6 +15,23 @@ type SavedCalculation = {
 };
 
 const STORAGE_KEY = "fixora.calculations.v1";
+const BUSINESS_TYPE_KEY = "fixora.business-type.v1";
+const businessTypes: { id: BusinessType; title: string; subtitle: string; detail: string }[] = [
+  { id: "general", title: "Aún estoy definiendo mi negocio", subtitle: "Perfil general", detail: "Empieza con las herramientas comunes." },
+  { id: "retail", title: "Comercio y reventa", subtitle: "Productos físicos", detail: "Compras, envío, empaque, comisiones e inventario." },
+  { id: "food", title: "Alimentos y repostería", subtitle: "Recetas y producción", detail: "Ingredientes, rendimiento por lote, porciones y merma." },
+  { id: "services", title: "Servicios y belleza", subtitle: "Tiempo y consumibles", detail: "Duración, materiales, capacidad y precio por cita." },
+  { id: "digital", title: "Productos digitales y creativos", subtitle: "Creación y plataformas", detail: "Tiempo de creación, comisiones y costes recurrentes." },
+  { id: "workshop", title: "Taller y manufactura", subtitle: "Producción por etapas", detail: "Materiales, operaciones, lotes y desperdicio." },
+];
+function readBusinessType(): BusinessType {
+  try {
+    const value = window.localStorage.getItem(BUSINESS_TYPE_KEY);
+    return businessTypes.some((item) => item.id === value) ? (value as BusinessType) : "general";
+  } catch {
+    return "general";
+  }
+}
 const initial: PricingInput = {
   materials: 85,
   laborMinutes: 90,
@@ -86,7 +104,9 @@ function percent(value: number) {
 export function App() {
   const [input, setInput] = useState<PricingInput>(initial);
   const [currency, setCurrency] = useState<CurrencyCode>("MXN");
-  const [view, setView] = useState<View>("calculator");
+  const [view, setView] = useState<View>("essentials");
+  const [businessType, setBusinessType] = useState<BusinessType>(readBusinessType);
+  const [profileMessage, setProfileMessage] = useState("");
   const [name, setName] = useState("Mi primer producto");
   const [history, setHistory] = useState<SavedCalculation[]>(readHistory);
   const [savedMessage, setSavedMessage] = useState("");
@@ -104,11 +124,25 @@ export function App() {
 
   useEffect(() => {
     try {
+      window.localStorage.setItem(BUSINESS_TYPE_KEY, businessType);
+    } catch {
+      setProfileMessage("No fue posible guardar el perfil en este navegador.");
+    }
+  }, [businessType]);
+
+  useEffect(() => {
+    try {
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
     } catch {
       setSavedMessage("No fue posible guardar en este navegador.");
     }
   }, [history]);
+
+  function chooseBusinessType(type: BusinessType) {
+    setBusinessType(type);
+    setProfileMessage("Perfil guardado en este dispositivo. Los kits especializados se habilitarán por etapas.");
+    setView("essentials");
+  }
 
   function update(key: keyof PricingInput, rawValue: string, percentageField = false) {
     const parsed = Number(rawValue);
