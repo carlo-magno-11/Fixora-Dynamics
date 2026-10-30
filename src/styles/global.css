@@ -406,3 +406,12 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
   .catalog-row .catalog-kind { grid-column: auto; }
   .catalog-form-actions { align-items: stretch; flex-direction: column; }
 }
+
+.draft-banner { display: inline-flex; margin: 18px 0 8px; padding: 7px 11px; border: 1px solid #d7c39a; border-radius: 20px; background: #f6f0e3; color: #8a7044; font-size: 9px; font-weight: 800; letter-spacing: .1em; }
+.legal-page .page-lead { max-width: 780px; }
+.legal-draft-card { margin: 14px 0; padding: 20px 22px; border: 1px solid var(--line); border-radius: 8px; background: var(--paper); }
+.legal-draft-card h2 { margin: 0 0 8px; color: var(--ink); font: 500 19px Georgia, serif; }
+.legal-draft-card p { margin: 0; color: #68756f; font-size: 12px; line-height: 1.8; }
+.legal-review-note { margin-top: 22px; padding: 17px 19px; border-left: 3px solid var(--gold); background: #f5f0e5; }
+.legal-review-note strong { color: var(--ink); font-size: 12px; }
+.legal-review-note p { margin: 6px 0 0; color: #69766e; font-size: 11px; line-height: 1.75; }
