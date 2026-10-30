@@ -57,6 +57,14 @@ describe("calculatePrice", () => {
     expect(result.effectiveMargin).toBeGreaterThanOrEqual(0.33);
   });
 
+  it("rejects a result outside the supported numeric range", () => {
+    expect(() => calculatePrice({
+      ...base,
+      materials: 1e308,
+      targetMarginRate: 0.9999999999999999,
+    })).toThrow("El resultado excede el rango numérico permitido.");
+  });
+
   it("returns zero price and zero profit for a zero-cost product", () => {
     const result = calculatePrice({ ...base, materials: 0, targetMarginRate: 0.2 });
     expect(result.suggestedPrice).toBe(0);
