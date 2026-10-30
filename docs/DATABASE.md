@@ -1,15 +1,31 @@
-# Datos y migraciones
+# Datos y migraciones — Fixora Dynamics
 
-Fuente de verdad: `supabase/migrations`. Prohibidos cambios de esquema/datos por SQL directo o Dashboard. Crear cada migración con Supabase CLI, revisar SQL, probar en base local desechable, ejecutar pruebas RLS/advisors, revisar destino, aplicar solo como migración y verificar historial.
+Fuente de verdad del esquema: archivos versionados en `supabase/migrations`. Crear cada migración con Supabase CLI, revisar el SQL, probarla en el stack local y ejecutar pruebas RLS/advisors antes de proponer despliegue.
 
-Modelo evolutivo: profiles, businesses, business_memberships, products, materials, product_materials, labor_rates, expense_categories, fixed_expenses, sales_channels, commissions, calculations, calculation_items, scenarios, licenses, license_devices, license_events, orders y audit_logs. Construir por fases, con constraints, índices y RLS desde cada migración.
+## Modelo evolutivo
+
+La primera migración crea `fixora_profiles`, `fixora_businesses` y `fixora_business_memberships`. Se usa el prefijo `fixora_` para evitar colisiones con tablas heredadas del proyecto remoto. Después se incorporan snapshots de cálculo, catálogo, gastos, reportes y, finalmente, licencias/dispositivos.
+
+Especificación actual:
+- `docs/FIXORA-FOUNDATION-SPEC.md`
+- `docs/FIXORA-FOUNDATION-MIGRATION-SQL.md`
+- `docs/DATABASE-LOCAL-SETUP.md`
+
+## Seguridad
+
+- RLS en todas las tablas multiusuario.
+- Cada tabla de negocio incluye tenant `business_id` y políticas basadas en membresía activa/rol.
+- No confiar en filtros del cliente ni en `user_metadata` para autorización.
+- No dar escritura directa de membresías, roles o licencias al cliente.
+- Funciones privilegiadas en esquema no expuesto, con `search_path` fijado, nombres cualificados, validación de `auth.uid()` y EXECUTE mínimo.
+- Probar aislamiento con dos usuarios y dos negocios.
 
 ## Data API y privilegios
 
-A partir del cambio de plataforma del 30 de octubre de 2026, no depender de la exposición/grants automáticos para tablas nuevas. La migración debe combinar RLS con grants explícitos mínimos. Los grants controlan si un rol puede alcanzar el objeto; RLS controla qué filas puede ver o modificar. No conceder acceso de tablas a `anon` para datos privados.
+Desde el 30 de octubre de 2026, las tablas nuevas de proyectos existentes tampoco se exponen automáticamente a Data API. Los grants controlan si un rol puede alcanzar un objeto; RLS controla las filas/acciones permitidas. Cada migración debe conceder únicamente los privilegios necesarios, junto con RLS. No conceder acceso a `anon` para datos privados.
 
-Revocar los privilegios por defecto que puedan exponer futuras tablas y rutinas a `anon`/roles cliente; después otorgar permisos por tabla según cada caso de uso. No dar escritura directa sobre membresías o licencias. Verificar privilegios efectivos en PostgreSQL y probar la API como usuario anónimo y autenticado.
+Fuente oficial: https://supabase.com/changelog/45329-breaking-change-tables-not-exposed-to-data-and-graphql-api-automatically
 
-RLS en todas las tablas expuestas. Acceso mediante membresía activa y rol. No usar `user_metadata` para permisos. Probar aislamiento cruzado de usuarios/negocios. Vistas con `security_invoker` cuando aplique. Diagnósticos SQL solo lectura.
+## Frontera con EYESITE
 
-La guía operativa y los pasos de transición están en [DATABASE-BOOTSTRAP-PLAN.md](DATABASE-BOOTSTRAP-PLAN.md).
+No recuperar ni reproducir las migraciones históricas EYESITE. No mover, borrar ni modificar objetos remotos como atajo. El trigger Auth remoto heredado debe resolverse en una migración de transición separada antes de habilitar signup remoto. Ninguna operación remota se realiza sin inspección, respaldo, plan y aprobación explícita.
