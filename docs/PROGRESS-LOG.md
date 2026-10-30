@@ -117,3 +117,15 @@ No conectar ni habilitar signup. Primero completar backup verificable, inspecci�
 - Documentación adicional: se verificaron ownership/RLS, claves foráneas y ausencia de vistas dependientes. Se identificaron las políticas de Storage que dependen de `public.is_admin()`; deben resolverse antes de mover o retirar esa función.
 - Commit de documentación de auditoría: `9b379f716ab8bf59c5b0980292d4d60997110a5d`.
 - La validación CI de este último commit documental todavía no se ha confirmado.
+
+
+## 2026-10-30 — Entrega 7: reinicio de estrategia de base Fixora
+
+- Decisión explícita del usuario: detener la recuperación/reproducción de migraciones heredadas EYESITE y avanzar con el modelo propio de Fixora.
+- Se documentó la frontera de datos y la especificación de identidad/negocios/membresías en `docs/FIXORA-FOUNDATION-SPEC.md`.
+- Se preparó un borrador SQL revisado para la primera migración local en `docs/FIXORA-FOUNDATION-MIGRATION-SQL.md`. No es todavía una migración ejecutable y no se aplicó a ninguna base.
+- Se actualizó `docs/DATABASE-LOCAL-SETUP.md` para reflejar que el runtime nativo local está iniciado y que no hay migraciones Fixora aplicadas.
+- Se actualizó `supabase/README.md` para eliminar la secuencia antigua de recuperación de EYESITE y dejar explícita la regla de no tocar objetos remotos como atajo.
+- Se usa prefijo `fixora_` en las tablas iniciales para evitar colisión con `public.profiles` heredada.
+- El trigger Auth remoto heredado sigue siendo un bloqueo separado para habilitar signup remoto. No se modificó.
+- Sin DDL/DML remoto, sin enlace CLI remoto y sin cambios en el proyecto oficial EYESITE.
