@@ -319,3 +319,76 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
 
 .catalog-source-note { margin: 13px 0 0; padding: 10px 13px; border-left: 2px solid var(--gold); background: #f2efe6; color: #69766f; font-size: 10px; line-height: 1.6; }
 .catalog-source-note strong { color: var(--petrol); }
+
+
+/* Fixora brand, account and learning experience */
+.avatar-button { padding: 0; cursor: pointer; font: inherit; }
+.avatar-button:hover { border-color: var(--gold); background: #efe8d8; }
+.brand-hero { display: grid; grid-template-columns: minmax(0, 1fr) 190px; align-items: center; gap: 28px; margin: 24px 0 30px; padding: clamp(25px, 5vw, 52px); border-radius: 14px; background: linear-gradient(125deg, #1d3038 0%, #244b4a 72%, #345c53 100%); color: #fffefa; overflow: hidden; }
+.brand-hero .welcome-kicker { color: #dfc99e; }
+.brand-hero h1 { max-width: 720px; margin: 16px 0; color: #fffefa; font: 500 clamp(30px, 4.5vw, 49px)/1.08 Georgia, serif; letter-spacing: -.035em; }
+.brand-hero .page-lead { max-width: 680px; margin: 0; color: #e0e7df; font-size: 14px; line-height: 1.85; }
+.brand-hero-mark { width: 170px; height: 170px; display: grid; place-content: center; border: 1px solid #d9c59b80; border-radius: 48% 48% 48% 12%; color: #e4d2ac; transform: rotate(-8deg); }
+.brand-hero-mark span { font: 500 100px/.85 Georgia, serif; text-align: center; }
+.brand-hero-mark small { margin-top: 12px; font-size: 13px; letter-spacing: .3em; text-align: center; }
+.brand-product-card { padding: 26px 28px; border: 1px solid var(--line); border-radius: 10px; background: var(--paper); }
+.brand-product-card h2 { margin: 12px 0 8px; color: var(--ink); font: 500 28px Georgia, serif; }
+.brand-product-card p { max-width: 780px; color: #68756f; font-size: 13px; line-height: 1.8; }
+.brand-product-signature { display: block; margin-top: 19px; color: var(--muted); font-size: 10px; }
+.brand-product-signature strong { color: var(--petrol); }
+.values-section { margin-top: 32px; }
+.values-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-top: 14px; }
+.value-card { min-height: 126px; padding: 17px; border: 1px solid var(--line); border-radius: 8px; background: #fbfaf6; }
+.value-card span { color: var(--gold); font-size: 10px; font-weight: 700; letter-spacing: .12em; }
+.value-card h3 { margin: 16px 0 0; color: var(--ink); font: 500 16px/1.35 Georgia, serif; }
+.brand-disclaimer { margin-top: 22px; }
+.account-security-banner { display: grid; grid-template-columns: 42px minmax(0, 1fr) auto; align-items: center; gap: 15px; margin: 24px 0; padding: 19px; border: 1px solid #d8c8a7; border-radius: 9px; background: #f7f2e7; }
+.account-security-icon { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 50%; background: #e9dfca; color: var(--petrol); font-size: 19px; }
+.account-security-banner strong { color: var(--ink); font-size: 13px; }
+.account-security-banner p { margin: 5px 0 0; color: #6d7770; font-size: 11px; line-height: 1.65; }
+.planned-pill { max-width: 190px; color: #8a744d; font-size: 9px; line-height: 1.5; text-align: right; }
+.account-summary-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.account-section-card { display: grid; grid-template-columns: 38px minmax(0, 1fr); gap: 13px; padding: 18px; border: 1px solid var(--line); border-radius: 8px; background: var(--paper); }
+.account-section-icon { width: 36px; height: 36px; display: grid; place-items: center; border-radius: 8px; background: var(--petrol-light); color: var(--petrol); font-size: 17px; }
+.account-section-card h2 { margin: 1px 0 5px; color: var(--ink); font: 600 14px "Aptos Display", "Segoe UI", Arial, sans-serif; }
+.account-section-card p { margin: 0; color: #758078; font-size: 11px; line-height: 1.6; }
+.account-card-status { display: inline-block; margin-top: 11px; color: #9a8054; font-size: 9px; }
+.account-preferences { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 18px; padding: 18px; border: 1px solid var(--line); border-radius: 8px; background: #fbfaf6; }
+.account-preferences > div { display: grid; gap: 7px; }
+.account-preferences strong { color: var(--ink); font-size: 12px; }
+.expanded-guide .guide-index { display: flex; flex-wrap: wrap; gap: 8px; margin: 24px 0; }
+.guide-index a { padding: 8px 11px; border: 1px solid var(--line); border-radius: 20px; background: var(--paper); color: var(--petrol); font-size: 10px; text-decoration: none; }
+.guide-index a:hover { border-color: var(--gold); background: #f6f1e6; }
+.manual-section { margin: 18px 0; padding: 23px; border: 1px solid var(--line); border-radius: 9px; background: var(--paper); scroll-margin-top: 20px; }
+.manual-section-heading { display: grid; grid-template-columns: 38px minmax(0, 1fr); gap: 13px; align-items: start; }
+.manual-section-heading > span { color: var(--gold); font: 500 24px Georgia, serif; }
+.manual-section-heading h2 { margin: 0 0 6px; color: var(--ink); font: 500 21px Georgia, serif; }
+.manual-section-heading p { margin: 0; color: #758078; font-size: 11px; line-height: 1.7; }
+.manual-section ol, .manual-section ul { margin: 19px 0 0 52px; padding: 0; color: #59665f; font-size: 12px; line-height: 1.9; }
+.manual-section li { padding-left: 5px; margin: 5px 0; }
+.manual-example { margin: 18px 0 0 51px; padding: 14px 16px; border-left: 2px solid var(--gold); background: #f7f4ed; }
+.manual-example strong { color: var(--petrol); font-size: 10px; }
+.manual-example p { margin: 6px 0 0; color: #657168; font-size: 11px; line-height: 1.75; }
+.faq-list { display: grid; gap: 8px; margin: 18px 0 0 51px; }
+.faq-list details { padding: 13px 15px; border: 1px solid var(--line); border-radius: 6px; background: #fbfaf6; }
+.faq-list summary { color: var(--ink); cursor: pointer; font-size: 12px; font-weight: 700; }
+.faq-list details p { margin: 10px 0 0; color: #69766e; font-size: 11px; line-height: 1.75; }
+.glossary-list { margin: 18px 0 0 51px; }
+.glossary-list > div { display: grid; grid-template-columns: minmax(130px, .35fr) minmax(0, 1fr); gap: 15px; padding: 11px 0; border-bottom: 1px solid var(--line); }
+.glossary-list dt { color: var(--petrol); font-size: 11px; font-weight: 700; }
+.glossary-list dd { margin: 0; color: #69766e; font-size: 11px; line-height: 1.65; }
+@media (max-width: 900px) {
+  .values-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .account-security-banner { grid-template-columns: 40px minmax(0, 1fr); }
+  .planned-pill { grid-column: 2; max-width: none; text-align: left; }
+}
+@media (max-width: 600px) {
+  .brand-hero { grid-template-columns: 1fr; }
+  .brand-hero-mark { width: 100px; height: 100px; justify-self: end; }
+  .brand-hero-mark span { font-size: 60px; }
+  .values-grid, .account-summary-grid { grid-template-columns: 1fr; }
+  .account-preferences { align-items: flex-start; flex-direction: column; }
+  .manual-section { padding: 17px; }
+  .manual-section ol, .manual-section ul, .manual-example, .faq-list, .glossary-list { margin-left: 0; }
+  .glossary-list > div { grid-template-columns: 1fr; gap: 5px; }
+}
