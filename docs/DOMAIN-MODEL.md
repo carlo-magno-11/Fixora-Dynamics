@@ -32,3 +32,13 @@
 ## Escala
 
 Comenzar con PostgreSQL relacional, índices por tenant y paginación. Evitar microservicios, colas y cachés prematuras. Medir consultas antes de optimizar. Diseñar `business_id`, timestamps y claves de idempotencia desde el principio. Pruebas de carga antes de abrir el registro al público.
+
+## Perfil y kits de emprendimiento
+
+`businesses` tendrá un campo `business_type` controlado por una lista versionada: `general`, `retail`, `food`, `services_beauty`, `digital_products` y `workshop`. El tipo describe la actividad principal y solo adapta la experiencia; no concede permisos ni acceso comercial por sí mismo.
+
+Los kits activados son capacidades del mismo negocio, no negocios distintos. En una fase posterior, `module_key` identificará la plantilla/regla especializada y la licencia/entitlement del negocio. El perfil de actividad y la autorización para usar un módulo deben ser conceptos separados.
+
+Todos los registros de kits deben compartir `business_id`, identidad, moneda, catálogo base, snapshots, auditoría y RLS. Los datos específicos del sector pueden vivir en tablas relacionadas con clave foránea compuesta por tenant, evitando duplicar productos, costes y usuarios.
+
+La selección de perfil en la primera interfaz se guarda solo en el navegador. No es aún un registro cloud ni un entitlement de licencia.
