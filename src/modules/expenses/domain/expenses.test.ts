@@ -13,12 +13,15 @@ describe("summarizeExpenses", () => {
         { id: "commission", name: "Comisión", costPerUnit: 8 },
       ],
       expectedUnits: 100,
+      period: "month",
     })).toEqual({
       fixedCostsForPeriod: 8600,
       variableCostPerUnit: 20,
       fixedCostAllocationPerUnit: 86,
       fullyAllocatedCostPerUnit: 106,
       expectedUnits: 100,
+      period: "month",
+      period: "month",
     });
   });
 
@@ -27,6 +30,7 @@ describe("summarizeExpenses", () => {
       fixedExpenses: [{ id: "rent", name: "Renta", amount: 9000 }],
       variableExpenses: [{ id: "materials", name: "Materiales", costPerUnit: 30 }],
       expectedUnits: 90,
+      period: "month",
     });
     expect(result.fixedCostsForPeriod).toBe(9000);
     expect(result.variableCostPerUnit).toBe(30);
@@ -38,6 +42,7 @@ describe("summarizeExpenses", () => {
       fixedExpenses: [],
       variableExpenses: [],
       expectedUnits: 10,
+      period: "month",
     }).fullyAllocatedCostPerUnit).toBe(0);
   });
 
@@ -47,6 +52,7 @@ describe("summarizeExpenses", () => {
         fixedExpenses: [],
         variableExpenses: [],
         expectedUnits,
+        period: "month",
       })).toThrow("Las unidades estimadas deben ser mayores que cero.");
     }
   });
@@ -56,12 +62,14 @@ describe("summarizeExpenses", () => {
       fixedExpenses: [{ id: "rent", name: " ", amount: 1 }],
       variableExpenses: [],
       expectedUnits: 1,
+      period: "month",
     })).toThrow("Cada gasto debe tener un nombre.");
 
     expect(() => summarizeExpenses({
       fixedExpenses: [{ id: "rent", name: 12 as unknown as string, amount: 1 }],
       variableExpenses: [],
       expectedUnits: 1,
+      period: "month",
     })).toThrow("Cada gasto debe tener un nombre.");
 
     for (const amount of [-1, Number.NaN, Number.POSITIVE_INFINITY]) {
@@ -69,10 +77,20 @@ describe("summarizeExpenses", () => {
         fixedExpenses: [{ id: "rent", name: "Renta", amount }],
         variableExpenses: [],
         expectedUnits: 1,
+      period: "month",
       })).toThrow("Los importes deben ser finitos y no negativos.");
     }
   });
  
+  it("rejects an unsupported reporting period", () => {
+    expect(() => summarizeExpenses({
+      fixedExpenses: [],
+      variableExpenses: [],
+      expectedUnits: 10,
+      period: "daily" as "month",
+    })).toThrow("Selecciona un periodo válido.");
+  });
+
   it("rejects totals outside the supported numeric range", () => {
     expect(() => summarizeExpenses({
       fixedExpenses: [
@@ -81,6 +99,7 @@ describe("summarizeExpenses", () => {
       ],
       variableExpenses: [],
       expectedUnits: 1,
+      period: "month",
     })).toThrow("El total de gastos excede el rango numérico permitido.");
   });
 });
