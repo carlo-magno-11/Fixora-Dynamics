@@ -16,7 +16,8 @@ Este documento separa entregables de diseño, código, infraestructura y validac
 - [x] Pruebas de cobertura básica del catálogo i18n y contenido de guía.
 - [ ] Ejecutar CI del HEAD actual y corregir fallos.
 - [ ] Extraer los textos restantes de la UI y completar el sistema de traducción antes de habilitar selector de idioma.
-- [ ] Completar edición/archivo del catálogo y revisión de flujos de gastos e historial.
+- [x] Completar edición/archivo/reactivación del catálogo con validación de SKU y moneda por elemento.
+- [ ] Revisar flujos de gastos e historial.
 - [ ] Implementar onboarding, registro, login y recuperación conectados a Supabase Auth (no crear autenticación ficticia en frontend).
 
 Registro detallado: `docs/PROGRESS-LOG.md`. Convenciones de idioma: `docs/I18N.md`.
