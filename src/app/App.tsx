@@ -199,17 +199,24 @@ export function App() {
 
       <div className="app-layout">
         <aside className="sidebar" aria-label="Navegación principal">
-          <p className="nav-label">TU NEGOCIO</p>
+          <p className="nav-label">TU ESPACIO</p>
+          <button className={view === "essentials" ? "nav-item active" : "nav-item"} onClick={() => setView("essentials")}>
+            <span className="nav-icon">✳</span> Fixora Essentials
+          </button>
           <button className={view === "calculator" ? "nav-item active" : "nav-item"} onClick={() => setView("calculator")}>
             <span className="nav-icon">⌗</span> Calculadora
           </button>
+          <button className={view === "kits" ? "nav-item active" : "nav-item"} onClick={() => setView("kits")}>
+            <span className="nav-icon">◇</span> Kits por negocio
+          </button>
+          <p className="nav-label nav-label-spaced">MIS REGISTROS</p>
           <button className={view === "history" ? "nav-item active" : "nav-item"} onClick={() => setView("history")}>
             <span className="nav-icon">◷</span> Mis cálculos
             <span className="nav-count">{history.length}</span>
           </button>
           <p className="nav-label nav-label-spaced">RECURSOS</p>
           <button className={view === "guide" ? "nav-item active" : "nav-item"} onClick={() => setView("guide")}>
-            <span className="nav-icon">◇</span> Guía de uso
+            <span className="nav-icon">⌘</span> Guía de uso
           </button>
           <div className="sidebar-note">
             <span className="sidebar-note-mark">✳</span>
