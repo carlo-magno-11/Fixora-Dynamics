@@ -243,3 +243,8 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
   .business-profile-actions { width: 100%; justify-items: start; }
   .business-profile-actions strong { text-align: left; }
 }
+
+@media (max-width: 720px) {
+  .sidebar { overflow-x: auto; flex-wrap: nowrap; justify-content: flex-start; scrollbar-width: thin; }
+  .nav-item { flex: 0 0 auto; white-space: nowrap; }
+}
