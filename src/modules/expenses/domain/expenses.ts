@@ -27,7 +27,7 @@ export type ExpenseSummary = {
 };
 
 function assertValidLine(name: string, amount: number) {
-  if (!name.trim()) {
+  if (typeof name !== "string" || !name.trim()) {
     throw new Error("Cada gasto debe tener un nombre.");
   }
   if (!Number.isFinite(amount) || amount < 0) {
@@ -59,6 +59,10 @@ export function summarizeExpenses(input: ExpenseSummaryInput): ExpenseSummary {
     new Decimal(0),
   );
   const allocation = fixedCosts.div(input.expectedUnits);
+  const values = [fixedCosts, variableCost, allocation, allocation.plus(variableCost)];
+  if (values.some((value) => !value.isFinite() || !Number.isFinite(value.toNumber()))) {
+    throw new Error("El total de gastos excede el rango numérico permitido.");
+  }
 
   return {
     fixedCostsForPeriod: fixedCosts.toNumber(),
