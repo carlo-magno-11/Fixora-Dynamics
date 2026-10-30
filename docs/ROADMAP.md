@@ -51,10 +51,12 @@ Registro detallado: `docs/PROGRESS-LOG.md`. Convenciones de idioma: `docs/I18N.m
 - [ ] Probar explícitamente registros antiguos de gastos sin moneda y la asignación elegida.
 - [ ] Probar que cambiar moneda/periodo no se interpreta como conversión de importes.
 - [ ] Completar pruebas manuales de cálculo, redondeo, comisiones, descuentos, historial, catálogo y responsive.
-- [ ] Inicializar Supabase CLI en entorno local y reconciliar las tres migraciones heredadas remotas.
+- [x] Inicializar Supabase CLI en Codespaces y validar configuración local; aún falta iniciar el stack local.
+- [x] Recuperar el SQL de las tres migraciones heredadas desde el historial remoto y documentar la discrepancia entre historial y esquema.
+- [ ] Reconciliar la historia CLI sin reparar ni reescribir el historial remoto.
 - [ ] Generar migraciones solo con `supabase migration new`; no inventar timestamps ni aplicar SQL directo en remoto.
-- [ ] Aislar objetos heredados EYESITE y reemplazar con seguridad el trigger Auth.
-- [ ] Crear perfiles, negocios y membresías con RLS, grants Data API explícitos y pruebas multiusuario.
+- [ ] Respaldar e inspeccionar dependencias; aislar objetos heredados EYESITE y reemplazar con seguridad el trigger Auth.
+- [ ] Crear perfiles, negocios y membresías con RLS, grants Data API explícitos y pruebas multiusuario. No habilitar signup antes de resolver los hallazgos heredados.
 - [ ] Conectar Auth y persistencia cloud; reemplazar almacenamiento local.
 - [ ] Completar escenarios y exportación CSV/PDF.
 - [ ] Implementar licencias anuales, activación transaccional, límite de tres dispositivos, renovación y revocación.
@@ -82,3 +84,8 @@ No crear una aplicación distinta por sector. Todos los kits reutilizan cuenta, 
 ## Fuera del MVP
 
 Contabilidad fiscal, declaraciones de impuestos, nómina, sincronización bancaria, pagos integrados, CRM completo, ERP avanzado y aplicaciones nativas independientes.
+
+
+## Actualización de infraestructura — 2026-10-30
+
+La recuperación del historial remoto está documentada en `docs/SUPABASE-LEGACY-RECOVERY-20261030.md`. El SQL completo se recuperó desde la tabla de historial; no debe re-ejecutarse como migraciones Fixora. El proyecto reservado no está listo para Auth: existen privilegios heredados amplios, cuatro funciones SECURITY DEFINER ejecutables por roles cliente y el trigger Auth antiguo. La rama de Supabase `main` informa `MIGRATIONS_FAILED`. No se han realizado cambios remotos.
