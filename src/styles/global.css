@@ -392,3 +392,17 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
   .manual-section ol, .manual-section ul, .manual-example, .faq-list, .glossary-list { margin-left: 0; }
   .glossary-list > div { grid-template-columns: 1fr; gap: 5px; }
 }
+
+.catalog-form-actions { display: flex; align-items: end; gap: 8px; }
+.catalog-row-actions { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 6px; }
+.catalog-row-actions .outline-button { min-height: 31px; padding: 0 9px; }
+.catalog-row-actions .text-button { min-height: 31px; padding: 0 7px; font-size: 10px; }
+.catalog-row-archived { opacity: .68; background: #f3f1eb; }
+.catalog-archived-label { color: #9a8054; }
+@media (max-width: 560px) {
+  .catalog-row { grid-template-columns: minmax(0, 1fr); }
+  .catalog-row-actions { justify-content: flex-start; }
+  .catalog-use-button { justify-self: start; }
+  .catalog-row .catalog-kind { grid-column: auto; }
+  .catalog-form-actions { align-items: stretch; flex-direction: column; }
+}
