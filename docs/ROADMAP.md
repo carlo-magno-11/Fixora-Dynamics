@@ -17,8 +17,9 @@ Este documento separa entregables de diseño, código, infraestructura y validac
 - [x] CI GitHub para el HEAD `90588e53dd10dcdbdcbe294c7f87f666ab2e142d` (run #127): typecheck, 18 pruebas Vitest y build completados correctamente.
 - [x] Registro local de gastos en Essentials: alta/eliminación de gastos fijos y costes variables, unidades esperadas, resumen de asignación por unidad y persistencia en `localStorage`.
 - [x] Dominio de gastos con Decimal.js, validación de importes/nombres/rango numérico y prevención de doble conteo en el punto de equilibrio; seis pruebas unitarias añadidas.
+- [x] Catálogo local compartido de productos/servicios: unidad explícita, SKU opcional único, moneda y coste de referencia; validación de dominio y seis pruebas unitarias. El coste de referencia no altera snapshots históricos.
 - [x] CI remoto valida pantalla y dominio de gastos en el HEAD `90588e53dd10dcdbdcbe294c7f87f666ab2e142d` (18/18 pruebas).
-- [ ] Validar manualmente en Windows la experiencia de gastos; la sincronización cloud sigue pendiente.
+- [ ] Validar manualmente en Windows la experiencia de gastos y catálogo; la sincronización cloud sigue pendiente.
 - [ ] Generar y versionar `pnpm-lock.yaml`; después cambiar CI a `pnpm install --frozen-lockfile`.
 - [ ] Inicializar Supabase CLI y reconciliar las tres migraciones heredadas remotas.
 - [ ] Generar migraciones solo con `supabase migration new`; no inventar timestamps.
