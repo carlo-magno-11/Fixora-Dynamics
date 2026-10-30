@@ -21,7 +21,7 @@ Fixora Essentials es la primera sección comercial y el acceso general para cual
 7. **Reportes:** resumen de costes, comparación de escenarios y exportación de información en una fase posterior.
 8. **Aprendizaje:** guías cortas y ejemplos para personas sin experiencia contable.
 
-El primer corte funcional ya contiene calculadora general, calculadora de punto de equilibrio, registro local de gastos fijos del periodo y costes variables por unidad, catálogo local de productos/servicios con unidad, SKU opcional y coste de referencia, selector MXN/USD, historial local y guía. El registro de gastos muestra una asignación analítica por unidad sin duplicar el fijo en el punto de equilibrio. Estos datos siguen en el navegador. No debe describirse como sincronizado, autenticado ni licenciado hasta conectar y probar esas funciones.
+El primer corte funcional ya contiene calculadora general, calculadora de punto de equilibrio, registro local de gastos fijos del periodo y costes variables por unidad, catálogo local de productos/servicios con unidad, SKU opcional y coste de referencia, inicio de costeo desde catálogo con captura descriptiva en el snapshot, selector MXN/USD, historial local y guía. El registro de gastos muestra una asignación analítica por unidad sin duplicar el fijo en el punto de equilibrio. Estos datos siguen en el navegador. No debe describirse como sincronizado, autenticado ni licenciado hasta conectar y probar esas funciones.
 
 ### Fuera del primer corte de Essentials
 
