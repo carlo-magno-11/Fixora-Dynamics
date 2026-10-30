@@ -91,3 +91,21 @@ Estos son ajustes locales; no cambian el proyecto remoto.
 ## Estado
 
 **Investigación histórica recuperada; saneamiento y migraciones Fixora aún no implementados.** No afirmar que Supabase está limpio, seguro para usuarios finales o listo para producción.
+
+
+## Dependencias y propiedades estructurales verificadas
+
+Lectura adicional de catálogos PostgreSQL:
+
+- Las cuatro tablas son tablas ordinarias propiedad de `postgres`, tienen RLS activado y no tienen FORCE RLS.
+- No se encontraron vistas ni materialized views en `public` o `storage` en esta inspección.
+- Las claves foráneas heredadas observadas son:
+  - `profiles.id → auth.users.id` con `ON DELETE CASCADE`.
+  - `solicitudes_propiedades.user_id → auth.users.id` con `ON DELETE CASCADE`.
+  - `notificaciones.user_id → profiles.id` con `ON DELETE CASCADE`.
+- No se encontraron dependencias de vistas registradas mediante `pg_rewrite` hacia las cuatro tablas.
+- El trigger Auth heredado continúa presente.
+- La tabla `storage.objects` está administrada por `supabase_storage_admin`; no se debe alterar su ownership ni modificar tablas internas de Storage.
+- El bucket `eyesite-media` existe y es público. No se elimina ni se reutiliza en Fixora.
+
+La transición debe preservar las relaciones FK al mover tablas de esquema (PostgreSQL conserva referencias por OID), pero las políticas de Storage que llaman a `public.is_admin()` deben revisarse y retirarse o sustituirse en el mismo plan controlado antes de mover/retirar esa función. No se debe mover o borrar la función sin revisar primero esas políticas.
