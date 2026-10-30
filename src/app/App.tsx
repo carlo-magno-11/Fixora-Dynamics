@@ -65,7 +65,7 @@ function percent(value: number) {
 
 export function App() {
   const historyRepository = useMemo(
-    () => createCalculationHistoryRepository(window.localStorage),
+    () => createCalculationHistoryRepository(() => window.localStorage),
     [],
   );
   const [input, setInput] = useState<PricingInput>(initial);
