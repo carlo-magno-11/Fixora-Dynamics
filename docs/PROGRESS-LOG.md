@@ -213,3 +213,7 @@ No conectar ni habilitar signup. Primero completar backup verificable, inspecci�
 - `4940381` / `89f983c` / `eee552c`: repositorio de catálogo y pruebas de validación, límite de 500 registros y fallos de almacenamiento; CatalogPage ya no lee/escribe localStorage directamente.
 - `c455b29` / `92db314` / `7e5c293` / `013576a` / `7153a2f`: repositorio de gastos, validación estricta, preservación de moneda/periodo y confirmación de moneda para registros antiguos; ExpensesPage delega persistencia.
 - Sigue siendo almacenamiento local de un solo navegador; no se declara sincronización multiusuario.
+
+
+- `876fafd`: elimina import obsoleto tras extraer el contrato del historial.
+- `c455b29` / `92db314` / `7e5c293` / `013576a` / `7153a2f`: extracción del repositorio de gastos y adaptación de la UI, preservando la revisión explícita de moneda heredada.
