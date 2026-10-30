@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import type { FormEvent } from "react";
 import { createCatalogItem } from "../domain/catalog";
 import type { CatalogCurrency, CatalogDraft, CatalogItem, CatalogItemKind } from "../domain/catalog";
 
@@ -49,7 +50,7 @@ export function CatalogPage({ currency, formatMoney }: {
     }
   }, [items]);
 
-  function addItem(event: React.FormEvent<HTMLFormElement>) {
+  function addItem(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const draft: CatalogDraft = { name, kind, unit, sku, currency, referenceCost };
     try {
