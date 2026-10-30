@@ -1,0 +1,67 @@
+import { describe, expect, it } from "vitest";
+import {
+  calculateLicenseExpiry,
+  canActivateAnotherDevice,
+  canRedeemActivationCode,
+  getEffectiveLicenseState,
+  getLicenseCapabilities,
+  MAX_ACTIVE_DEVICES,
+} from "./license-policy";
+
+describe("Fixora annual license policy", () => {
+  it("calculates one calendar year from first activation", () => {
+    expect(calculateLicenseExpiry("2026-10-30T12:00:00.000Z")).toBe("2027-10-30T12:00:00.000Z");
+  });
+
+  it("clamps leap-day activation to the last valid day in February", () => {
+    expect(calculateLicenseExpiry("2024-02-29T08:15:00.000Z")).toBe("2025-02-28T08:15:00.000Z");
+  });
+
+  it("rejects invalid activation dates", () => {
+    expect(() => calculateLicenseExpiry("not-a-date")).toThrow(RangeError);
+  });
+
+  it("keeps the license active immediately before expiry and expires at the boundary", () => {
+    const license = {
+      status: "active" as const,
+      activatedAt: "2026-10-30T12:00:00.000Z",
+      expiresAt: "2027-10-30T12:00:00.000Z",
+    };
+    expect(getEffectiveLicenseState(license, "2027-10-30T11:59:59.999Z")).toBe("active");
+    expect(getEffectiveLicenseState(license, "2027-10-30T12:00:00.000Z")).toBe("expired");
+  });
+
+  it("preserves account, history and export capabilities after expiry", () => {
+    const capabilities = getLicenseCapabilities("expired");
+    expect(capabilities).toContain("account.read");
+    expect(capabilities).toContain("history.read");
+    expect(capabilities).toContain("data.export");
+    expect(capabilities).not.toContain("premium.tools");
+    expect(capabilities).not.toContain("kits.access");
+  });
+
+  it("does not grant premium access to suspended or revoked licenses", () => {
+    expect(getLicenseCapabilities("suspended")).not.toContain("premium.tools");
+    expect(getLicenseCapabilities("revoked")).not.toContain("premium.tools");
+  });
+
+  it("allows no more than three active devices", () => {
+    expect(MAX_ACTIVE_DEVICES).toBe(3);
+    expect(canActivateAnotherDevice("active", 2)).toBe(true);
+    expect(canActivateAnotherDevice("active", 3)).toBe(false);
+    expect(canActivateAnotherDevice("expired", 0)).toBe(false);
+  });
+
+  it("rejects invalid active-device counts", () => {
+    expect(canActivateAnotherDevice("active", -1)).toBe(false);
+    expect(canActivateAnotherDevice("active", 1.5)).toBe(false);
+  });
+
+  it("requires an available code and verified purchase to redeem", () => {
+    expect(canRedeemActivationCode("available", true)).toBe(true);
+    expect(canRedeemActivationCode("available", false)).toBe(false);
+    expect(canRedeemActivationCode("redeemed", true)).toBe(false);
+    expect(canRedeemActivationCode("revoked", true)).toBe(false);
+    expect(canRedeemActivationCode("expired", true)).toBe(false);
+  });
+});
