@@ -392,3 +392,14 @@ Supabase: existe un proyecto dedicado a Fixora, pero conserva objetos heredados 
 - No declarar una función terminada hasta probarla en backend, UI y escenarios de seguridad correspondientes.
 - Mantener separado: código local, GitHub/CI, migraciones remotas, staging y pruebas físicas.
 - Actualizar este plan y la hoja de ruta cuando cambie el estado real.
+
+
+## Anexo de implementación — arquitectura y panel de administración
+
+La arquitectura de código y las fronteras de módulos se definen en `docs/ARCHITECTURE.md`. Se utilizará un monolito modular por dominios con capas de presentación, aplicación, dominio e infraestructura. El motor financiero debe permanecer independiente de React y Supabase para reutilizarlo en Expo.
+
+El panel de administración es parte obligatoria del primer producto comercial. Su alcance, roles, permisos, modelo de auditoría, operaciones server-side y criterios de aceptación están definidos en `docs/ADMIN-CONSOLE-ARCHITECTURE.md`.
+
+El primer módulo TypeScript de política de acceso y sus pruebas solo sirven para presentación/UX. No conceden acceso real. La producción exige roles internos no editables por usuarios, sesión autenticada, AAL2, estado administrativo activo, autorización por permiso en cada operación, RLS/funciones server-side y auditoría transaccional. No habilitar el panel ni mostrar datos ficticios hasta conectar esos controles.
+
+Estado real: el shell de la aplicación todavía concentra parte de la navegación y persistencia local; gastos, catálogo e historial no son todavía multiusuario. El refactor será incremental y respaldado por pruebas. El diseño del panel no se considera implementado por la sola existencia de la matriz de permisos.
