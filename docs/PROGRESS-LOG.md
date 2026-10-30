@@ -129,3 +129,14 @@ No conectar ni habilitar signup. Primero completar backup verificable, inspecci�
 - Se usa prefijo `fixora_` en las tablas iniciales para evitar colisión con `public.profiles` heredada.
 - El trigger Auth remoto heredado sigue siendo un bloqueo separado para habilitar signup remoto. No se modificó.
 - Sin DDL/DML remoto, sin enlace CLI remoto y sin cambios en el proyecto oficial EYESITE.
+
+
+## 2026-10-30 — Entrega 8: exportación segura del historial
+
+- `76a4144683c1d72a3bbba780bf9ace9af86a79a0`: acción de exportación CSV desde la pantalla de historial.
+- `2d933ead74811bb9813014f67fa6114cf4696723`: serializador CSV independiente del navegador, con columnas de entradas/resultados, moneda, fecha UTC y versión de fórmula.
+- `d51071daafbd7a95cdb7b30981b8bea8ad308a34`: pruebas para comillas, comas, saltos de línea, encabezados vacíos e inyección de fórmulas de hoja de cálculo.
+- `fb52fcffef09b36e21b891584a399c024a4464df`: presentación responsive de la acción de exportación.
+- La exportación se genera localmente desde el historial del navegador; no implica persistencia cloud ni transmisión de datos.
+- La descarga incluye BOM UTF-8 para mejorar la apertura de caracteres españoles en hojas de cálculo.
+- Validación CI del commit final pendiente de confirmación; no se declara typecheck/tests/build aprobados en esta entrega.
