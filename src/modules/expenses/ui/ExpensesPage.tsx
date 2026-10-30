@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { summarizeExpenses } from "../domain/expenses";
-import type { ExpensePeriod, FixedExpense, VariableExpense } from "../domain/expenses";
+import type { ExpensePeriod } from "../domain/expenses";
 import { createExpensesRepository, type ExpenseCurrency } from "../infrastructure/browser-expenses-repository";
 
 type CurrencyCode = ExpenseCurrency;
