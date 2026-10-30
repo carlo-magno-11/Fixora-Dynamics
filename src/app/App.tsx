@@ -9,8 +9,9 @@ import { PRICING_FORMULA_VERSION } from "../modules/pricing/domain/pricing";
 import { calculateBreakEven } from "../modules/break-even/domain/break-even";
 import type { BreakEvenInput } from "../modules/break-even/domain/break-even";
 import type { PricingInput, PricingResult } from "../modules/pricing/domain/pricing";
+import { AboutPage, AccountPage, GuidePage } from "./BrandPages";
 
-type View = "essentials" | "calculator" | "breakEven" | "expenses" | "catalog" | "kits" | "history" | "guide";
+type View = "essentials" | "calculator" | "breakEven" | "expenses" | "catalog" | "kits" | "history" | "guide" | "account" | "about";
 type BusinessType = "general" | "retail" | "food" | "services_beauty" | "digital_products" | "workshop";
 type CurrencyCode = "MXN" | "USD";
 type SavedCalculation = {
@@ -268,7 +269,7 @@ export function App() {
         <div className="topbar-right">
           <span className="status-dot" />
           <span className="topbar-caption">ESPACIO DE TRABAJO</span>
-          <span className="avatar" aria-label="Perfil local">U</span>
+          <button className="avatar avatar-button" aria-label="Abrir mi cuenta" onClick={() => setView("account")}>U</button>
         </div>
       </header>
 
@@ -298,6 +299,9 @@ export function App() {
             <span className="nav-icon">◷</span> Mis cálculos
             <span className="nav-count">{history.length}</span>
           </button>
+          <p className="nav-label nav-label-spaced">TU CUENTA</p>
+          <button className={view === "account" ? "nav-item active" : "nav-item"} onClick={() => setView("account")}><span className="nav-icon">◉</span> Mi cuenta</button>
+          <button className={view === "about" ? "nav-item active" : "nav-item"} onClick={() => setView("about")}><span className="nav-icon">✳</span> Nuestra familia</button>
           <p className="nav-label nav-label-spaced">RECURSOS</p>
           <button className={view === "guide" ? "nav-item active" : "nav-item"} onClick={() => setView("guide")}>
             <span className="nav-icon">⌘</span> Guía de uso
@@ -521,20 +525,10 @@ export function App() {
             </div>
           )}
 
-          {view === "guide" && (
-            <div className="secondary-page guide-page">
-              <p className="eyebrow">CENTRO DE AYUDA <span> / </span> 03</p>
-              <h1>Entiende tus números.</h1>
-              <p className="page-lead">Una guía breve para usar la calculadora con datos consistentes.</p>
-              <div className="guide-grid">
-                <GuideCard number="01" title="Registra tus materiales" text="Suma el coste de los materiales y consumibles necesarios para producir una unidad. Usa el coste real de reposición." />
-                <GuideCard number="02" title="Valora tu tiempo" text="Indica cuánto tardas en producir y define un coste por hora para que tu trabajo forme parte del coste." />
-                <GuideCard number="03" title="Incluye los gastos" text="Añade costes directos y una asignación de gastos fijos por unidad. No cuentes dos veces los mismos gastos del periodo." />
-                <GuideCard number="04" title="Configura la venta" text="Introduce comisión, descuento y margen objetivo. Verifica las condiciones reales de tu plataforma o punto de venta." />
-              </div>
-              <div className="guide-callout"><strong>Margen no es lo mismo que recargo.</strong><p>El margen compara la ganancia con el ingreso; el recargo compara la ganancia con el coste. Son indicadores distintos y no deben confundirse.</p></div>
-            </div>
-          )}
+          {view === "guide" && <GuidePage />}
+          {view === "account" && <AccountPage onOpenGuide={() => setView("guide")} />}
+          {view === "about" && <AboutPage />}
+
         </section>
       </div>
       <footer className="app-footer"><span>FIXORA DYNAMICS</span><span>Claridad para construir negocios sostenibles.</span><span>VERSIÓN DE DESARROLLO</span></footer>
