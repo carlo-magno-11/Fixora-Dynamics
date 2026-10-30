@@ -4,6 +4,9 @@ Aplicación web adaptable para que profesionales independientes y pequeños nego
 
 ## Experiencia inicial
 
+- Fixora Essentials como acceso general y centro común para cualquier emprendimiento.
+- Selector de perfil de negocio: comercio/reventa, alimentos/repostería, servicios/belleza, productos digitales y taller/manufactura. El selector guarda la preferencia local; los módulos especializados siguen en planificación.
+
 - Calculadora de costes, mano de obra, merma, gastos fijos por unidad, comisión, descuento y margen.
 - Precio sugerido, ganancia estimada, margen efectivo, recargo y desglose de costes.
 - Selector de moneda MXN/USD.
@@ -33,3 +36,4 @@ Requisitos: Node.js LTS y pnpm. Ejecutar `pnpm install`, `pnpm dev`, `pnpm test`
 - `docs/DATABASE.md` y `docs/DATABASE-BOOTSTRAP-PLAN.md`: datos, grants, RLS y migraciones.
 - `docs/SECURITY.md` y `docs/LICENSES.md`: seguridad y licenciamiento.
 - `docs/ROADMAP.md`: estado y puertas de lanzamiento.
+- `docs/OPEN-SOURCE-RESEARCH.md`: repositorios evaluados, estrellas, licencias y decisiones de adopción.
