@@ -28,12 +28,44 @@ const initial: PricingInput = {
 
 const currencyOptions: CurrencyCode[] = ["MXN", "USD"];
 
+function isSavedCalculation(value: unknown): value is SavedCalculation {
+  if (!value || typeof value !== "object") return false;
+  const record = value as Record<string, unknown>;
+  if (
+    typeof record.id !== "string" ||
+    typeof record.name !== "string" ||
+    typeof record.createdAt !== "string" ||
+    Number.isNaN(Date.parse(record.createdAt)) ||
+    (record.currency !== "MXN" && record.currency !== "USD") ||
+    !record.input ||
+    typeof record.input !== "object" ||
+    !record.result ||
+    typeof record.result !== "object"
+  ) return false;
+
+  const input = record.input as Record<string, unknown>;
+  const inputKeys: (keyof PricingInput)[] = [
+    "materials", "laborMinutes", "hourlyRate", "directExpenses",
+    "wasteRate", "fixedExpensesPerUnit", "variableFeeRate",
+    "targetMarginRate", "discountRate",
+  ];
+  if (!inputKeys.every((key) => typeof input[key] === "number" && Number.isFinite(input[key]) && (input[key] as number) >= 0)) return false;
+
+  const result = record.result as Record<string, unknown>;
+  const resultKeys: (keyof PricingResult)[] = [
+    "materialCost", "laborCost", "wasteCost", "directCost",
+    "totalUnitCost", "suggestedPrice", "profitAtSuggestedPrice",
+    "effectiveMargin", "markup",
+  ];
+  return resultKeys.every((key) => typeof result[key] === "number" && Number.isFinite(result[key]));
+}
+
 function readHistory(): SavedCalculation[] {
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return [];
     const parsed: unknown = JSON.parse(raw);
-    return Array.isArray(parsed) ? (parsed as SavedCalculation[]) : [];
+    return Array.isArray(parsed) ? parsed.filter(isSavedCalculation).slice(0, 100) : [];
   } catch {
     return [];
   }
