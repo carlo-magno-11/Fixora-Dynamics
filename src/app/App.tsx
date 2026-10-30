@@ -306,7 +306,7 @@ export function App() {
                   ))}
                 </div>
               )}
-              <p className="local-storage-note">Por ahora, el historial se conserva únicamente en este navegador y dispositivo. La sincronización de cuenta se habilitará al integrar Supabase.</p>
+              <p className="local-storage-note">Este historial permanece solo en este navegador; no se cifra ni sincroniza y puede borrarse al limpiar los datos del sitio. Evita usarlo en equipos compartidos.</p>
             </div>
           )}
 
