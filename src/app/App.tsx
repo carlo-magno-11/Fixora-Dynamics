@@ -217,26 +217,30 @@ export function App() {
 
   function saveCalculation() {
     if (!calculation.result) return;
-    const snapshot = createPricingSnapshot({
-      name: name.trim() || "Cálculo sin nombre",
-      createdAt: new Date().toISOString(),
-      currency,
-      pricingInput: input,
-      catalogItem: selectedCatalogItem,
-    });
-    const record: SavedCalculation = {
-      id: snapshot.id,
-      name: snapshot.name,
-      createdAt: snapshot.createdAt,
-      currency: snapshot.currency,
-      input: { ...snapshot.pricingInput },
-      result: { ...snapshot.pricingResult },
-      formulaVersion: snapshot.formulaVersion,
-      snapshotVersion: snapshot.schemaVersion,
-      catalogItem: snapshot.catalogItem,
-    };
-    setHistory((current) => [record, ...current].slice(0, 100));
-    setSavedMessage("Cálculo guardado en este dispositivo.");
+    try {
+      const snapshot = createPricingSnapshot({
+        name: name.trim() || "Cálculo sin nombre",
+        createdAt: new Date().toISOString(),
+        currency,
+        pricingInput: input,
+        catalogItem: selectedCatalogItem,
+      });
+      const record: SavedCalculation = {
+        id: snapshot.id,
+        name: snapshot.name,
+        createdAt: snapshot.createdAt,
+        currency: snapshot.currency,
+        input: { ...snapshot.pricingInput },
+        result: { ...snapshot.pricingResult },
+        formulaVersion: snapshot.formulaVersion,
+        snapshotVersion: snapshot.schemaVersion,
+        catalogItem: snapshot.catalogItem,
+      };
+      setHistory((current) => [record, ...current].slice(0, 100));
+      setSavedMessage("Cálculo guardado en este dispositivo.");
+    } catch (error) {
+      setSavedMessage(error instanceof Error ? error.message : "No fue posible guardar el cálculo. Revisa la moneda y los datos del catálogo.");
+    }
   }
 
   function openCalculation(record: SavedCalculation) {
@@ -373,7 +377,7 @@ export function App() {
                 </div>
                 <label className="currency-select">
                   <span>MONEDA</span>
-                  <select value={currency} onChange={(event) => setCurrency(event.target.value as CurrencyCode)}>
+                  <select value={currency} onChange={(event) => { const nextCurrency = event.target.value as CurrencyCode; setCurrency(nextCurrency); if (selectedCatalogItem && selectedCatalogItem.currency !== nextCurrency) { setSelectedCatalogItem(undefined); setSavedMessage("Cambiaste la moneda. Se retiró la referencia del catálogo para evitar mezclar monedas; revisa todos los importes manualmente."); } }}>
                     {currencyOptions.map((option) => <option key={option} value={option}>{option}</option>)}
                   </select>
                 </label>
@@ -549,6 +553,3 @@ function Metric({ label, value, positive = false }: { label: string; value: stri
   return <div className="metric"><span>{label}</span><strong className={positive ? "positive" : ""}>{value}</strong></div>;
 }
 
-function GuideCard({ number, title, text }: { number: string; title: string; text: string }) {
-  return <article className="guide-card"><span>{number}</span><h2>{title}</h2><p>{text}</p></article>;
-}
