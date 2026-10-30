@@ -82,3 +82,9 @@ Cambios en esta entrega (commits secuenciales de la misma rama):
 - CI push #270 y CI PR #267 también pasaron en el HEAD documental `89194e0855d3e484d433f13d6db15b6ee3e31882`.
 - Commit `c69b66362078e1d8755302fc037cb2a1396a6c18`: README actualizado con el estado real y los nuevos documentos.
 - Las validaciones CI no equivalen a inspección visual manual ni a prueba en dispositivos.
+
+## 2026-10-30 — Entrega 5: bienvenida visible desde el inicio
+
+- Commit `743532fd3dd7f63951af0ac55dc1b587b6657375`: la pantalla principal incorpora el mensaje "Bienvenido a la familia Fixora" y un acceso directo a la presentación de la empresa.
+- Commit `fa277b812d3ab149cf2b765d9c50d6ee5b1225db`: estilo de bienvenida y enlace de marca.
+- Se conserva Fixora Dynamics como marca de empresa y Fixora Essentials como producto.
