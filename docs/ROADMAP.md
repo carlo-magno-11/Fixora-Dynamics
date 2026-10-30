@@ -11,7 +11,7 @@ Este documento separa entregables de diseño, código, infraestructura y validac
 - [x] Selector MXN/USD, historial local y guía de uso.
 - [x] Identidad visual prémium: petróleo, marfil, champagne y verde salvia.
 - [x] Investigación de repositorios GitHub de más de 1,000 estrellas y revisión de candidatos/licencias; decisión registrada en `docs/OPEN-SOURCE-RESEARCH.md`.
-- [x] Definición de producto modular: Fixora Essentials + kits por tipo de emprendimiento.
+- [x] Definición de producto modular: Fixora Essentials + kits por tipo de emprendimiento (ADR-003).
 - [x] Implementar la pantalla inicial Fixora Essentials y selector persistente de perfil de negocio (preferencia local, aún no sincronizada).
 - [x] CI GitHub para el HEAD `4bb658dd20deac8686cdb687f7b913b958cc97a3`: typecheck, Vitest y build completados correctamente.
 - [ ] Repetir CI después de los cambios de documentación y ajustes finales de interfaz.
