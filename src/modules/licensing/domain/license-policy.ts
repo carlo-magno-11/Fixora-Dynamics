@@ -43,14 +43,18 @@ export function getEffectiveLicenseState(
   license: LicenseRecord,
   now: string,
 ): EffectiveLicenseState {
-  if (license.status === "revoked" || license.status === "suspended") {
+  if (license.status === "revoked" || license.status === "suspended" || license.status === "pending") {
     return license.status;
   }
   if (!license.activatedAt || !license.expiresAt) {
     return "pending";
   }
-  const current = parseInstant(now, "actual");
+  const activated = parseInstant(license.activatedAt, "de activación");
   const expiry = parseInstant(license.expiresAt, "de vencimiento");
+  const current = parseInstant(now, "actual");
+  if (expiry.getTime() <= activated.getTime()) {
+    throw new RangeError("El vencimiento debe ser posterior a la activación.");
+  }
   return current.getTime() < expiry.getTime() ? "active" : "expired";
 }
 
