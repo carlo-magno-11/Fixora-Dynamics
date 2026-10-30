@@ -315,3 +315,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
   .catalog-cost { text-align: left; }
   .catalog-row .delete-button { grid-column: 2; grid-row: 2 / span 2; }
 }
+
+
+.catalog-source-note { margin: 13px 0 0; padding: 10px 13px; border-left: 2px solid var(--gold); background: #f2efe6; color: #69766f; font-size: 10px; line-height: 1.6; }
+.catalog-source-note strong { color: var(--petrol); }
