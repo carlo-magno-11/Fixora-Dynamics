@@ -204,3 +204,12 @@ No conectar ni habilitar signup. Primero completar backup verificable, inspecci�
 - `ff020db` / `18daafe` / `d02c98e`: difiere acceso a localStorage y cubre almacenamiento bloqueado.
 - `bca68e8`: actualiza roadmap para el refactor incremental.
 - El historial sigue siendo local; el repositorio prepara el puerto para añadir Supabase sin mezclar reglas de dominio y navegador.
+
+
+## 2026-10-30 — Repositorios locales para catálogo y gastos
+
+- `3bbb2b0`: contrato compartido KeyValueStorage/KeyValueStorageSource.
+- `58cbfdc` / `4177f62`: el repositorio de historial reutiliza el contrato compartido.
+- `4940381` / `89f983c` / `eee552c`: repositorio de catálogo y pruebas de validación, límite de 500 registros y fallos de almacenamiento; CatalogPage ya no lee/escribe localStorage directamente.
+- `c455b29` / `92db314` / `7e5c293` / `013576a` / `7153a2f`: repositorio de gastos, validación estricta, preservación de moneda/periodo y confirmación de moneda para registros antiguos; ExpensesPage delega persistencia.
+- Sigue siendo almacenamiento local de un solo navegador; no se declara sincronización multiusuario.
