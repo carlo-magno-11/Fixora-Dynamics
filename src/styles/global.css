@@ -420,3 +420,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
 .welcome-about-link { margin-top: 11px; padding: 0; border: 0; background: transparent; color: #e2d2ae; font-size: 10px; font-weight: 700; }
 .welcome-about-link span { margin-left: 5px; }
 .welcome-about-link:hover { color: #fffefa; }
+
+.history-actions { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 24px; color: #89918b; font-size: 10px; }
+.history-actions .outline-button { min-height: 36px; padding: 0 15px; font-size: 10px; }
+@media (max-width: 500px) { .history-actions { align-items: flex-start; flex-direction: column; } }
