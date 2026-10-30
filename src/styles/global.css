@@ -1,7 +1,5 @@
-@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap");
-
 :root {
-  font-family: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+  font-family: "Aptos", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
   color: #1d3038;
   background: #f3f1eb;
   font-synthesis: none;
@@ -29,7 +27,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
 .topbar { height: 76px; padding: 0 clamp(20px, 4vw, 58px); display: flex; align-items: center; justify-content: space-between; background: var(--paper); border-bottom: 1px solid var(--line); }
 .brand { display: inline-flex; align-items: center; gap: 11px; color: var(--ink); text-decoration: none; }
 .brand-mark { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 10px 10px 10px 3px; background: var(--ink); color: #e6d5b2; font: 700 21px/1 Georgia, serif; }
-.brand-word { font: 800 12px/1 "Manrope", sans-serif; letter-spacing: .15em; }
+.brand-word { font: 800 12px/1 "Aptos Display", "Segoe UI", "Helvetica Neue", Arial, sans-serif; letter-spacing: .15em; }
 .brand-word b { color: var(--gold); font-weight: 700; }
 .topbar-right { display: flex; align-items: center; gap: 10px; color: var(--muted); }
 .status-dot { width: 7px; height: 7px; border-radius: 50%; background: #6d9a7b; box-shadow: 0 0 0 4px #6d9a7b18; }
@@ -46,7 +44,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
 .nav-count { margin-left: auto; min-width: 21px; padding: 3px 5px; border-radius: 12px; background: #ffffff24; font-size: 9px; text-align: center; }
 .sidebar-note { margin-top: auto; padding: 17px 15px; border: 1px solid #dcd8ca; border-radius: 9px; background: #f4f2eb; }
 .sidebar-note-mark { color: var(--gold); font-size: 19px; }
-.sidebar-note strong { display: block; margin-top: 9px; color: var(--ink); font: 600 13px "Manrope", sans-serif; }
+.sidebar-note strong { display: block; margin-top: 9px; color: var(--ink); font: 600 13px "Aptos Display", "Segoe UI", "Helvetica Neue", Arial, sans-serif; }
 .sidebar-note p { margin: 6px 0 0; color: #7a827d; font-size: 10px; line-height: 1.6; }
 .sidebar-footer { margin: 22px 5px 0; color: #9a9e96; font-size: 8px; font-weight: 700; letter-spacing: .13em; }
 .sidebar-footer span { color: var(--gold); }
@@ -54,7 +52,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
 .page-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; margin-bottom: 28px; }
 .eyebrow { margin: 0; color: #9a8054; font-size: 9px; font-weight: 700; letter-spacing: .17em; }
 .eyebrow span { padding: 0 5px; color: #c5b99f; }
-.page-heading h1, .secondary-page h1 { margin: 13px 0 7px; color: var(--ink); font: 600 clamp(30px, 3.3vw, 43px)/1.13 "Manrope", sans-serif; letter-spacing: -.045em; }
+.page-heading h1, .secondary-page h1 { margin: 13px 0 7px; color: var(--ink); font: 600 clamp(30px, 3.3vw, 43px)/1.13 "Aptos Display", "Segoe UI", "Helvetica Neue", Arial, sans-serif; letter-spacing: -.045em; }
 .page-lead { max-width: 620px; margin: 0; color: #78817d; font-size: 13px; line-height: 1.7; }
 .currency-select { display: grid; gap: 7px; min-width: 112px; }
 .currency-select span, .product-name-field label > span { color: #8b918b; font-size: 8px; font-weight: 700; letter-spacing: .14em; }
@@ -70,22 +68,22 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
 .form-column, .results-column { display: grid; gap: 17px; min-width: 0; }
 .surface-card { padding: 23px 24px 20px; border: 1px solid var(--line); border-radius: 9px; background: var(--paper); box-shadow: 0 4px 18px #1d303806; }
 .section-heading { display: flex; align-items: flex-start; gap: 13px; margin-bottom: 22px; }
-.section-number { width: 30px; height: 30px; flex: 0 0 30px; display: grid; place-items: center; border-radius: 8px; background: var(--petrol-light); color: var(--petrol); font: 700 10px "Manrope", sans-serif; }
-.section-heading h2 { margin: 1px 0 4px; color: var(--ink); font: 650 15px "Manrope", sans-serif; letter-spacing: -.02em; }
+.section-number { width: 30px; height: 30px; flex: 0 0 30px; display: grid; place-items: center; border-radius: 8px; background: var(--petrol-light); color: var(--petrol); font: 700 10px "Aptos Display", "Segoe UI", "Helvetica Neue", Arial, sans-serif; }
+.section-heading h2 { margin: 1px 0 4px; color: var(--ink); font: 650 15px "Aptos Display", "Segoe UI", "Helvetica Neue", Arial, sans-serif; letter-spacing: -.02em; }
 .section-heading p { margin: 0; color: #89918b; font-size: 10px; }
 .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 17px 15px; }
 .field-grid-secondary { margin-top: 18px; padding-top: 17px; border-top: 1px solid #f0eee8; }
 .field { min-width: 0; display: grid; gap: 7px; color: #606e69; font-size: 10px; font-weight: 500; }
 .input-wrap { height: 39px; display: flex; align-items: center; border: 1px solid #e5e3db; border-radius: 6px; background: #fff; transition: border .15s, box-shadow .15s; }
 .input-wrap:focus-within { border-color: var(--gold); box-shadow: 0 0 0 3px #b89a641a; }
-.input-wrap input { width: 100%; min-width: 0; height: 100%; padding: 0 10px; border: 0; outline: 0; background: transparent; color: var(--ink); font: 600 12px "DM Sans", sans-serif; font-variant-numeric: tabular-nums; }
+.input-wrap input { width: 100%; min-width: 0; height: 100%; padding: 0 10px; border: 0; outline: 0; background: transparent; color: var(--ink); font: 600 12px "Aptos", "Segoe UI", "Helvetica Neue", Arial, sans-serif; font-variant-numeric: tabular-nums; }
 .input-wrap small { padding: 0 10px 0 4px; color: #a1a69f; font-size: 9px; }
 .field-hint { margin: 16px 0 0; color: #929991; font-size: 9px; line-height: 1.65; }
 .result-card { padding: 23px 23px 19px; border: 1px solid #1d3038; border-radius: 9px; background: var(--ink); color: #f7f4eb; box-shadow: 0 10px 28px #1d30381c; }
 .result-card-top { display: flex; align-items: center; justify-content: space-between; }
 .result-kicker, .breakdown-title { color: #c6ad7e; font-size: 9px; font-weight: 700; letter-spacing: .16em; }
 .result-spark { color: #c6ad7e; font-size: 19px; }
-.result-price { margin: 22px 0 4px; color: #e6d3a9; font: 600 clamp(32px, 3.6vw, 43px)/1.1 "Manrope", sans-serif; letter-spacing: -.045em; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.result-price { margin: 22px 0 4px; color: #e6d3a9; font: 600 clamp(32px, 3.6vw, 43px)/1.1 "Aptos Display", "Segoe UI", "Helvetica Neue", Arial, sans-serif; letter-spacing: -.045em; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 .result-subtitle { margin: 0; color: #aab6b0; font-size: 10px; }
 .result-rule { height: 1px; margin: 20px 0 8px; background: #ffffff20; }
 .result-metrics { display: grid; }
@@ -113,7 +111,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
 .secondary-page h1 { margin-top: 14px; }
 .empty-state { margin-top: 35px; padding: 55px 24px; border: 1px dashed #d8d4c8; border-radius: 10px; background: #faf9f4; text-align: center; }
 .empty-state > span { color: var(--gold); font-size: 28px; }
-.empty-state h2 { margin: 14px 0 7px; color: var(--ink); font: 600 18px "Manrope", sans-serif; }
+.empty-state h2 { margin: 14px 0 7px; color: var(--ink); font: 600 18px "Aptos Display", "Segoe UI", "Helvetica Neue", Arial, sans-serif; }
 .empty-state p { max-width: 390px; margin: 0 auto; color: #7d8780; font-size: 11px; line-height: 1.7; }
 .primary-button.compact { width: auto; display: inline-flex; margin: 20px auto 0; padding: 0 18px; }
 .history-list { display: grid; gap: 10px; margin-top: 30px; }
@@ -124,7 +122,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
 .history-main span { color: #90978f; font-size: 9px; }
 .history-price { display: grid; gap: 5px; text-align: right; }
 .history-price span { color: #999e96; font-size: 8px; letter-spacing: .1em; }
-.history-price strong { color: var(--petrol); font: 700 13px "Manrope", sans-serif; }
+.history-price strong { color: var(--petrol); font: 700 13px "Aptos Display", "Segoe UI", "Helvetica Neue", Arial, sans-serif; }
 .outline-button { min-height: 32px; padding: 0 12px; border: 1px solid #d8d9cf; border-radius: 5px; background: transparent; color: var(--petrol); font-size: 9px; font-weight: 700; }
 .outline-button:hover { border-color: var(--gold); background: #f7f3e9; }
 .delete-button { width: 28px; height: 28px; border: 0; border-radius: 5px; background: transparent; color: #a1a69f; font-size: 18px; }
@@ -132,11 +130,11 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
 .local-storage-note { margin-top: 20px; color: #8a9189; font-size: 10px; line-height: 1.6; }
 .guide-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 13px; margin-top: 32px; }
 .guide-card { min-height: 150px; padding: 20px; border: 1px solid var(--line); border-radius: 8px; background: var(--paper); }
-.guide-card > span { color: var(--gold); font: 700 11px "Manrope", sans-serif; }
-.guide-card h2 { margin: 12px 0 7px; color: var(--ink); font: 650 14px "Manrope", sans-serif; }
+.guide-card > span { color: var(--gold); font: 700 11px "Aptos Display", "Segoe UI", "Helvetica Neue", Arial, sans-serif; }
+.guide-card h2 { margin: 12px 0 7px; color: var(--ink); font: 650 14px "Aptos Display", "Segoe UI", "Helvetica Neue", Arial, sans-serif; }
 .guide-card p { margin: 0; color: #7f8982; font-size: 10px; line-height: 1.7; }
 .guide-callout { margin-top: 16px; padding: 19px 20px; border-left: 3px solid var(--gold); border-radius: 0 7px 7px 0; background: #eeece4; }
-.guide-callout strong { color: var(--ink); font: 650 12px "Manrope", sans-serif; }
+.guide-callout strong { color: var(--ink); font: 650 12px "Aptos Display", "Segoe UI", "Helvetica Neue", Arial, sans-serif; }
 .guide-callout p { margin: 6px 0 0; color: #78817a; font-size: 10px; line-height: 1.7; }
 .app-footer { min-height: 50px; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 0 clamp(20px, 4vw, 58px); border-top: 1px solid #e2dfd5; color: #9a9e96; font-size: 8px; letter-spacing: .11em; }
 .app-footer span:first-child { color: #74827b; font-weight: 700; }
