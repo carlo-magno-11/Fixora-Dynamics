@@ -8,7 +8,8 @@ export type AdminSection =
   | "devices"
   | "support"
   | "audit"
-  | "settings";
+  | "settings"
+  | "administrators";
 
 const SECTION_PERMISSIONS: Record<AdminSection, AdminPermission> = {
   overview: "dashboard.read",
@@ -19,6 +20,7 @@ const SECTION_PERMISSIONS: Record<AdminSection, AdminPermission> = {
   support: "support.read",
   audit: "audit.read",
   settings: "settings.read",
+  administrators: "admins.manage",
 };
 
 export const ADMIN_SECTION_LABELS: Record<AdminSection, string> = {
@@ -30,6 +32,7 @@ export const ADMIN_SECTION_LABELS: Record<AdminSection, string> = {
   support: "Soporte",
   audit: "Auditoría",
   settings: "Configuración",
+  administrators: "Administradores",
 };
 
 export function getAccessibleAdminSections(
