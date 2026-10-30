@@ -31,6 +31,22 @@ describe("Fixora annual license policy", () => {
     expect(getEffectiveLicenseState(license, "2027-10-30T12:00:00.000Z")).toBe("expired");
   });
 
+  it("keeps a pending license pending even if dates are accidentally populated", () => {
+    expect(getEffectiveLicenseState({
+      status: "pending",
+      activatedAt: "2026-10-30T12:00:00.000Z",
+      expiresAt: "2027-10-30T12:00:00.000Z",
+    }, "2026-11-01T12:00:00.000Z")).toBe("pending");
+  });
+
+  it("rejects a license whose expiry is not after activation", () => {
+    expect(() => getEffectiveLicenseState({
+      status: "active",
+      activatedAt: "2027-01-01T00:00:00.000Z",
+      expiresAt: "2026-12-31T23:59:59.000Z",
+    }, "2026-10-30T12:00:00.000Z")).toThrow(RangeError);
+  });
+
   it("preserves account, history and export capabilities after expiry", () => {
     const capabilities = getLicenseCapabilities("expired");
     expect(capabilities).toContain("account.read");
