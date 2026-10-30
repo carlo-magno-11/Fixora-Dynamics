@@ -93,4 +93,4 @@ Cambios en esta entrega (commits secuenciales de la misma rama):
 
 - CI push #276 pasó para el commit de código `743532fd3dd7f63951af0ac55dc1b587b6657375`.
 - CI push #278 pasó para el commit de estilos `fa277b812d3ab149cf2b765d9c50d6ee5b1225db`.
-- CI push #280 y #281 sobre el HEAD documental `ebf1800aead0fc3b791ed089f6655e1461ff8f68) seguían en ejecución al registrar esta nota.
+- CI push #280 y #281 completadas con éxito sobre el HEAD documental `ebf1800aead0fc3b791ed089f6655e1461ff8f68`. Pasaron instalación congelada, typecheck, tests y build.
