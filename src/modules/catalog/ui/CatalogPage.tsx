@@ -1,40 +1,19 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import { createCatalogItem, updateCatalogItem } from "../domain/catalog";
 import type { CatalogCurrency, CatalogDraft, CatalogItem, CatalogItemKind } from "../domain/catalog";
-
-const STORAGE_KEY = "fixora.catalog.v1";
-
-function isCatalogItem(value: unknown): value is CatalogItem {
-  if (!value || typeof value !== "object") return false;
-  const item = value as Record<string, unknown>;
-  return typeof item.id === "string" &&
-    typeof item.name === "string" && item.name.trim().length > 0 &&
-    (item.kind === "product" || item.kind === "service") &&
-    typeof item.unit === "string" && item.unit.trim().length > 0 &&
-    typeof item.sku === "string" &&
-    (item.currency === "MXN" || item.currency === "USD") &&
-    typeof item.referenceCost === "number" && Number.isFinite(item.referenceCost) && item.referenceCost >= 0 &&
-    typeof item.active === "boolean";
-}
-
-function readCatalog(): CatalogItem[] {
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return [];
-    const parsed: unknown = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed.filter(isCatalogItem).slice(0, 500) : [];
-  } catch {
-    return [];
-  }
-}
+import { createCatalogRepository } from "../infrastructure/browser-catalog-repository";
 
 export function CatalogPage({ currency, formatMoney, onUseInCalculator }: {
   currency: CatalogCurrency;
   formatMoney: (value: number, currency: CatalogCurrency) => string;
   onUseInCalculator: (item: CatalogItem) => void;
 }) {
-  const [items, setItems] = useState<CatalogItem[]>(readCatalog);
+  const repository = useMemo(
+    () => createCatalogRepository(() => window.localStorage),
+    [],
+  );
+  const [items, setItems] = useState<CatalogItem[]>(() => repository.load());
   const [name, setName] = useState("");
   const [kind, setKind] = useState<CatalogItemKind>("product");
   const [unit, setUnit] = useState("pieza");
@@ -46,11 +25,11 @@ export function CatalogPage({ currency, formatMoney, onUseInCalculator }: {
 
   useEffect(() => {
     try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+      repository.save(items);
     } catch {
       setMessage("No fue posible guardar el catálogo en este navegador.");
     }
-  }, [items]);
+  }, [items, repository]);
 
   useEffect(() => {
     if (!editingId) setDraftCurrency(currency);
