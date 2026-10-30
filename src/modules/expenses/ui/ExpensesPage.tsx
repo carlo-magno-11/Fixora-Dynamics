@@ -62,7 +62,7 @@ export function ExpensesPage({ currency, formatMoney }: {
     } catch {
       setMessage("No fue posible guardar los gastos en este navegador.");
     }
-  }, [fixed, variable, expectedUnits]);
+  }, [fixed, variable, expectedUnits, period]);
 
   function updateFixed(id: string, key: "name" | "amount", value: string) {
     setFixed((current) => current.map((item) => item.id === id
@@ -83,7 +83,7 @@ export function ExpensesPage({ currency, formatMoney }: {
       <p className="page-lead">Separa lo que pagas durante el periodo de lo que cuesta cada unidad. Así podrás analizar tus precios sin duplicar gastos.</p>
       <div className="expenses-grid">
         <section className="surface-card">
-          <div className="section-heading"><div className="section-number">01</div><div><h2>Gastos fijos del periodo</h2><p>Importes que no dependen directamente de cuántas unidades vendas.</p></div></div>
+          <div className="section-heading"><div className="section-number">01</div><div><h2>Gastos fijos del periodo</h2><p>Importes que no dependen directamente de cuántas unidades vendas. Usa el periodo seleccionado abajo para todos los importes.</p></div></div>
           {fixed.map((item) => (
             <div className="expense-entry" key={item.id}>
               <label className="field"><span>Concepto</span><input value={item.name} maxLength={80} placeholder="Ej. renta del local" onChange={(event) => updateFixed(item.id, "name", event.target.value)} /></label>
