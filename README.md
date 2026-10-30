@@ -12,7 +12,10 @@ Aplicación web adaptable para que profesionales independientes y pequeños nego
 - Selector de moneda MXN/USD.
 - Registro de gastos fijos del periodo y costes variables por unidad, con asignación analítica sin doble conteo.
 - Catálogo local compartido de productos y servicios con unidades explícitas, SKU opcional y coste de referencia.
-- Historial y guía de uso.
+- Historial local y guía práctica ampliada con ejemplos, preguntas frecuentes y glosario.
+- Catálogo con alta, edición, archivo/reactivación y moneda propia por elemento.
+- Página de presentación de Fixora Dynamics y área Mi cuenta (estructura visual; autenticación aún pendiente).
+- Borradores internos de términos y privacidad claramente marcados como no vigentes.
 - El perfil, gastos, catálogo e historial actuales se conservan solo en el almacenamiento local del navegador. No representan todavía una cuenta, sincronización cloud ni licencia activa.
 
 ## Principios técnicos
@@ -38,5 +41,9 @@ Requisitos: Node.js 24 y pnpm 9.15.9. Ejecutar `pnpm install`, `pnpm dev`, `pnpm
 - `docs/DATABASE.md` y `docs/DATABASE-BOOTSTRAP-PLAN.md`: datos, grants, RLS y migraciones.
 - `docs/SECURITY.md` y `docs/LICENSES.md`: seguridad y licenciamiento.
 - `docs/ROADMAP.md`: estado y puertas de lanzamiento.
+- `docs/MASTER-IMPLEMENTATION-PLAN.md` y `docs/PROGRESS-LOG.md`: plan maestro y registro por commit.
+- `docs/I18N.md`: convenciones para centralizar textos y agregar idiomas.
+- `docs/legal/`: borradores legales sujetos a revisión.
+- `docs/DATABASE-LOCAL-SETUP.md`: preparación segura de Supabase local y flujo de migraciones.
 - `docs/OPEN-SOURCE-RESEARCH.md`: repositorios evaluados, estrellas, licencias y decisiones de adopción.
 - `docs/DECISIONS/ADR-003-essentials-and-business-kits.md`: decisión de producto modular.
