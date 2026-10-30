@@ -91,3 +91,15 @@ Nunca conectar Fixora al proyecto oficial EYESITE.
 ## Fuera del primer lanzamiento
 
 ERP completo, contabilidad fiscal, declaraciones, nómina, sincronización bancaria, pagos integrados, CRM avanzado, microservicios y aplicaciones nativas independientes.
+ 
+
+## 2026-10-30 — Arquitectura y administración
+
+- [x] Matriz de permisos de plataforma separada de los roles de negocio, con requisito AAL2 y estado administrativo activo en la política de cliente.
+- [x] Pruebas unitarias de denegación para sesión ausente, MFA insuficiente, cuenta suspendida y rol ausente.
+- [x] Especificación del panel administrativo: compras, licencias, códigos/QR, dispositivos, usuarios, soporte, auditoría y configuración.
+- [ ] La matriz TypeScript no es autorización de servidor. Faltan roles administrativos internos, RLS/RPC/Edge Functions y pruebas negativas contra PostgreSQL.
+- [ ] El panel UI conectado queda bloqueado hasta disponer de backend y datos reales; no mostrar métricas ni botones simulados.
+- [x] Documentación de arquitectura modular y dirección de dependencias.
+- [ ] Extraer gradualmente navegación/estado del shell App.tsx; no reescribir de golpe.
+- [ ] Confirmar CI para los commits actuales.
