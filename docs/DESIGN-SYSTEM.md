@@ -32,9 +32,9 @@ Fixora ayuda a profesionales independientes y pequeños negocios a entender sus 
 
 ## Tipografía
 
-- Manrope para títulos, encabezados y cifras principales.
-- DM Sans para formularios, tablas, instrucciones y texto funcional.
-- Fallbacks del sistema para mantener legibilidad si Google Fonts no está disponible.
+- Tipografía de sistema: Aptos Display / Segoe UI / Helvetica Neue para títulos y cifras.
+- Aptos / Segoe UI / Helvetica Neue para formularios, tablas e instrucciones.
+- No descargar fuentes de terceros en tiempo de ejecución; mantener fallback local para legibilidad y menor dependencia de red.
 
 ## Estado del prototipo
 
