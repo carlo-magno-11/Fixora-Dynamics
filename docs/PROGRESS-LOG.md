@@ -94,3 +94,21 @@ Cambios en esta entrega (commits secuenciales de la misma rama):
 - CI push #276 pasó para el commit de código `743532fd3dd7f63951af0ac55dc1b587b6657375`.
 - CI push #278 pasó para el commit de estilos `fa277b812d3ab149cf2b765d9c50d6ee5b1225db`.
 - CI push #280 y #281 completadas con éxito sobre el HEAD documental `ebf1800aead0fc3b791ed089f6655e1461ff8f68`. Pasaron instalación congelada, typecheck, tests y build.
+
+
+## 2026-10-30 — Entrega 6: recuperación del historial Supabase y configuración local
+
+- Se recuperó en modo solo lectura el SQL completo de las tres migraciones históricas desde `supabase_migrations.schema_migrations.statements`; no fue necesario reconstruirlas desde GitHub.
+- Se documentó el resultado en `docs/SUPABASE-LEGACY-RECOVERY-20261030.md`. Los SQL heredados no se copiarán como migraciones ejecutables de Fixora.
+- Se confirmó que `public.notificaciones` existe aunque el comentario de su migración histórica dice “NO EJECUTADA”; el historial por sí solo no se tratará como prueba suficiente del estado del esquema.
+- Conteos remotos observados: 0 filas en `profiles`, `propiedades`, `solicitudes_propiedades` y `notificaciones`.
+- Se confirmaron privilegios amplios para `anon` y `authenticated` sobre las cuatro tablas heredadas, trigger Auth heredado y cuatro funciones públicas SECURITY DEFINER ejecutables por ambos roles.
+- Security Advisor del 2026-10-30 devolvió 4 avisos de funciones SECURITY DEFINER ejecutables por anon y 4 por authenticated.
+- La rama Supabase `main` aparece con estado `MIGRATIONS_FAILED`; no se reparó, reinició ni modificó.
+- En Codespaces: Supabase CLI 2.122.0; Docker disponible; `supabase init` ejecutado localmente. Se validó `supabase/config.toml` con exposición automática desactivada, seed desactivado, Auth local en puerto 5173 y signup local desactivado.
+- Los archivos `supabase/config.toml` y `supabase/.gitignore` siguen sin registrar en Git según el último `git status` informado por el usuario.
+- No se ejecutó DDL/DML remoto, no se cambió Storage, no se enlazó el proyecto con CLI y no se aplicó ninguna migración.
+
+### Puerta de seguridad antes de Auth
+
+No conectar ni habilitar signup. Primero completar backup verificable, inspección de dependencias, estrategia reversible de aislamiento heredado, migración nueva creada con CLI, pruebas locales de RLS/grants y revisión explícita antes de cualquier despliegue remoto.
