@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { calculatePrice } from "../modules/pricing/domain/pricing";
+import { calculateBreakEven } from "../modules/break-even/domain/break-even";
+import type { BreakEvenInput } from "../modules/break-even/domain/break-even";
 import type { PricingInput, PricingResult } from "../modules/pricing/domain/pricing";
 
-type View = "essentials" | "calculator" | "kits" | "history" | "guide";
+type View = "essentials" | "calculator" | "breakEven" | "kits" | "history" | "guide";
 type BusinessType = "general" | "retail" | "food" | "services" | "digital" | "workshop";
 type CurrencyCode = "MXN" | "USD";
 type SavedCalculation = {
@@ -32,6 +34,8 @@ function readBusinessType(): BusinessType {
     return "general";
   }
 }
+const initialBreakEven: BreakEvenInput = { fixedCosts: 12000, sellingPrice: 250, variableCostPerUnit: 100 };
+
 const initial: PricingInput = {
   materials: 85,
   laborMinutes: 90,
@@ -107,9 +111,18 @@ export function App() {
   const [view, setView] = useState<View>("essentials");
   const [businessType, setBusinessType] = useState<BusinessType>(readBusinessType);
   const [profileMessage, setProfileMessage] = useState("");
+  const [breakEvenInput, setBreakEvenInput] = useState<BreakEvenInput>(initialBreakEven);
   const [name, setName] = useState("Mi primer producto");
   const [history, setHistory] = useState<SavedCalculation[]>(readHistory);
   const [savedMessage, setSavedMessage] = useState("");
+
+  const breakEvenCalculation = useMemo(() => {
+    try {
+      return { result: calculateBreakEven(breakEvenInput), error: null };
+    } catch (error) {
+      return { result: null, error: error instanceof Error ? error.message : "No se pudo calcular." };
+    }
+  }, [breakEvenInput]);
 
   const calculation = useMemo(() => {
     try {
@@ -142,6 +155,12 @@ export function App() {
     setBusinessType(type);
     setProfileMessage("Perfil guardado en este dispositivo. Los kits especializados se habilitarán por etapas.");
     setView("essentials");
+  }
+
+  function updateBreakEven(key: keyof BreakEvenInput, rawValue: string) {
+    const parsed = Number(rawValue);
+    const value = Number.isFinite(parsed) ? parsed : 0;
+    setBreakEvenInput((current) => ({ ...current, [key]: value }));
   }
 
   function update(key: keyof PricingInput, rawValue: string, percentageField = false) {
@@ -206,6 +225,9 @@ export function App() {
           <button className={view === "calculator" ? "nav-item active" : "nav-item"} onClick={() => setView("calculator")}>
             <span className="nav-icon">⌗</span> Calculadora
           </button>
+          <button className={view === "breakEven" ? "nav-item active" : "nav-item"} onClick={() => setView("breakEven")}>
+            <span className="nav-icon">◒</span> Punto de equilibrio
+          </button>
           <button className={view === "kits" ? "nav-item active" : "nav-item"} onClick={() => setView("kits")}>
             <span className="nav-icon">◇</span> Kits por negocio
           </button>
@@ -246,6 +268,7 @@ export function App() {
                 <article className="essential-tile"><span className="tile-index">01 / COSTES</span><div className="tile-symbol">⌗</div><h3>Costear productos y servicios</h3><p>Integra materiales, tiempo de trabajo, merma y otros costes directos en un coste unitario.</p><button onClick={() => setView("calculator")}>Calcular ahora <span>→</span></button></article>
                 <article className="essential-tile"><span className="tile-index">02 / PRECIOS</span><div className="tile-symbol">◇</div><h3>Definir un precio sostenible</h3><p>Considera comisiones, descuentos y margen objetivo antes de publicar o cotizar.</p><button onClick={() => setView("calculator")}>Definir precio <span>→</span></button></article>
                 <article className="essential-tile"><span className="tile-index">03 / CONTROL</span><div className="tile-symbol">◷</div><h3>Conservar tus análisis</h3><p>Guarda cálculos, vuelve a abrirlos y compara tus decisiones de precio.</p><button onClick={() => setView("history")}>Ver mis cálculos <span>→</span></button></article>
+                <article className="essential-tile"><span className="tile-index">04 / EQUILIBRIO</span><div className="tile-symbol">◒</div><h3>Conocer tu punto de equilibrio</h3><p>Calcula cuántas unidades necesitas vender para cubrir los costes fijos del periodo.</p><button onClick={() => setView("breakEven")}>Calcular equilibrio <span>→</span></button></article>
               </div>
               <section className="business-profile-panel"><div><p className="eyebrow">CONFIGURA TU EXPERIENCIA</p><h2>¿A qué te dedicas?</h2><p>Tu elección orientará las plantillas y herramientas especializadas que añadiremos. No cambia ni sustituye el motor de cálculo general.</p></div><div className="business-profile-actions"><strong>{businessTypes.find((item) => item.id === businessType)?.title}</strong><button className="outline-button" onClick={() => setView("kits")}>Ver opciones de emprendimiento</button></div></section>
               {profileMessage && <p className="profile-message" role="status">{profileMessage}</p>}
@@ -370,6 +393,39 @@ export function App() {
                 </aside>
               </div>
             </>
+          )}
+
+          {view === "breakEven" && (
+            <div className="secondary-page break-even-page">
+              <p className="eyebrow">FIXORA ESSENTIALS <span> / </span> 04</p>
+              <h1>Encuentra tu punto de equilibrio.</h1>
+              <p className="page-lead">Descubre cuántas unidades necesitas vender para cubrir los gastos fijos del periodo. A partir de esa cantidad, cada unidad adicional aporta margen de contribución.</p>
+              <div className="break-even-layout">
+                <section className="surface-card">
+                  <div className="section-heading"><div className="section-number">01</div><div><h2>Datos de tu operación</h2><p>Usa el mismo periodo para tus gastos fijos.</p></div></div>
+                  <div className="field-grid">
+                    <Field label="Gastos fijos del periodo" value={breakEvenInput.fixedCosts} suffix={currency} onChange={(v) => updateBreakEven("fixedCosts", v)} />
+                    <Field label="Precio de venta por unidad" value={breakEvenInput.sellingPrice} suffix={currency} onChange={(v) => updateBreakEven("sellingPrice", v)} />
+                    <Field label="Coste variable por unidad" value={breakEvenInput.variableCostPerUnit} suffix={currency} onChange={(v) => updateBreakEven("variableCostPerUnit", v)} />
+                  </div>
+                  <p className="field-hint">Incluye como coste variable lo que cambia con cada unidad vendida. No vuelvas a sumar los mismos gastos fijos dentro del coste variable.</p>
+                </section>
+                <section className="break-even-result" aria-live="polite">
+                  <span className="result-kicker">UNIDADES PARA CUBRIR TUS COSTES</span>
+                  {breakEvenCalculation.error ? <div className="error-state" role="alert"><strong>Revisa los valores</strong><p>{breakEvenCalculation.error}</p></div> : breakEvenCalculation.result && (
+                    <>
+                      <p className="break-even-number">{breakEvenCalculation.result.wholeUnits.toLocaleString("es-MX")}</p>
+                      <p className="result-subtitle">unidades completas como mínimo</p>
+                      <div className="result-rule" />
+                      <Metric label="Margen de contribución / unidad" value={formatMoney(breakEvenCalculation.result.contributionPerUnit, currency)} />
+                      <Metric label="Margen de contribución" value={percent(breakEvenCalculation.result.contributionRate)} />
+                      <Metric label="Venta mínima estimada" value={formatMoney(breakEvenCalculation.result.breakEvenRevenue, currency)} />
+                    </>
+                  )}
+                </section>
+              </div>
+              <div className="guide-callout"><strong>Cómo interpretar el resultado.</strong><p>El punto de equilibrio es una estimación operativa, no una promesa de ventas. No incluye impuestos, financiación ni costes que no hayas registrado. Si cambian precio o costes variables, vuelve a calcular.</p></div>
+            </div>
           )}
 
           {view === "history" && (
