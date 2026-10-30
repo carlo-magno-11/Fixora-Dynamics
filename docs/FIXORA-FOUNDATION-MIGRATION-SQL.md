@@ -26,7 +26,7 @@ create table public.fixora_profiles (
 create table public.fixora_businesses (
   id uuid primary key default gen_random_uuid(),
   name text not null
-    check (char_length(btrim(name)) between 1 and 120),
+    check (char_length(btrim(name)) between 2 and 100),
   business_type text not null default 'general'
     check (business_type in (
       'general',
@@ -171,13 +171,13 @@ begin
 
   v_name := pg_catalog.btrim(coalesce(p_name, ''));
 
-  if pg_catalog.char_length(v_name) < 1
-     or pg_catalog.char_length(v_name) > 120 then
-    raise exception 'Business name must contain 1 to 120 characters'
+  if pg_catalog.char_length(v_name) < 2
+     or pg_catalog.char_length(v_name) > 100 then
+    raise exception 'Business name must contain 2 to 100 characters'
       using errcode = '22023';
   end if;
 
-  if p_business_type not in (
+  if p_business_type is null or p_business_type not in (
     'general',
     'retail',
     'food',
@@ -189,7 +189,7 @@ begin
       using errcode = '22023';
   end if;
 
-  if p_currency_code not in ('MXN', 'USD') then
+  if p_currency_code is null or p_currency_code not in ('MXN', 'USD') then
     raise exception 'Unsupported currency'
       using errcode = '22023';
   end if;
