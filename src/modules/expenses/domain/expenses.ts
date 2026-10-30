@@ -1,5 +1,7 @@
 import Decimal from "decimal.js";
 
+export type ExpensePeriod = "week" | "month" | "quarter" | "year";
+
 export type FixedExpense = {
   id: string;
   name: string;
@@ -16,6 +18,7 @@ export type ExpenseSummaryInput = {
   fixedExpenses: FixedExpense[];
   variableExpenses: VariableExpense[];
   expectedUnits: number;
+  period: ExpensePeriod;
 };
 
 export type ExpenseSummary = {
@@ -24,6 +27,7 @@ export type ExpenseSummary = {
   fixedCostAllocationPerUnit: number;
   fullyAllocatedCostPerUnit: number;
   expectedUnits: number;
+  period: ExpensePeriod;
 };
 
 function assertValidLine(name: string, amount: number) {
@@ -38,6 +42,9 @@ function assertValidLine(name: string, amount: number) {
 export function summarizeExpenses(input: ExpenseSummaryInput): ExpenseSummary {
   if (!Array.isArray(input.fixedExpenses) || !Array.isArray(input.variableExpenses)) {
     throw new Error("La lista de gastos no es válida.");
+  }
+  if (!["week", "month", "quarter", "year"].includes(input.period)) {
+    throw new Error("Selecciona un periodo válido.");
   }
   if (!Number.isFinite(input.expectedUnits) || input.expectedUnits <= 0) {
     throw new Error("Las unidades estimadas deben ser mayores que cero.");
@@ -70,5 +77,6 @@ export function summarizeExpenses(input: ExpenseSummaryInput): ExpenseSummary {
     fixedCostAllocationPerUnit: allocation.toNumber(),
     fullyAllocatedCostPerUnit: allocation.plus(variableCost).toNumber(),
     expectedUnits: input.expectedUnits,
+    period: input.period,
   };
 }
