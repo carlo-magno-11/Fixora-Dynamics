@@ -15,7 +15,17 @@ export interface BreakEvenResult {
 }
 
 const D = (value: number) => new Decimal(value);
-const money = (value: Decimal) => value.toDecimalPlaces(2, Decimal.ROUND_HALF_UP).toNumber();
+
+function finiteNumber(value: Decimal): number {
+  const result = value.toNumber();
+  if (!Number.isFinite(result)) {
+    throw new RangeError("El resultado excede el rango numérico permitido.");
+  }
+  return result;
+}
+
+const money = (value: Decimal) =>
+  finiteNumber(value.toDecimalPlaces(2, Decimal.ROUND_HALF_UP));
 
 export function calculateBreakEven(input: BreakEvenInput): BreakEvenResult {
   const values = Object.values(input);
@@ -35,12 +45,18 @@ export function calculateBreakEven(input: BreakEvenInput): BreakEvenResult {
   const exactUnits = fixedCosts.div(contribution);
   const wholeUnits = exactUnits.ceil();
   const breakEvenRevenue = wholeUnits.mul(sellingPrice);
+  const exactUnitsRounded = exactUnits.toDecimalPlaces(4, Decimal.ROUND_HALF_UP);
+  const wholeUnitsNumber = finiteNumber(wholeUnits);
+
+  if (!Number.isSafeInteger(wholeUnitsNumber)) {
+    throw new RangeError("El resultado excede el rango numérico permitido.");
+  }
 
   return {
     contributionPerUnit: money(contribution),
-    contributionRate: sellingPrice.eq(0) ? 0 : contribution.div(sellingPrice).toNumber(),
-    exactUnits: exactUnits.toDecimalPlaces(4, Decimal.ROUND_HALF_UP).toNumber(),
-    wholeUnits: wholeUnits.toNumber(),
+    contributionRate: finiteNumber(sellingPrice.eq(0) ? D(0) : contribution.div(sellingPrice)),
+    exactUnits: finiteNumber(exactUnitsRounded),
+    wholeUnits: wholeUnitsNumber,
     breakEvenRevenue: money(breakEvenRevenue),
   };
 }
