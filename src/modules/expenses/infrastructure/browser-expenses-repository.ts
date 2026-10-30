@@ -75,15 +75,18 @@ export function createExpensesRepository(storageSource: KeyValueStorageSource) {
         const period: ExpensePeriod = ["week", "month", "quarter", "year"].includes(value.period as string)
           ? value.period as ExpensePeriod
           : "month";
-        const hasCurrency = value.currency === "MXN" || value.currency === "USD";
-        const currency: ExpenseCurrency = hasCurrency ? value.currency : defaultCurrency;
+        const currency: ExpenseCurrency =
+          value.currency === "MXN" || value.currency === "USD"
+            ? value.currency
+            : defaultCurrency;
+        const needsCurrencyReview = value.currency !== "MXN" && value.currency !== "USD";
         return {
           fixed,
           variable,
           expectedUnits: value.expectedUnits,
           period,
           currency,
-          needsCurrencyReview: !hasCurrency,
+          needsCurrencyReview,
         };
       } catch {
         return empty;
