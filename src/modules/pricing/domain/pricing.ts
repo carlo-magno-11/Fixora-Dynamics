@@ -1,4 +1,6 @@
 import Decimal from "decimal.js";
+export const PRICING_FORMULA_VERSION = "pricing.v1" as const;
+
 export interface PricingInput {materials:number;laborMinutes:number;hourlyRate:number;directExpenses:number;wasteRate:number;fixedExpensesPerUnit:number;variableFeeRate:number;targetMarginRate:number;discountRate:number;}
 export interface PricingResult {materialCost:number;laborCost:number;wasteCost:number;directCost:number;totalUnitCost:number;suggestedPrice:number;profitAtSuggestedPrice:number;effectiveMargin:number;markup:number;}
 const D=(n:number)=>new Decimal(n); const money=(n:Decimal)=>n.toDecimalPlaces(2,Decimal.ROUND_HALF_UP).toNumber();
