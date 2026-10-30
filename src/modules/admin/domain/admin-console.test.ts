@@ -28,6 +28,13 @@ describe("admin console section visibility", () => {
     ]);
   });
 
+  it("shows administrator management only to platform owners", () => {
+    const owner = resolveAdminAccess({ ...principal, roles: ["platform_owner"] });
+    const support = resolveAdminAccess(principal);
+    expect(getAccessibleAdminSections(owner)).toContain("administrators");
+    expect(getAccessibleAdminSections(support)).not.toContain("administrators");
+  });
+
   it("does not expose settings to license managers", () => {
     const access = resolveAdminAccess({ ...principal, roles: ["license_manager"] });
     expect(getAccessibleAdminSections(access)).not.toContain("settings");
