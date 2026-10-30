@@ -44,6 +44,6 @@ Requisitos: Node.js 24 y pnpm 9.15.9. Ejecutar `pnpm install`, `pnpm dev`, `pnpm
 - `docs/MASTER-IMPLEMENTATION-PLAN.md` y `docs/PROGRESS-LOG.md`: plan maestro y registro por commit.
 - `docs/I18N.md`: convenciones para centralizar textos y agregar idiomas.
 - `docs/legal/`: borradores legales sujetos a revisión.
-- `docs/DATABASE-LOCAL-SETUP.md`: preparación segura de Supabase local y flujo de migraciones.
+- `docs/DATABASE-LOCAL-SETUP.md`: preparación segura de Supabase local y flujo de migraciones.\n- `docs/FIXORA-FOUNDATION-SPEC.md`: arquitectura de la primera base propia de Fixora.\n- `docs/FIXORA-FOUNDATION-MIGRATION-SQL.md`: borrador SQL revisado para la primera migración local; aún no aplicado.
 - `docs/OPEN-SOURCE-RESEARCH.md`: repositorios evaluados, estrellas, licencias y decisiones de adopción.
 - `docs/DECISIONS/ADR-003-essentials-and-business-kits.md`: decisión de producto modular.
