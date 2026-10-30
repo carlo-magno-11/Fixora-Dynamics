@@ -58,6 +58,12 @@ describe("summarizeExpenses", () => {
       expectedUnits: 1,
     })).toThrow("Cada gasto debe tener un nombre.");
 
+    expect(() => summarizeExpenses({
+      fixedExpenses: [{ id: "rent", name: 12 as unknown as string, amount: 1 }],
+      variableExpenses: [],
+      expectedUnits: 1,
+    })).toThrow("Cada gasto debe tener un nombre.");
+
     for (const amount of [-1, Number.NaN, Number.POSITIVE_INFINITY]) {
       expect(() => summarizeExpenses({
         fixedExpenses: [{ id: "rent", name: "Renta", amount }],
