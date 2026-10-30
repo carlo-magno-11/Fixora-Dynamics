@@ -105,3 +105,8 @@ La especificación de seguridad y alcance vive en `docs/ADMIN-CONSOLE-ARCHITECTU
 Gastos, catálogo e historial aún se guardan localmente en el navegador; no son multiusuario ni sincronizados. Al introducir repositorios, el adaptador local se conservará temporalmente y luego se añadirá Supabase detrás de la misma interfaz. No migrar silenciosamente datos entre monedas, negocios o periodos.
 
 La identidad remota no se habilitará hasta revisar y sustituir de forma segura el trigger Auth heredado del proyecto reservado. El proyecto oficial de EYESITE permanece fuera de alcance.
+
+
+## Repositorios locales y adaptadores
+
+El contrato compartido `src/shared/infrastructure/key-value-storage.ts` permite inyectar almacenamiento temporal sin acoplar dominio/UI a localStorage. Historial, catálogo y gastos usan repositorios separados con validación de lectura, límites y manejo de storage bloqueado. Estos adaptadores siguen siendo locales; la futura implementación Supabase debe cumplir los mismos contratos de aplicación y tenant, sin confiar en businessId enviado por el navegador.
