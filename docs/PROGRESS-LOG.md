@@ -35,7 +35,7 @@ Cambios en esta entrega (commits secuenciales de la misma rama):
 ### Estado de validación
 
 - Se añadieron pruebas unitarias para el catálogo central y la cobertura de la guía.
-- La ejecución de CI para el HEAD de esta entrega queda pendiente de confirmación.
+- CI PR #234 aprobada en el commit de código `97613962de5404be9c699a79af4fd673d49c9564`: instalación congelada, typecheck, tests y build correctos. El workflow push del HEAD documental `2e36a992d006530c6a42e1a3caae5e8d0116cac0` se encontraba en ejecución al actualizar este registro.
 - No se afirma que el navegador haya sido inspeccionado visualmente.
 - No se afirma que Auth, Mi cuenta cloud, licencias, QR, base de datos ni integraciones marketplace estén implementados.
 - No se ha ejecutado ninguna migración ni consulta de escritura en Supabase.
