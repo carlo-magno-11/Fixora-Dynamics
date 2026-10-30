@@ -11,9 +11,28 @@ Aplicación web adaptable con una arquitectura modular por capas: presentación 
 - Etsy como canal de venta inicial; licencias anuales activadas en backend y hasta tres dispositivos activos.
 - No añadir microservicios, colas ni cachés antes de medir una necesidad.
 
+## Producto modular: Essentials + Kits
+
+- `Fixora Essentials` es la experiencia común y siempre disponible: perfil del negocio, costeo, precios, rentabilidad, gastos básicos, catálogo, historial y ayuda.
+- Los kits de emprendimiento agregan plantillas, campos y flujos al mismo workspace. No crean cuentas, motores financieros, tablas clonadas ni aplicaciones separadas.
+- Claves de módulo previstas: `retail`, `services_beauty`, `food_production`, `workshop`, `digital_products`.
+- `business_type` describe la actividad principal del negocio; `module_key` identifica una capacidad activada. No confundir tipo de negocio con rol de usuario o licencia.
+- Los cálculos comunes usan el mismo motor Decimal.js. Las reglas específicas deben ser funciones puras y versionadas con pruebas; nunca duplicar fórmulas en componentes React.
+- Los módulos no construidos se presentan como próximos, no como habilitados.
+
 ## Dominios
 
-pricing, materials, labor, expenses, scenarios, calculations, licenses y account. Cada módulo puede crecer con domain/application/infrastructure/ui, pero no crear capas vacías por anticipado. Especializaciones de ropa, repostería y artesanía quedan fuera del MVP.
+pricing, materials, labor, expenses, scenarios, calculations, licenses, account, catalog e industry-kits. Cada módulo puede crecer con domain/application/infrastructure/ui, pero no crear capas vacías por anticipado. Mantener el núcleo independiente de los kits verticales.
+
+## Bibliotecas externas candidatas (no todas instaladas)
+
+- React Hook Form + Zod: formularios y validación de esquemas; revisar compatibilidad y bundle antes de adoptar.
+- Recharts: gráficas del dashboard cuando existan series reales.
+- pdfme: reportes y fichas PDF cuando el formato esté definido.
+- InvenTree: referencia de procesos de inventario; no desplegar como backend paralelo.
+- Mantener Decimal.js como motor monetario; no importar cálculos de otros ERPs.
+- No adoptar Frappe Books ni Firefly III como base: arquitectura no alineada y licencias AGPL para el segundo; el repositorio histórico `frappe/books` está archivado y marcado como sustituido.
+- Registrar cada dependencia, versión y licencia en inventario de software antes de instalarla.
 
 ## Multiusuario
 
