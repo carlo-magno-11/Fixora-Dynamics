@@ -14,9 +14,9 @@ Este documento separa entregables de diseño, código, infraestructura y validac
 - [x] Investigación de repositorios GitHub de más de 1,000 estrellas y revisión de candidatos/licencias; decisión registrada en `docs/OPEN-SOURCE-RESEARCH.md`.
 - [x] Definición de producto modular: Fixora Essentials + kits por tipo de emprendimiento (ADR-003).
 - [x] Implementar la pantalla inicial Fixora Essentials y selector persistente de perfil de negocio (preferencia local, aún no sincronizada).
-- [x] CI GitHub para el HEAD `4bb658dd20deac8686cdb687f7b913b958cc97a3`: typecheck, Vitest y build completados correctamente.
+- [x] CI GitHub para el HEAD `4e69a495b62d74e8948c8883e259737336a17aae`: typecheck, 12 pruebas Vitest y build completados correctamente.
+- [x] Identificadores de perfiles de negocio alineados con el modelo de dominio (`services_beauty` y `digital_products`) en el commit `ad2851234e7285d61fe5d1342aa0e7e6991e1622`; CI de este commit pendiente.
 - [ ] Generar y versionar `pnpm-lock.yaml`; después cambiar CI a `pnpm install --frozen-lockfile`.
-- [ ] Generar y versionar `pnpm-lock.yaml`; pasar CI a instalación congelada.
 - [ ] Inicializar Supabase CLI y reconciliar las tres migraciones heredadas remotas.
 - [ ] Generar migraciones solo con `supabase migration new`; no inventar timestamps.
 - [ ] Aislar objetos heredados EYESITE y reemplazar con seguridad el trigger Auth.
