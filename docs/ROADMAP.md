@@ -14,11 +14,11 @@ Este documento separa entregables de diseño, código, infraestructura y validac
 - [x] Investigación de repositorios GitHub de más de 1,000 estrellas y revisión de candidatos/licencias; decisión registrada en `docs/OPEN-SOURCE-RESEARCH.md`.
 - [x] Definición de producto modular: Fixora Essentials + kits por tipo de emprendimiento (ADR-003).
 - [x] Implementar la pantalla inicial Fixora Essentials y selector persistente de perfil de negocio (preferencia local, aún no sincronizada).
-- [x] CI GitHub para el HEAD `4e69a495b62d74e8948c8883e259737336a17aae`: typecheck, 12 pruebas Vitest y build completados correctamente.
-- [x] Identificadores de perfiles de negocio alineados con el modelo de dominio (`services_beauty` y `digital_products`) en el commit `ad2851234e7285d61fe5d1342aa0e7e6991e1622`; CI de este commit pendiente.
+- [x] CI GitHub para el HEAD `90588e53dd10dcdbdcbe294c7f87f666ab2e142d` (run #127): typecheck, 18 pruebas Vitest y build completados correctamente.
 - [x] Registro local de gastos en Essentials: alta/eliminación de gastos fijos y costes variables, unidades esperadas, resumen de asignación por unidad y persistencia en `localStorage`.
 - [x] Dominio de gastos con Decimal.js, validación de importes/nombres/rango numérico y prevención de doble conteo en el punto de equilibrio; seis pruebas unitarias añadidas.
-- [ ] Validar en Windows y CI la pantalla y el dominio de gastos; la sincronización cloud sigue pendiente.
+- [x] CI remoto valida pantalla y dominio de gastos en el HEAD `90588e53dd10dcdbdcbe294c7f87f666ab2e142d` (18/18 pruebas).
+- [ ] Validar manualmente en Windows la experiencia de gastos; la sincronización cloud sigue pendiente.
 - [ ] Generar y versionar `pnpm-lock.yaml`; después cambiar CI a `pnpm install --frozen-lockfile`.
 - [ ] Inicializar Supabase CLI y reconciliar las tres migraciones heredadas remotas.
 - [ ] Generar migraciones solo con `supabase migration new`; no inventar timestamps.
