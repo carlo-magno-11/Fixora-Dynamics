@@ -16,6 +16,7 @@ Este documento separa entregables de diseño, código, infraestructura y validac
 - [x] Implementar la pantalla inicial Fixora Essentials y selector persistente de perfil de negocio (preferencia local, aún no sincronizada).
 - [x] CI GitHub para el HEAD `4e69a495b62d74e8948c8883e259737336a17aae`: typecheck, 12 pruebas Vitest y build completados correctamente.
 - [x] Identificadores de perfiles de negocio alineados con el modelo de dominio (`services_beauty` y `digital_products`) en el commit `ad2851234e7285d61fe5d1342aa0e7e6991e1622`; CI de este commit pendiente.
+- [x] Primera capa de dominio para gastos: separación entre total fijo del periodo, variable por unidad y asignación analítica por unidad; pruebas de límites y prevención de doble conteo (`src/modules/expenses/domain`). No hay todavía pantalla ni persistencia de gastos.
 - [ ] Generar y versionar `pnpm-lock.yaml`; después cambiar CI a `pnpm install --frozen-lockfile`.
 - [ ] Inicializar Supabase CLI y reconciliar las tres migraciones heredadas remotas.
 - [ ] Generar migraciones solo con `supabase migration new`; no inventar timestamps.
