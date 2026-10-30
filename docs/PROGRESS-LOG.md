@@ -174,3 +174,8 @@ No conectar ni habilitar signup. Primero completar backup verificable, inspecci�
 
 
 - `1c25154` / `082d9cf`: corrige la validación de nombre de negocio (2–100 caracteres), rechaza valores NULL para tipo/moneda y alinea el borrador SQL con la especificación.
+
+
+- `9d85649` / `414b322`: añade permiso independiente `admins.manage`, reservado a `platform_owner`, con prueba negativa para soporte.
+- `3f4e820` / `44f1046`: añade sección de gestión de administradores filtrada por ese permiso.
+- `6286350`: documenta la exigencia de MFA reciente, motivo y auditoría reforzada para cambios de administradores.
