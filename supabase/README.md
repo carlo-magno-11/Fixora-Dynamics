@@ -35,6 +35,10 @@ No borrar ni reutilizar silenciosamente las tablas, políticas, funciones o buck
 
 Preferir Supabase CLI + Docker local para crear y probar migraciones. No crear proyectos, ramas Supabase ni recursos cloud adicionales. Las ramas de base de datos de Supabase pueden generar coste.
 
+## Estado de sincronización CLI
+
+La base remota ya tiene tres migraciones registradas (dos baselines y una migración adicional de EYESITE). El repositorio todavía no contiene `supabase/config.toml`; por tanto, no enlazar ni ejecutar `db push` hasta inicializar CLI, recuperar/reconciliar el historial remoto y verificar que el baseline local representa fielmente el esquema actual. No asumir que la migración remota y el historial Git están sincronizados.
+
 ## Política de cambios
 
 - La migración versionada en Git es la única fuente de verdad del esquema.
@@ -49,9 +53,9 @@ Preferir Supabase CLI + Docker local para crear y probar migraciones. No crear p
 ## Secuencia de adopción
 
 1. Inicializar Supabase CLI en este repositorio y comprobar la versión instalada.
-2. Capturar y revisar el esquema heredado mediante `supabase db pull` solo después de enlazar y verificar el project ref; mantener la migración de baseline separada y sin cambios destructivos.
+2. Recuperar y revisar el historial/esquema heredado mediante los comandos CLI apropiados para la versión instalada; no generar una migración de baseline a ciegas.
 3. Preparar una migración de transición que desactive el trigger de alta heredado y establezca el trigger/perfil de Fixora. Revisarla localmente antes de cualquier aplicación remota.
-4. Definir la exposición del esquema API de Fixora y las concesiones mínimas necesarias.
+4. Mantener los objetos heredados en un esquema privado `legacy_eyesite` y no exponerlo por PostgREST.
 5. Crear primero perfiles, negocios y membresías multiusuario con constraints, índices y RLS.
 6. Probar dos usuarios y dos negocios con pruebas positivas y negativas.
 7. Añadir catálogo, costes, cálculos, licencias y dispositivos en migraciones independientes.
