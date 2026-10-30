@@ -112,3 +112,8 @@ Cambios en esta entrega (commits secuenciales de la misma rama):
 ### Puerta de seguridad antes de Auth
 
 No conectar ni habilitar signup. Primero completar backup verificable, inspección de dependencias, estrategia reversible de aislamiento heredado, migración nueva creada con CLI, pruebas locales de RLS/grants y revisión explícita antes de cualquier despliegue remoto.
+
+
+- Documentación adicional: se verificaron ownership/RLS, claves foráneas y ausencia de vistas dependientes. Se identificaron las políticas de Storage que dependen de `public.is_admin()`; deben resolverse antes de mover o retirar esa función.
+- Commit de documentación de auditoría: `9b379f716ab8bf59c5b0980292d4d60997110a5d`.
+- La validación CI de este último commit documental todavía no se ha confirmado.
