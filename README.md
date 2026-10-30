@@ -1,6 +1,6 @@
 # Fixora Dynamics
 
-Aplicación web adaptable para que profesionales independientes y pequeños negocios calculen costes, definan precios y comprendan su rentabilidad. El MVP es una calculadora general; las especializaciones por sector quedan fuera del primer lanzamiento.
+Aplicación web adaptable para que profesionales independientes y pequeños negocios calculen costes, definan precios, organicen gastos y comprendan su rentabilidad. Fixora Essentials es el núcleo general; los kits especializados se desarrollan como módulos del mismo producto.
 
 ## Experiencia inicial
 
@@ -10,8 +10,10 @@ Aplicación web adaptable para que profesionales independientes y pequeños nego
 - Calculadora de costes, mano de obra, merma, gastos fijos por unidad, comisión, descuento y margen.
 - Precio sugerido, ganancia estimada, margen efectivo, recargo y desglose de costes.
 - Selector de moneda MXN/USD.
+- Registro de gastos fijos del periodo y costes variables por unidad, con asignación analítica sin doble conteo.
+- Catálogo local compartido de productos y servicios con unidades explícitas, SKU opcional y coste de referencia.
 - Historial y guía de uso.
-- El historial actual se conserva solo en el almacenamiento local del navegador. No representa todavía una cuenta, sincronización cloud ni licencia activa.
+- El perfil, gastos, catálogo e historial actuales se conservan solo en el almacenamiento local del navegador. No representan todavía una cuenta, sincronización cloud ni licencia activa.
 
 ## Principios técnicos
 
@@ -26,7 +28,7 @@ Aplicación web adaptable para que profesionales independientes y pequeños nego
 
 ## Desarrollo
 
-Requisitos: Node.js LTS y pnpm. Ejecutar `pnpm install`, `pnpm dev`, `pnpm test` y `pnpm typecheck`. Copiar `.env.example` a `.env.local`. Nunca exponer claves secret/service-role.
+Requisitos: Node.js 24 y pnpm 9.15.9. Ejecutar `pnpm install`, `pnpm dev`, `pnpm test` y `pnpm typecheck`. Copiar `.env.example` a `.env.local`. Nunca exponer claves secret/service-role.
 
 ## Documentación
 
