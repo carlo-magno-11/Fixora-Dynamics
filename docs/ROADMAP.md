@@ -2,7 +2,24 @@
 
 Este documento separa entregables de diseño, código, infraestructura y validación. Un componente no se considera terminado por existir su interfaz.
 
-## Estado actual (29 de octubre de 2026)
+## Estado actual (30 de octubre de 2026)
+
+### Entrega 1 — experiencia general (en desarrollo)
+
+- [x] Página de presentación de Fixora Dynamics y Fixora Essentials.
+- [x] Navegación a Mi cuenta y Nuestra familia.
+- [x] Panel Mi cuenta con estados explícitos de funciones todavía no conectadas; no simula autenticación.
+- [x] Guía ampliada con pasos, ejemplos, limitaciones, preguntas frecuentes y glosario para los módulos existentes.
+- [x] Catálogo central inicial de textos para marca, cuenta y guía (`src/i18n/messages.ts`).
+- [x] Estilos responsive para las nuevas páginas.
+- [x] Protección del guardado de snapshots ante errores y prevención de asociación de monedas distintas entre catálogo y cálculo.
+- [x] Pruebas de cobertura básica del catálogo i18n y contenido de guía.
+- [ ] Ejecutar CI del HEAD actual y corregir fallos.
+- [ ] Extraer los textos restantes de la UI y completar el sistema de traducción antes de habilitar selector de idioma.
+- [ ] Completar edición/archivo del catálogo y revisión de flujos de gastos e historial.
+- [ ] Implementar onboarding, registro, login y recuperación conectados a Supabase Auth (no crear autenticación ficticia en frontend).
+
+Registro detallado: `docs/PROGRESS-LOG.md`. Convenciones de idioma: `docs/I18N.md`.
 
 - [x] Repositorio y rama de trabajo aislada; PR #1 abierto como borrador contra `main`.
 - [x] Base React + TypeScript + Vite y motor financiero Decimal.js.
