@@ -267,7 +267,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
 /* Essentials expense register */
 .expenses-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 25px; }
 .expense-entry { display: grid; grid-template-columns: minmax(0, 1fr) minmax(110px, .7fr) 28px; align-items: end; gap: 10px; margin: 14px 0; padding-bottom: 13px; border-bottom: 1px solid var(--line); }
-.expense-entry .field input, .expected-units-field input { width: 100%; min-height: 39px; padding: 0 10px; border: 1px solid var(--line); border-radius: 5px; background: #fffefa; color: var(--ink); font: inherit; font-size: 12px; }
+.expense-entry .field input, .expected-units-field input, .expected-units-field select { width: 100%; min-height: 39px; padding: 0 10px; border: 1px solid var(--line); border-radius: 5px; background: #fffefa; color: var(--ink); font: inherit; font-size: 12px; }
 .expense-entry .field > span, .expected-units-field > span { display: block; margin-bottom: 6px; color: #78827b; font-size: 9px; font-weight: 700; }
 .expense-entry .delete-button { width: 28px; height: 36px; }
 .expense-allocation { margin-top: 16px; }
