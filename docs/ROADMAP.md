@@ -103,3 +103,15 @@ ERP completo, contabilidad fiscal, declaraciones, nómina, sincronización banca
 - [x] Documentación de arquitectura modular y dirección de dependencias.
 - [ ] Extraer gradualmente navegación/estado del shell App.tsx; no reescribir de golpe.
 - [ ] Confirmar CI para los commits actuales.
+
+
+## Licencias y administración — primera lógica de dominio
+
+- [x] Regla pura de vigencia anual desde primera activación, con aniversario UTC y ajuste de 29 de febrero.
+- [x] Estados pendientes, activos, vencidos, suspendidos y revocados; vencimiento conserva cuenta, historial y exportación, no herramientas premium/kits.
+- [x] Límite de tres dispositivos modelado y probado como regla de dominio.
+- [x] Canje requiere código disponible y compra verificada.
+- [x] Panel administrativo: shell UI que solo recibe un snapshot tipado desde servidor; sin datos de ejemplo.
+- [ ] Conectar snapshot, navegación y acciones a repositorios/RPC/Edge Functions.
+- [ ] Hacer que el límite de tres dispositivos y el canje de códigos sean transaccionales en PostgreSQL; la política cliente no impone límites de seguridad.
+- [ ] Crear tablas de licencias, entitlements, códigos hash, dispositivos y auditoría con RLS/grants y pruebas de concurrencia.
