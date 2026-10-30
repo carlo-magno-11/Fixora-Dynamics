@@ -115,3 +115,8 @@ ERP completo, contabilidad fiscal, declaraciones, nómina, sincronización banca
 - [ ] Conectar snapshot, navegación y acciones a repositorios/RPC/Edge Functions.
 - [ ] Hacer que el límite de tres dispositivos y el canje de códigos sean transaccionales en PostgreSQL; la política cliente no impone límites de seguridad.
 - [ ] Crear tablas de licencias, entitlements, códigos hash, dispositivos y auditoría con RLS/grants y pruebas de concurrencia.
+ 
+
+- [x] Política de dominio de compra: SKU esperado, referencia, pago aprobado, método/fecha de verificación y rechazo de reembolso, disputa o contracargo.
+- [ ] Verificación real de Etsy/Gumroad/Hotmart o revisión manual desde servidor; la función TypeScript no valida credenciales ni webhooks.
+- [ ] Idempotencia por proveedor/evento/pedido y restricción única de emisión de licencia.
