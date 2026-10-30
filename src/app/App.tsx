@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { calculatePrice } from "../modules/pricing/domain/pricing";
+import { ExpensesPage } from "../modules/expenses/ui/ExpensesPage";
 import { calculateBreakEven } from "../modules/break-even/domain/break-even";
 import type { BreakEvenInput } from "../modules/break-even/domain/break-even";
 import type { PricingInput, PricingResult } from "../modules/pricing/domain/pricing";
 
-type View = "essentials" | "calculator" | "breakEven" | "kits" | "history" | "guide";
+type View = "essentials" | "calculator" | "breakEven" | "expenses" | "kits" | "history" | "guide";
 type BusinessType = "general" | "retail" | "food" | "services_beauty" | "digital_products" | "workshop";
 type CurrencyCode = "MXN" | "USD";
 type SavedCalculation = {
@@ -228,6 +229,9 @@ export function App() {
           <button className={view === "breakEven" ? "nav-item active" : "nav-item"} onClick={() => setView("breakEven")}>
             <span className="nav-icon">◒</span> Punto de equilibrio
           </button>
+          <button className={view === "expenses" ? "nav-item active" : "nav-item"} onClick={() => setView("expenses")}>
+            <span className="nav-icon">＋</span> Control de gastos
+          </button>
           <button className={view === "kits" ? "nav-item active" : "nav-item"} onClick={() => setView("kits")}>
             <span className="nav-icon">◇</span> Kits por negocio
           </button>
@@ -269,6 +273,7 @@ export function App() {
                 <article className="essential-tile"><span className="tile-index">02 / PRECIOS</span><div className="tile-symbol">◇</div><h3>Definir un precio sostenible</h3><p>Considera comisiones, descuentos y margen objetivo antes de publicar o cotizar.</p><button onClick={() => setView("calculator")}>Definir precio <span>→</span></button></article>
                 <article className="essential-tile"><span className="tile-index">03 / CONTROL</span><div className="tile-symbol">◷</div><h3>Conservar tus análisis</h3><p>Guarda cálculos, vuelve a abrirlos y compara tus decisiones de precio.</p><button onClick={() => setView("history")}>Ver mis cálculos <span>→</span></button></article>
                 <article className="essential-tile"><span className="tile-index">04 / EQUILIBRIO</span><div className="tile-symbol">◒</div><h3>Conocer tu punto de equilibrio</h3><p>Calcula cuántas unidades necesitas vender para cubrir los costes fijos del periodo.</p><button onClick={() => setView("breakEven")}>Calcular equilibrio <span>→</span></button></article>
+                <article className="essential-tile"><span className="tile-index">05 / GASTOS</span><div className="tile-symbol">＋</div><h3>Organizar tus gastos</h3><p>Separa los gastos fijos del periodo de los costes variables por unidad.</p><button onClick={() => setView("expenses")}>Controlar gastos <span>→</span></button></article>
               </div>
               <section className="business-profile-panel"><div><p className="eyebrow">CONFIGURA TU EXPERIENCIA</p><h2>¿A qué te dedicas?</h2><p>Tu elección orientará las plantillas y herramientas especializadas que añadiremos. No cambia ni sustituye el motor de cálculo general.</p></div><div className="business-profile-actions"><strong>{businessTypes.find((item) => item.id === businessType)?.title}</strong><button className="outline-button" onClick={() => setView("kits")}>Ver opciones de emprendimiento</button></div></section>
               {profileMessage && <p className="profile-message" role="status">{profileMessage}</p>}
@@ -427,6 +432,8 @@ export function App() {
               <div className="guide-callout"><strong>Cómo interpretar el resultado.</strong><p>El punto de equilibrio es una estimación operativa, no una promesa de ventas. No incluye impuestos, financiación ni costes que no hayas registrado. Si cambian precio o costes variables, vuelve a calcular.</p></div>
             </div>
           )}
+
+          {view === "expenses" && <ExpensesPage currency={currency} formatMoney={formatMoney} />}
 
           {view === "history" && (
             <div className="secondary-page">
