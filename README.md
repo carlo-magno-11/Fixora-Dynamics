@@ -37,3 +37,4 @@ Requisitos: Node.js LTS y pnpm. Ejecutar `pnpm install`, `pnpm dev`, `pnpm test`
 - `docs/SECURITY.md` y `docs/LICENSES.md`: seguridad y licenciamiento.
 - `docs/ROADMAP.md`: estado y puertas de lanzamiento.
 - `docs/OPEN-SOURCE-RESEARCH.md`: repositorios evaluados, estrellas, licencias y decisiones de adopción.
+- `docs/DECISIONS/ADR-003-essentials-and-business-kits.md`: decisión de producto modular.
