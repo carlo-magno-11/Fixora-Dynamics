@@ -48,7 +48,11 @@ describe("calculationsToCsv", () => {
     "neutralizes spreadsheet formula injection for %s",
     (name) => {
       const csv = calculationsToCsv([{ ...record, name }]);
-      expect(csv).toContain("'"+name);
+      if (name.startsWith("=")) {
+        expect(csv).toContain("\"'=HYPERLINK(\"\"https://example.invalid\"\")\"");
+      } else {
+        expect(csv).toContain("'"+name);
+      }
     },
   );
 
