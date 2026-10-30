@@ -262,3 +262,27 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
 @media (max-width: 720px) {
   .essentials-grid { grid-template-columns: 1fr 1fr; }
 }
+
+
+/* Essentials expense register */
+.expenses-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 25px; }
+.expense-entry { display: grid; grid-template-columns: minmax(0, 1fr) minmax(110px, .7fr) 28px; align-items: end; gap: 10px; margin: 14px 0; padding-bottom: 13px; border-bottom: 1px solid var(--line); }
+.expense-entry .field input, .expected-units-field input { width: 100%; min-height: 39px; padding: 0 10px; border: 1px solid var(--line); border-radius: 5px; background: #fffefa; color: var(--ink); font: inherit; font-size: 12px; }
+.expense-entry .field > span, .expected-units-field > span { display: block; margin-bottom: 6px; color: #78827b; font-size: 9px; font-weight: 700; }
+.expense-entry .delete-button { width: 28px; height: 36px; }
+.expense-allocation { margin-top: 16px; }
+.expected-units-field { display: block; max-width: 280px; margin: 18px 0; }
+.expense-summary { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 17px 0; }
+.expense-summary > div { display: flex; flex-direction: column; gap: 6px; padding: 13px; border: 1px solid var(--line); border-radius: 6px; background: #fbfaf6; }
+.expense-summary span { color: #7e8880; font-size: 9px; }
+.expense-summary strong { color: var(--ink); font-size: 16px; font-variant-numeric: tabular-nums; }
+.expense-summary .expense-summary-total { border-color: #cbbb98; background: #f3efe4; }
+.expense-summary-total strong { color: var(--petrol); }
+@media (max-width: 850px) {
+  .expenses-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 560px) {
+  .expense-entry { grid-template-columns: minmax(0, 1fr) 28px; }
+  .expense-entry .field:first-child { grid-column: 1 / -1; }
+  .expense-summary { grid-template-columns: 1fr; }
+}
