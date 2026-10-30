@@ -20,7 +20,8 @@ export type AdminPermission =
   | "support.read"
   | "support.respond"
   | "settings.read"
-  | "settings.write";
+  | "settings.write"
+  | "admins.manage";
 
 export interface AdminPrincipal {
   userId: string;
@@ -39,7 +40,7 @@ const ROLE_PERMISSIONS: Record<PlatformAdminRole, readonly AdminPermission[]> = 
     "devices.read", "devices.revoke",
     "audit.read",
     "support.read", "support.respond",
-    "settings.read", "settings.write",
+    "settings.read", "settings.write", "admins.manage",
   ],
   license_manager: [
     "dashboard.read", "purchases.read", "purchases.verify",
