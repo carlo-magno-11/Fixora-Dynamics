@@ -1,13 +1,9 @@
 import { PRICING_FORMULA_VERSION } from "../../pricing/domain/pricing";
 import { isSavedCalculation, type SavedCalculation } from "../domain/saved-calculation";
+import { resolveKeyValueStorage, type KeyValueStorageSource } from "../../../shared/infrastructure/key-value-storage";
 
 export const CALCULATION_HISTORY_STORAGE_KEY = "fixora.calculations.v1";
 const MAX_HISTORY_RECORDS = 100;
-
-export interface KeyValueStorage {
-  getItem(key: string): string | null;
-  setItem(key: string, value: string): void;
-}
 
 export interface CalculationHistoryRepository {
   load(): SavedCalculation[];
@@ -15,15 +11,12 @@ export interface CalculationHistoryRepository {
 }
 
 export function createCalculationHistoryRepository(
-  storageSource: KeyValueStorage | (() => KeyValueStorage),
+  storageSource: KeyValueStorageSource,
 ): CalculationHistoryRepository {
-  const resolveStorage = () =>
-    typeof storageSource === "function" ? storageSource() : storageSource;
-
   return {
     load() {
       try {
-        const raw = resolveStorage().getItem(CALCULATION_HISTORY_STORAGE_KEY);
+        const raw = resolveKeyValueStorage(storageSource).getItem(CALCULATION_HISTORY_STORAGE_KEY);
         if (!raw) return [];
         const parsed: unknown = JSON.parse(raw);
         return Array.isArray(parsed)
@@ -38,7 +31,7 @@ export function createCalculationHistoryRepository(
       }
     },
     save(records) {
-      resolveStorage().setItem(
+      resolveKeyValueStorage(storageSource).setItem(
         CALCULATION_HISTORY_STORAGE_KEY,
         JSON.stringify(records.slice(0, MAX_HISTORY_RECORDS)),
       );
