@@ -153,3 +153,17 @@ No conectar ni habilitar signup. Primero completar backup verificable, inspecci�
 - `ad55b64`: corrige la marca BOM UTF-8 de la descarga CSV para que sea un carácter real y no texto escapado.
 - Importante: política frontend no sustituye autorización server-side. El panel no está conectado; faltan roles internos, RLS, RPC/Edge Functions, MFA real y auditoría.
 - CI de estos commits pendiente de confirmación.
+
+
+## 2026-10-30 — Entrega: política de licencias y consola administrativa
+
+- `623e3bf`: política de dominio para licencia anual, vencimiento, capacidades retenidas, límite de tres dispositivos y canje de código.
+- `c2f756f` / `ae3df7d`: valida estados pendientes, límites de fechas, año bisiesto y vencimiento exacto.
+- `d87891f`: contratos de datos y navegación de secciones administrativas según permiso.
+- `6b6bb68`: pruebas para visibilidad de secciones por rol.
+- `6647bce`: shell de consola administrativa con métricas solo desde snapshot servidor; sin datos simulados.
+- `0918120`: estilos responsive de consola.
+- `eb31165` / `e00291a`: actualiza roadmap y plan maestro.
+- No se integró la consola al menú de usuario: aún no existe Auth ni autorización server-side conectada. La UI exige un objeto de acceso y un snapshot verificados por el futuro backend.
+- La regla de tres dispositivos en TypeScript es informativa; falta enforcement transaccional y prueba de concurrencia en PostgreSQL.
+- CI del HEAD final pendiente de confirmación.
