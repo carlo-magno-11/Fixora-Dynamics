@@ -53,6 +53,6 @@ describe("calculationsToCsv", () => {
   );
 
   it("returns only the header when there are no records", () => {
-    expect(calculationsToCsv([])).toBe("Fecha (UTC),Nombre,Moneda,Materiales,Mano de obra,Merma,Costes directos,Gastos fijos por unidad,Coste total unitario,Comisión,Descuento,Margen objetivo,Precio sugerido,Ganancia estimada,Margen efectivo,Recargo,Versión de fórmula");
+    expect(calculationsToCsv([])).toBe("Fecha (UTC),Nombre,Moneda,Materiales (entrada),Tiempo de trabajo (min),Coste por hora,Otros costes directos,Tasa de merma,Materiales calculados,Mano de obra calculada,Merma calculada,Costes directos calculados,Gastos fijos por unidad,Coste total unitario,Comisión,Descuento,Margen objetivo,Precio sugerido,Ganancia estimada,Margen efectivo,Recargo,Versión de fórmula");
   });
 });
