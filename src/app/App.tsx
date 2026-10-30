@@ -8,7 +8,7 @@ import type { CatalogItemSnapshot } from "../modules/snapshots/domain/calculatio
 import { PRICING_FORMULA_VERSION } from "../modules/pricing/domain/pricing";
 import { calculateBreakEven } from "../modules/break-even/domain/break-even";
 import type { BreakEvenInput } from "../modules/break-even/domain/break-even";
-import type { PricingInput, PricingResult } from "../modules/pricing/domain/pricing";
+import type { PricingInput } from "../modules/pricing/domain/pricing";
 import { AboutPage, AccountPage, GuidePage } from "./BrandPages";
 import { LegalPage } from "./LegalPages";
 import { calculationsToCsv } from "../modules/snapshots/domain/calculation-export";
