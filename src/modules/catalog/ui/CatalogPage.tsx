@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
-import { createCatalogItem } from "../domain/catalog";
+import { createCatalogItem, updateCatalogItem } from "../domain/catalog";
 import type { CatalogCurrency, CatalogDraft, CatalogItem, CatalogItemKind } from "../domain/catalog";
 
 const STORAGE_KEY = "fixora.catalog.v1";
@@ -40,27 +40,57 @@ export function CatalogPage({ currency, formatMoney, onUseInCalculator }: {
   const [unit, setUnit] = useState("pieza");
   const [sku, setSku] = useState("");
   const [referenceCost, setReferenceCost] = useState(0);
+  const [draftCurrency, setDraftCurrency] = useState(currency);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [message, setMessage] = useState("");
 
   useEffect(() => {
     try {
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-      setMessage("Catálogo guardado en este navegador.");
     } catch {
       setMessage("No fue posible guardar el catálogo en este navegador.");
     }
   }, [items]);
 
-  function addItem(event: FormEvent<HTMLFormElement>) {
+  useEffect(() => {
+    if (!editingId) setDraftCurrency(currency);
+  }, [currency, editingId]);
+
+  function resetForm() {
+    setEditingId(null);
+    setName("");
+    setKind("product");
+    setUnit("pieza");
+    setSku("");
+    setReferenceCost(0);
+    setDraftCurrency(currency);
+  }
+
+  function startEditing(item: CatalogItem) {
+    setEditingId(item.id);
+    setName(item.name);
+    setKind(item.kind);
+    setUnit(item.unit);
+    setSku(item.sku);
+    setReferenceCost(item.referenceCost);
+    setDraftCurrency(item.currency);
+    setMessage("Editando elemento. Guarda los cambios o cancela para salir.");
+  }
+
+  function saveItem(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const draft: CatalogDraft = { name, kind, unit, sku, currency, referenceCost };
+    const draft: CatalogDraft = { name, kind, unit, sku, currency: draftCurrency, referenceCost };
     try {
-      const item = createCatalogItem(draft, items);
-      setItems((current) => [item, ...current].slice(0, 500));
-      setName("");
-      setSku("");
-      setReferenceCost(0);
-      setMessage("Elemento añadido al catálogo.");
+      if (editingId) {
+        const updated = updateCatalogItem(editingId, draft, items);
+        setItems((current) => current.map((item) => item.id === editingId ? updated : item));
+        setMessage("Cambios guardados en el catálogo.");
+      } else {
+        const item = createCatalogItem(draft, items);
+        setItems((current) => [item, ...current].slice(0, 500));
+        setMessage("Elemento añadido al catálogo.");
+      }
+      resetForm();
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "No se pudo añadir el elemento.");
     }
@@ -72,14 +102,15 @@ export function CatalogPage({ currency, formatMoney, onUseInCalculator }: {
       <h1>Tu catálogo de productos y servicios.</h1>
       <p className="page-lead">Mantén una lista sencilla de lo que vendes o prestas. El coste de referencia es informativo; cada cálculo guardado conservará sus propios valores.</p>
       <section className="surface-card catalog-form-card">
-        <div className="section-heading"><div className="section-number">01</div><div><h2>Añadir al catálogo</h2><p>Usa unidades claras y una sola moneda por registro.</p></div></div>
-        <form className="catalog-form" onSubmit={addItem}>
+        <div className="section-heading"><div className="section-number">01</div><div><h2>{editingId ? "Editar elemento" : "Añadir al catálogo"}</h2><p>Usa unidades claras y conserva la moneda correcta de cada registro.</p></div></div>
+        <form className="catalog-form" onSubmit={saveItem}>
           <label className="field"><span>Nombre</span><input value={name} maxLength={100} required placeholder="Ej. Jabón artesanal" onChange={(event) => setName(event.target.value)} /></label>
           <label className="field"><span>Tipo</span><select value={kind} onChange={(event) => setKind(event.target.value as CatalogItemKind)}><option value="product">Producto</option><option value="service">Servicio</option></select></label>
           <label className="field"><span>Unidad</span><input value={unit} maxLength={40} required placeholder="pieza, sesión, paquete..." onChange={(event) => setUnit(event.target.value)} /></label>
           <label className="field"><span>SKU / código (opcional)</span><input value={sku} maxLength={40} placeholder="Código interno" onChange={(event) => setSku(event.target.value)} /></label>
-          <label className="field"><span>Coste de referencia ({currency})</span><input type="number" min="0" step="0.01" value={referenceCost} onChange={(event) => setReferenceCost(Math.max(0, Number(event.target.value) || 0))} /></label>
-          <button className="primary-button compact" type="submit">Añadir al catálogo <span>↗</span></button>
+          <label className="field"><span>Moneda</span><select value={draftCurrency} onChange={(event) => setDraftCurrency(event.target.value as CatalogCurrency)}><option value="MXN">MXN</option><option value="USD">USD</option></select></label>
+          <label className="field"><span>Coste de referencia ({draftCurrency})</span><input type="number" min="0" step="0.01" value={referenceCost} onChange={(event) => setReferenceCost(Math.max(0, Number(event.target.value) || 0))} /></label>
+          <div className="catalog-form-actions"><button className="primary-button compact" type="submit">{editingId ? "Guardar cambios" : "Añadir al catálogo"} <span>↗</span></button>{editingId && <button className="outline-button" type="button" onClick={resetForm}>Cancelar</button>}</div>
         </form>
         <p className="save-message" role="status">{message}</p>
       </section>
@@ -90,12 +121,12 @@ export function CatalogPage({ currency, formatMoney, onUseInCalculator }: {
         ) : (
           <div className="catalog-list">
             {items.map((item) => (
-              <article className="catalog-row" key={item.id}>
-                <div className="catalog-kind">{item.kind === "product" ? "PRODUCTO" : "SERVICIO"}</div>
+              <article className={item.active ? "catalog-row" : "catalog-row catalog-row-archived"} key={item.id}>
+                <div className="catalog-kind">{item.kind === "product" ? "PRODUCTO" : "SERVICIO"}{!item.active && <span className="catalog-archived-label"> · ARCHIVADO</span>}</div>
                 <div className="catalog-main"><strong>{item.name}</strong><span>{item.sku ? `SKU ${item.sku} · ` : ""}Por {item.unit}</span></div>
                 <div className="catalog-cost"><span>COSTE REFERENCIA</span><strong>{formatMoney(item.referenceCost, item.currency)}</strong></div>
-                <button className="outline-button catalog-use-button" onClick={() => onUseInCalculator(item)}>Costear</button>
-                <button className="delete-button" aria-label={`Eliminar ${item.name}`} onClick={() => setItems((current) => current.filter((entry) => entry.id !== item.id))}>×</button>
+                <button className="outline-button catalog-use-button" onClick={() => onUseInCalculator(item)} disabled={!item.active}>Costear</button>
+                <div className="catalog-row-actions"><button className="outline-button" onClick={() => startEditing(item)}>Editar</button><button className="text-button" onClick={() => setItems((current) => current.map((entry) => entry.id === item.id ? { ...entry, active: !entry.active } : entry))}>{item.active ? "Archivar" : "Reactivar"}</button></div>
               </article>
             ))}
           </div>
