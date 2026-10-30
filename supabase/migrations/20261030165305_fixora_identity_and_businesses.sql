@@ -1,5 +1,3 @@
-begin;
-
 create schema if not exists private;
 revoke all on schema private from public;
 revoke all on schema private from anon;
@@ -295,5 +293,3 @@ grant update (name, business_type, currency_code, timezone)
   on table public.fixora_businesses to authenticated;
 
 grant select on table public.fixora_business_memberships to authenticated;
-
-commit;
