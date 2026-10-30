@@ -54,3 +54,54 @@ El proyecto seleccionado aún contiene objetos heredados vacíos de EYESITE. En 
 - Cambios de esquema solo mediante migraciones versionadas en `supabase/migrations`.
 - Probar localmente con Supabase CLI + Docker; no crear proyectos ni ramas cloud para desarrollo.
 - Separar local, staging y producción en documentación y configuración. No declarar producción hasta verificar migraciones, RLS y Auth.
+
+
+## Arquitectura de código y dependencias
+
+La implementación seguirá un monolito modular, no microservicios prematuros:
+
+- Presentación: `src/app` y `src/modules/*/ui`; solo interacción y visualización.
+- Aplicación: `src/modules/*/application`; casos de uso y orquestación mediante interfaces.
+- Dominio: `src/modules/*/domain`; reglas puras, invariantes, validación y modelos. No importa React, navegador, red ni Supabase.
+- Infraestructura: `src/modules/*/infrastructure` y `src/infrastructure`; repositorios, Supabase, almacenamiento local temporal y proveedores.
+- Composición: `src/app`; conecta casos de uso, proveedores y pantallas.
+
+Dirección permitida: UI → application → domain. Infrastructure implementa interfaces y se conecta desde la composición. Un módulo no importa internals privados de otro módulo; las integraciones usan exports públicos.
+
+Estructura objetivo por crecimiento real:
+
+    src/
+      app/
+        navigation/
+        providers/
+      modules/
+        identity/{domain,application,infrastructure,ui}
+        businesses/{domain,application,infrastructure,ui}
+        pricing/{domain,application,ui}
+        expenses/{domain,application,infrastructure,ui}
+        catalog/{domain,application,infrastructure,ui}
+        snapshots/{domain,application,infrastructure,ui}
+        reporting/{domain,application,ui}
+        licensing/{domain,application,infrastructure,ui}
+        admin/{domain,application,infrastructure,ui}
+        support/{domain,application,ui}
+      shared/{domain,ui,validation}
+      infrastructure/{supabase,persistence,observability}
+
+No crear carpetas vacías para aparentar avance. Extraer módulos por etapas y con pruebas de regresión. El shell actual `src/app/App.tsx` todavía concentra navegación, estado y persistencia local; es deuda técnica conocida que se reducirá sin una reescritura masiva.
+
+## Panel administrativo
+
+La especificación de seguridad y alcance vive en `docs/ADMIN-CONSOLE-ARCHITECTURE.md`. El módulo `src/modules/admin/domain/admin-access.ts` implementa la matriz pura de permisos para UX y tests. No es el mecanismo de autorización de producción.
+
+- Los roles de negocio nunca equivalen a roles de plataforma.
+- Cada operación exige sesión verificada, cuenta administrativa activa, AAL2 y permiso específico.
+- La autoridad real vive en PostgreSQL/RLS y operaciones server-side.
+- Compras, licencias, códigos, dispositivos, soporte y auditoría tienen módulos y límites de acceso separados.
+- No se simulan métricas ni acciones administrativas sin repositorios/backend conectado.
+
+## Persistencia temporal y transición
+
+Gastos, catálogo e historial aún se guardan localmente en el navegador; no son multiusuario ni sincronizados. Al introducir repositorios, el adaptador local se conservará temporalmente y luego se añadirá Supabase detrás de la misma interfaz. No migrar silenciosamente datos entre monedas, negocios o periodos.
+
+La identidad remota no se habilitará hasta revisar y sustituir de forma segura el trigger Auth heredado del proyecto reservado. El proyecto oficial de EYESITE permanece fuera de alcance.
