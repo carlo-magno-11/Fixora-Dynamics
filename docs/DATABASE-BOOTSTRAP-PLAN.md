@@ -1,6 +1,6 @@
 # Database bootstrap — Fixora-only strategy
 
-<badge>Current strategy</badge>
+**Estado: estrategia vigente de Fixora.**
 
 This document is retained as a navigation point. Its former proposal to recover EYESITE migration history, move EYESITE tables into a `legacy_eyesite` schema, or replace the remote trigger in the first local migration is superseded and must not be followed.
 
