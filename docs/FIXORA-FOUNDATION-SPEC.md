@@ -57,7 +57,7 @@ No client-editable role, license status, entitlement, or admin flag belongs in t
 #### `public.fixora_businesses`
 
 - `id uuid primary key default gen_random_uuid()`
-- `name text not null` with trimmed non-empty validation
+- `name text not null` with trimmed length validation (2–100 characters)
 - `business_type text not null default 'general'`, constrained to the six supported profile keys
 - `currency_code text not null default 'MXN'`, constrained to supported currencies at launch
 - `timezone text not null default 'America/Merida'`
