@@ -14,9 +14,9 @@ Este documento separa entregables de diseño, código, infraestructura y validac
 - [x] Investigación de repositorios GitHub de más de 1,000 estrellas y revisión de candidatos/licencias; decisión registrada en `docs/OPEN-SOURCE-RESEARCH.md`.
 - [x] Definición de producto modular: Fixora Essentials + kits por tipo de emprendimiento (ADR-003).
 - [x] Implementar la pantalla inicial Fixora Essentials y selector persistente de perfil de negocio (preferencia local, aún no sincronizada).
-- [x] CI GitHub para el HEAD `46871a815dc0af2771a1a3a01ad95ad225c7a2d0` (run #146): typecheck, 24 pruebas Vitest en cuatro archivos y build completados correctamente.
+- [x] CI GitHub para el HEAD `f4b365ea1551f2a4dadd0eac006cc5c452a92c24` (run #148): typecheck, 24 pruebas Vitest en cuatro archivos y build completados correctamente. Cambios posteriores de periodos explícitos están pendientes de CI.
 - [x] Registro local de gastos en Essentials: alta/eliminación de gastos fijos y costes variables, unidades esperadas, resumen de asignación por unidad y persistencia en `localStorage`.
-- [x] Dominio de gastos con Decimal.js, validación de importes/nombres/rango numérico y prevención de doble conteo en el punto de equilibrio; seis pruebas unitarias añadidas.
+- [x] Dominio de gastos con Decimal.js, periodos explícitos semanal/mensual/trimestral/anual, validación de importes/nombres/rango numérico y prevención de doble conteo en punto de equilibrio; siete pruebas unitarias.
 - [x] Catálogo local compartido de productos/servicios: unidad explícita, SKU opcional único, moneda y coste de referencia; validación de dominio y seis pruebas unitarias. El coste de referencia no altera snapshots históricos.
 - [x] CI remoto valida gastos y catálogo en el HEAD `46871a815dc0af2771a1a3a01ad95ad225c7a2d0` (24/24 pruebas).
 - [ ] Validar manualmente en Windows la experiencia de gastos y catálogo; la sincronización cloud sigue pendiente.
