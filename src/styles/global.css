@@ -415,3 +415,8 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
 .legal-review-note { margin-top: 22px; padding: 17px 19px; border-left: 3px solid var(--gold); background: #f5f0e5; }
 .legal-review-note strong { color: var(--ink); font-size: 12px; }
 .legal-review-note p { margin: 6px 0 0; color: #69766e; font-size: 11px; line-height: 1.75; }
+
+.welcome-family { display: block; margin-bottom: 9px; color: #d9c49a; font-size: 10px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+.welcome-about-link { margin-top: 11px; padding: 0; border: 0; background: transparent; color: #e2d2ae; font-size: 10px; font-weight: 700; }
+.welcome-about-link span { margin-left: 5px; }
+.welcome-about-link:hover { color: #fffefa; }
