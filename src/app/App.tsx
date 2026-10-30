@@ -11,6 +11,7 @@ import type { BreakEvenInput } from "../modules/break-even/domain/break-even";
 import type { PricingInput, PricingResult } from "../modules/pricing/domain/pricing";
 import { AboutPage, AccountPage, GuidePage } from "./BrandPages";
 import { LegalPage } from "./LegalPages";
+import { calculationsToCsv } from "../modules/snapshots/domain/calculation-export";
 
 type View = "essentials" | "calculator" | "breakEven" | "expenses" | "catalog" | "kits" | "history" | "guide" | "account" | "about" | "terms" | "privacy";
 type BusinessType = "general" | "retail" | "food" | "services_beauty" | "digital_products" | "workshop";
@@ -119,6 +120,19 @@ function readHistory(): SavedCalculation[] {
   } catch {
     return [];
   }
+}
+
+function downloadHistoryCsv(records: SavedCalculation[]) {
+  const csv = calculationsToCsv(records);
+  const blob = new Blob(["\\uFEFF", csv], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `fixora-calculos-${new Date().toISOString().slice(0, 10)}.csv`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
 }
 
 function formatMoney(value: number, currency: CurrencyCode) {
@@ -513,6 +527,7 @@ export function App() {
               <p className="eyebrow">TU ACTIVIDAD <span> / </span> 02</p>
               <h1>Mis cálculos.</h1>
               <p className="page-lead">Consulta y recupera los análisis que has guardado en este dispositivo.</p>
+              {history.length > 0 && <div className="history-actions"><span>{history.length} {history.length === 1 ? "registro" : "registros"}</span><button className="outline-button" onClick={() => downloadHistoryCsv(history)}>Exportar CSV ↓</button></div>}
               {history.length === 0 ? (
                 <div className="empty-state"><span>◷</span><h2>Aún no hay cálculos guardados</h2><p>Cuando guardes un análisis, aparecerá aquí para que puedas consultarlo después.</p><button className="primary-button compact" onClick={() => setView("calculator")}>Crear primer cálculo</button></div>
               ) : (
