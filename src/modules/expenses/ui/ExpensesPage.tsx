@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { summarizeExpenses } from "../domain/expenses";
-import type { FixedExpense, VariableExpense } from "../domain/expenses";
+import type { ExpensePeriod, FixedExpense, VariableExpense } from "../domain/expenses";
 
 const STORAGE_KEY = "fixora.expenses.v1";
 
-function readExpenses(): { fixed: FixedExpense[]; variable: VariableExpense[]; expectedUnits: number } {
+function readExpenses(): { fixed: FixedExpense[]; variable: VariableExpense[]; expectedUnits: number; period: ExpensePeriod } {
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return { fixed: [], variable: [], expectedUnits: 100 };
+    if (!raw) return { fixed: [], variable: [], expectedUnits: 100, period: "month" };
     const parsed: unknown = JSON.parse(raw);
     if (!parsed || typeof parsed !== "object") throw new Error("Invalid expenses");
     const value = parsed as Record<string, unknown>;
@@ -29,9 +29,10 @@ function readExpenses(): { fixed: FixedExpense[]; variable: VariableExpense[]; e
       !Number.isFinite(value.expectedUnits) || value.expectedUnits <= 0) {
       throw new Error("Invalid expenses");
     }
-    return { fixed: value.fixed as FixedExpense[], variable: value.variable as VariableExpense[], expectedUnits: value.expectedUnits };
+    const period = ["week", "month", "quarter", "year"].includes(value.period as string) ? value.period as ExpensePeriod : "month";
+    return { fixed: value.fixed as FixedExpense[], variable: value.variable as VariableExpense[], expectedUnits: value.expectedUnits, period };
   } catch {
-    return { fixed: [], variable: [], expectedUnits: 100 };
+    return { fixed: [], variable: [], expectedUnits: 100, period: "month" };
   }
 }
 
@@ -43,19 +44,20 @@ export function ExpensesPage({ currency, formatMoney }: {
   const [fixed, setFixed] = useState(saved.fixed);
   const [variable, setVariable] = useState(saved.variable);
   const [expectedUnits, setExpectedUnits] = useState(saved.expectedUnits);
+  const [period, setPeriod] = useState<ExpensePeriod>(saved.period);
   const [message, setMessage] = useState("");
 
   const summary = useMemo(() => {
     try {
-      return { result: summarizeExpenses({ fixedExpenses: fixed, variableExpenses: variable, expectedUnits }), error: null };
+      return { result: summarizeExpenses({ fixedExpenses: fixed, variableExpenses: variable, expectedUnits, period }), error: null };
     } catch (error) {
       return { result: null, error: error instanceof Error ? error.message : "Revisa los datos de tus gastos." };
     }
-  }, [fixed, variable, expectedUnits]);
+  }, [fixed, variable, expectedUnits, period]);
 
   useEffect(() => {
     try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ fixed, variable, expectedUnits }));
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ fixed, variable, expectedUnits, period }));
       setMessage("Cambios guardados en este navegador.");
     } catch {
       setMessage("No fue posible guardar los gastos en este navegador.");
@@ -104,11 +106,12 @@ export function ExpensesPage({ currency, formatMoney }: {
         </section>
       </div>
       <section className="surface-card expense-allocation">
-        <div className="section-heading"><div className="section-number">03</div><div><h2>Asignación analítica por unidad</h2><p>Una estimación para distribuir el gasto fijo entre tu volumen esperado.</p></div></div>
+        <div className="section-heading"><div className="section-number">03</div><div><h2>Periodo y asignación analítica</h2><p>Define el periodo de tus gastos fijos y distribúyelos entre el volumen esperado.</p></div></div>
+        <label className="field expected-units-field"><span>Periodo de registro</span><select value={period} onChange={(event) => setPeriod(event.target.value as ExpensePeriod)}><option value="week">Semanal</option><option value="month">Mensual</option><option value="quarter">Trimestral</option><option value="year">Anual</option></select></label>
         <label className="field expected-units-field"><span>Unidades estimadas en el periodo</span><input type="number" min="1" step="1" value={expectedUnits} onChange={(event) => setExpectedUnits(Math.max(1, Math.floor(Number(event.target.value) || 1)))} /></label>
         {summary.error ? <p className="error-state" role="alert">{summary.error}</p> : summary.result && (
           <div className="expense-summary">
-            <div><span>Gastos fijos del periodo</span><strong>{formatMoney(summary.result.fixedCostsForPeriod, currency)}</strong></div>
+            <div><span>Gastos fijos del periodo ({period === "week" ? "semanal" : period === "month" ? "mensual" : period === "quarter" ? "trimestral" : "anual"})</span><strong>{formatMoney(summary.result.fixedCostsForPeriod, currency)}</strong></div>
             <div><span>Costes variables por unidad</span><strong>{formatMoney(summary.result.variableCostPerUnit, currency)}</strong></div>
             <div><span>Gasto fijo asignado por unidad</span><strong>{formatMoney(summary.result.fixedCostAllocationPerUnit, currency)}</strong></div>
             <div className="expense-summary-total"><span>Coste analítico total por unidad</span><strong>{formatMoney(summary.result.fullyAllocatedCostPerUnit, currency)}</strong></div>
