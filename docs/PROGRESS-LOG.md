@@ -167,3 +167,7 @@ No conectar ni habilitar signup. Primero completar backup verificable, inspecci�
 - No se integró la consola al menú de usuario: aún no existe Auth ni autorización server-side conectada. La UI exige un objeto de acceso y un snapshot verificados por el futuro backend.
 - La regla de tres dispositivos en TypeScript es informativa; falta enforcement transaccional y prueba de concurrencia en PostgreSQL.
 - CI del HEAD final pendiente de confirmación.
+
+
+- `7a37548`: README enlaza la arquitectura del panel administrativo.
+- `bedc1e2`: aclara que los estados TypeScript son una proyección de UX; compra, reembolso, contracargo, vigencia y cupos de dispositivo deben resolverse transaccionalmente en servidor.
