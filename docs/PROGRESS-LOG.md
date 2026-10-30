@@ -217,3 +217,6 @@ No conectar ni habilitar signup. Primero completar backup verificable, inspecci�
 
 - `876fafd`: elimina import obsoleto tras extraer el contrato del historial.
 - `c455b29` / `92db314` / `7e5c293` / `013576a` / `7153a2f`: extracción del repositorio de gastos y adaptación de la UI, preservando la revisión explícita de moneda heredada.
+
+
+- `77b20c7`: elimina BEGIN/COMMIT explícitos de la migración para dejar que el runner de Supabase gestione la transacción de cada archivo.
