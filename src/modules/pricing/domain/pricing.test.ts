@@ -40,7 +40,21 @@ describe("calculatePrice", () => {
       targetMarginRate: 0.25,
       discountRate: 0.1,
     });
+    expect(result.effectiveMargin).toBeGreaterThanOrEqual(0.25);
     expect(result.effectiveMargin).toBeCloseTo(0.25);
+  });
+
+  it("rounds the displayed price upward and calculates profit from that price", () => {
+    const result = calculatePrice({
+      ...base,
+      materials: 1,
+      targetMarginRate: 0.33,
+    });
+
+    expect(result.suggestedPrice).toBe(1.5);
+    expect(result.profitAtSuggestedPrice).toBe(0.5);
+    expect(result.effectiveMargin).toBeCloseTo(1 / 3);
+    expect(result.effectiveMargin).toBeGreaterThanOrEqual(0.33);
   });
 
   it("returns zero price and zero profit for a zero-cost product", () => {
