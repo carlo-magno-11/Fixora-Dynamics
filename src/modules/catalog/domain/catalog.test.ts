@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createCatalogItem, validateCatalogDraft } from "./catalog";
+import { createCatalogItem, updateCatalogItem, validateCatalogDraft } from "./catalog";
 import type { CatalogDraft, CatalogItem } from "./catalog";
 
 const draft: CatalogDraft = {
@@ -57,4 +57,27 @@ describe("catalog domain", () => {
     expect(validateCatalogDraft({ ...draft, referenceCost: Number.NaN })).toContain("El coste de referencia debe ser finito y no negativo.");
     expect(validateCatalogDraft({ ...draft, referenceCost: Number.POSITIVE_INFINITY })).toContain("El coste de referencia debe ser finito y no negativo.");
   });
+  it("updates an existing item without losing its active state or allowing duplicate SKUs", () => {
+    const existing = createCatalogItem(draft);
+    const updated = updateCatalogItem(existing.id, {
+      ...draft,
+      name: "Jabón de avena",
+      sku: "JAB-02",
+      referenceCost: 31.25,
+    }, [existing]);
+    expect(updated.id).toBe(existing.id);
+    expect(updated.active).toBe(true);
+    expect(updated.name).toBe("Jabón de avena");
+    expect(updated.sku).toBe("JAB-02");
+    expect(updated.referenceCost).toBe(31.25);
+    expect(() => updateCatalogItem(existing.id, { ...draft, sku: "SKU-OTHER" }, [
+      existing,
+      { ...existing, id: "other", sku: "SKU-OTHER" },
+    ])).toThrow("Ese código SKU ya existe en tu catálogo.");
+  });
+
+  it("rejects editing a catalog item that no longer exists", () => {
+    expect(() => updateCatalogItem("missing", draft, [])).toThrow("No se encontró el elemento que quieres editar.");
+  });
+
 });
