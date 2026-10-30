@@ -10,8 +10,9 @@ import { calculateBreakEven } from "../modules/break-even/domain/break-even";
 import type { BreakEvenInput } from "../modules/break-even/domain/break-even";
 import type { PricingInput, PricingResult } from "../modules/pricing/domain/pricing";
 import { AboutPage, AccountPage, GuidePage } from "./BrandPages";
+import { LegalPage } from "./LegalPages";
 
-type View = "essentials" | "calculator" | "breakEven" | "expenses" | "catalog" | "kits" | "history" | "guide" | "account" | "about";
+type View = "essentials" | "calculator" | "breakEven" | "expenses" | "catalog" | "kits" | "history" | "guide" | "account" | "about" | "terms" | "privacy";
 type BusinessType = "general" | "retail" | "food" | "services_beauty" | "digital_products" | "workshop";
 type CurrencyCode = "MXN" | "USD";
 type SavedCalculation = {
@@ -310,6 +311,8 @@ export function App() {
           <button className={view === "guide" ? "nav-item active" : "nav-item"} onClick={() => setView("guide")}>
             <span className="nav-icon">⌘</span> Guía de uso
           </button>
+          <button className={view === "terms" ? "nav-item active" : "nav-item"} onClick={() => setView("terms")}><span className="nav-icon">§</span> Términos</button>
+          <button className={view === "privacy" ? "nav-item active" : "nav-item"} onClick={() => setView("privacy")}><span className="nav-icon">⌑</span> Privacidad</button>
           <div className="sidebar-note">
             <span className="sidebar-note-mark">✳</span>
             <strong>Decisiones con claridad.</strong>
@@ -532,6 +535,8 @@ export function App() {
           {view === "guide" && <GuidePage />}
           {view === "account" && <AccountPage onOpenGuide={() => setView("guide")} />}
           {view === "about" && <AboutPage />}
+          {view === "terms" && <LegalPage kind="terms" />}
+          {view === "privacy" && <LegalPage kind="privacy" />}
 
         </section>
       </div>
