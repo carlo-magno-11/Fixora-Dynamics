@@ -552,3 +552,8 @@ Proyecto de destino verificado antes de las operaciones: `eyesite-security-test`
 - Se introdujo `scripts/test-license-concurrency.sh`, restringido a la URL local de Supabase `127.0.0.1:54322`, y se añadió al workflow DB CI.
 - Mutation test manual: se creó temporalmente una policy permisiva SELECT para tickets; la suite falló exactamente al detectar que Customer B podía ver el ticket de Customer A. La transacción revirtió la policy; verificación posterior: policy temporal = 0.
 - La CI que ejecuta el nuevo script y todas las migraciones sigue pendiente de nueva corrida en el HEAD actual.
+
+
+## 2026-10-31 — Corrección adicional: reintento de código tras reembolso
+
+Durante la revisión final detecté que el camino idempotente de un código ya redimido podía devolver metadatos de licencia aunque después hubiera ocurrido un reembolso. Se corrigió para revalidar estado de licencia, compra y dispositivo antes de devolver el resultado. Se añadió prueba funcional: repetir el código después de reembolso debe ser rechazado. La suite de licencias volvió a ejecutarse y terminó en `ok 27`.
