@@ -300,11 +300,15 @@ revoke all on table public.fixora_expense_settings
 revoke all on table public.fixora_calculation_snapshots
   from public, anon, authenticated;
 
-grant select, insert on table public.fixora_catalog_items to authenticated;
+grant select on table public.fixora_catalog_items to authenticated;
+grant insert (business_id, name, kind, unit, sku, currency_code, reference_cost)
+  on table public.fixora_catalog_items to authenticated;
 grant update (name, kind, unit, sku, currency_code, reference_cost, is_active)
   on table public.fixora_catalog_items to authenticated;
 
-grant select, insert on table public.fixora_expenses to authenticated;
+grant select on table public.fixora_expenses to authenticated;
+grant insert (business_id, expense_type, name, amount)
+  on table public.fixora_expenses to authenticated;
 grant update (expense_type, name, amount, is_active)
   on table public.fixora_expenses to authenticated;
 
@@ -312,4 +316,8 @@ grant select on table public.fixora_expense_settings to authenticated;
 grant update (expected_units, period, version)
   on table public.fixora_expense_settings to authenticated;
 
-grant select, insert on table public.fixora_calculation_snapshots to authenticated;
+grant select on table public.fixora_calculation_snapshots to authenticated;
+grant insert (
+  business_id, name, currency_code, schema_version,
+  formula_version, pricing_input, pricing_result, catalog_item_snapshot
+) on table public.fixora_calculation_snapshots to authenticated;
