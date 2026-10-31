@@ -389,3 +389,48 @@ La base de pruebas ya no está vacía: contiene la fundación Fixora aplicada. N
 ### Estado real
 
 El proyecto de pruebas ya tiene siete tablas Fixora, 15 políticas RLS y cero datos de prueba persistidos. La base todavía no está completa para el producto comercial: licencias, compras, activación, dispositivos, entitlements, roles de plataforma, MFA, auditoría y soporte requieren migraciones y pruebas posteriores. La aplicación todavía no usa Supabase; conserva persistencia local. El bucket `eyesite-media` sigue vacío y pendiente de eliminar por Storage API.
+
+
+## 15. Licencias, administración y soporte — 31 de octubre de 2026
+
+### Licencias y compras
+
+- Tablas privadas: `fixora_products`, `fixora_purchase_orders`, `fixora_licenses`, `fixora_license_entitlements`, `fixora_license_devices`, `fixora_activation_code_hashes`, `fixora_provider_events`, `fixora_license_events`.
+- Producto sembrado: `FIXORA-ESSENTIALS-ANNUAL`, 12 meses, tres dispositivos.
+- Activación inicia el plazo; el cuarto dispositivo se rechaza después de bloquear la fila de licencia; la revocación libera el cupo.
+- Los códigos se generan con 32 bytes aleatorios y se persiste solo SHA-256. El backend debe calcular el hash/HMAC del identificador de instalación; no confiar en fingerprint enviado por cliente.
+- Emisión y operaciones de dispositivos permanecen en `fixora_private`, ejecutables solo por `service_role`.
+- Etsy se modela con revisión manual inicial; Gumroad por API y Hotmart por webhook autenticado. Los eventos tienen unicidad proveedor/ID externo.
+- Reembolso/cargo revertido revoca; disputa suspende; los códigos pendientes y dispositivos se revocan.
+- La RPC pública de estado es SECURITY INVOKER y RLS limita lectura al propietario. Entitlements base permanecen después del vencimiento; premium expira.
+
+### Administración y soporte
+
+- Matriz de roles/permisos, membresías, invitaciones, auditoría append-only y eventos de seguridad.
+- AAL2 requerido para operaciones administrativas; invitaciones comprueban hash de correo y son de un solo uso. `platform_owner` no se puede invitar y debe provisionarse fuera de banda.
+- Tickets/mensajes públicos están protegidos por RLS de propietario y RPC SECURITY INVOKER. El cliente no puede escribir autor, referencias de adjuntos, ni borrar historial.
+- Los eventos de soporte se registran en esquema privado mediante triggers.
+- No hay usuario administrador inicial ni MFA real conectado a una Edge Function todavía.
+
+### Pruebas ejecutadas
+
+- `fixora_licenses.test.sql`: 26 aserciones estructurales y bloque funcional; sin error SQL tras las correcciones de ambigüedad.
+- `fixora_admin_support.test.sql`: 23 aserciones estructurales y bloque funcional; se ejecutó después de agregar aislamiento de mensajes.
+- Las pruebas funcionales cubren compra no verificada, reembolso, idempotencia, límite de dispositivos, roles, AAL2, invitaciones, soporte y separación entre clientes.
+- No se declara CI completa para estas suites: falta una nueva ejecución del workflow DB en el HEAD que contiene todas las migraciones.
+
+## 16. Identidad del proyecto y limpieza de EYESITE heredado
+
+- Destino comprobado: `eyesite-security-test`, `dclaebknyalimmtgppeg`, us-east-2, PostgreSQL 17.11.
+- Proyecto oficial EYESITE `xhvpvpvtkdgnnxdwdrkn`: no tocado.
+- 9 tablas públicas Fixora, 14 tablas privadas Fixora; no hay tablas públicas EYESITE.
+- Triggers Auth y funciones públicas restantes son Fixora. Las políticas públicas pertenecen a Fixora. La limpieza de políticas/funciones/triggers EYESITE está versionada en `20261031230342_remove_eyesite_auth_and_storage_policies_for_fixora.sql`.
+- Todas las tablas públicas Fixora tienen RLS; las privadas tienen RLS y FORCE RLS.
+- Security Advisor: cero hallazgos. Performance Advisor: cero FKs sin índice.
+- 0 usuarios y 0 filas de datos operativos de prueba tras los rollbacks. Se conservan el SKU anual y 18 permisos de rol.
+- El bucket `eyesite-media` permanece vacío y público. La herramienta Supabase conectada no ofrece Storage API para borrarlo; completar esa acción en Dashboard/Storage antes de afirmar que no queda ningún recurso heredado.
+- El historial remoto conserva las tres migraciones históricas EYESITE; son registros históricos, no tablas/funciones activas. No se deben borrar ni reescribir.
+
+## 17. Estado de salida
+
+La base de pruebas ya contiene el esquema Fixora de identidad, operación, licencias, administración y soporte; no equivale a producto listo para producción. Bloqueos restantes: reconstrucción CI de todas las migraciones, backup/restore probado, configuración API para mantener `fixora_private` no expuesto, Edge Functions y verificación real AAL2, integración Auth/repositorios cloud de la app, almacenamiento privado de adjuntos, borrado del bucket vacío EYESITE, staging y pruebas de concurrencia/carga. Ningún cambio se ha aplicado al proyecto oficial EYESITE.
