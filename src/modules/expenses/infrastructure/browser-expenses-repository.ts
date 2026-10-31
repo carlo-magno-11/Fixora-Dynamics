@@ -1,25 +1,13 @@
+import type {
+  ExpenseCurrency,
+  ExpensesDraft,
+  ExpensesRepositoryPort,
+  StoredExpenses,
+} from "../application/expenses-service";
 import type { ExpensePeriod, FixedExpense, VariableExpense } from "../domain/expenses";
 import { resolveKeyValueStorage, type KeyValueStorageSource } from "../../../shared/infrastructure/key-value-storage";
 
 export const EXPENSES_STORAGE_KEY = "fixora.expenses.v1";
-export type ExpenseCurrency = "MXN" | "USD";
-
-export interface StoredExpenses {
-  fixed: FixedExpense[];
-  variable: VariableExpense[];
-  expectedUnits: number;
-  period: ExpensePeriod;
-  currency: ExpenseCurrency;
-  needsCurrencyReview: boolean;
-}
-
-export interface ExpensesDraft {
-  fixed: FixedExpense[];
-  variable: VariableExpense[];
-  expectedUnits: number;
-  period: ExpensePeriod;
-  currency: ExpenseCurrency;
-}
 
 function isFixedExpense(value: unknown): value is FixedExpense {
   if (!value || typeof value !== "object") return false;
@@ -52,7 +40,7 @@ function emptyExpenses(defaultCurrency: ExpenseCurrency): StoredExpenses {
   };
 }
 
-export function createExpensesRepository(storageSource: KeyValueStorageSource) {
+export function createExpensesRepository(storageSource: KeyValueStorageSource): ExpensesRepositoryPort {
   return {
     load(defaultCurrency: ExpenseCurrency): StoredExpenses {
       const empty = emptyExpenses(defaultCurrency);
