@@ -113,6 +113,8 @@ El contrato compartido `src/shared/infrastructure/key-value-storage.ts` permite 
 
 La separación UI → application → domain ya está implementada en catálogo, gastos y creación de snapshots: `CatalogApplicationService` y `ExpensesApplicationService` definen los casos de uso/puertos; los repositorios browser los implementan; `src/app/App.tsx` inyecta los adaptadores concretos. Las pantallas no importan infraestructura directamente. La generación de IDs y el reloj de snapshots también se inyectan desde el composition root para que el dominio no dependa de APIs globales del navegador.
 
+El composition root se está separando de la vista principal: `src/app/create-app-services.ts` conecta repositorios y servicios de catálogo, gastos e historial, e inyecta ID/reloj. `App.tsx` conserva la navegación y el estado de pantalla, pero ya no construye adaptadores concretos en línea. Su prueba valida el cableado con almacenamiento en memoria. El siguiente refactor separará las vistas de navegación y extraerá la persistencia del perfil de negocio.
+
 El puerto de catálogo opera por entidad (create/update). El puerto de gastos conserva por ahora un agregado completo local; su futuro adaptador cloud no podrá hacer last-write-wins: deberá aplicar versión optimista o una operación transaccional que evite perder cambios de otro miembro. Historial tiene recuperación explícita para no sobrescribir JSON dañado.
 
 `src/architecture/architecture-boundaries.test.ts` hace cumplir las primeras reglas de dependencias en Vitest. Se amplía conforme se extraigan los módulos restantes; no sustituye un lint completo.
