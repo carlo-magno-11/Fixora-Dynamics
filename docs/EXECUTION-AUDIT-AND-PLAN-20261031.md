@@ -41,14 +41,15 @@ Existe en Git la migración supabase/migrations/20261030165305_fixora_identity_a
 
 La prueba supabase/tests/fixora_foundation.test.sql contiene 12 comprobaciones estructurales/de privilegios. Comprueba existencia de tablas, RLS, grants y privilegios de función. Todavía no demuestra el comportamiento de aislamiento entre identidades.
 
-Observaciones para resolver antes de considerar esta migración aprobada:
+Observaciones y ajustes realizados antes de la ejecución:
 
-1. La función pública fixora_create_business está declarada SECURITY DEFINER. Aunque restringe EXECUTE a authenticated y usa search_path vacío, debemos revisar si conviene reducir la superficie con una función interna privada SECURITY DEFINER y una interfaz pública SECURITY INVOKER, manteniendo los permisos mínimos.
-2. El helper private.has_active_business_role también es SECURITY DEFINER y tiene EXECUTE para authenticated; verificar que el contrato no exponga información innecesaria y que el esquema private no esté expuesto por PostgREST.
+1. Se cambió la frontera del RPC: public.fixora_create_business es ahora SECURITY INVOKER y delega la mutación a private.create_business_for_authenticated_user, SECURITY DEFINER con search_path vacío y EXECUTE explícito para authenticated. Se añadieron aserciones pgTAP para comprobar esa separación y los privilegios.
+2. El helper private.has_active_business_role continúa SECURITY DEFINER y tiene EXECUTE para authenticated porque las policies RLS lo necesitan. Debe permanecer en un schema no expuesto por PostgREST y su resultado solo se basa en la identidad auth.uid() de la sesión.
 3. El trigger de Fixora se añade a auth.users. En el entorno remoto hay otro trigger heredado activo. No se debe desplegar esta migración remota sin resolver esa coexistencia.
 4. La migración no crea membresías compartidas/invitaciones ni gestiona roles de negocio más allá del propietario inicial; esas operaciones requieren casos de uso y permisos transaccionales posteriores.
 5. Los usuarios Auth preexistentes necesitarán un backfill controlado de fixora_profiles si se habilita la migración sobre una base con usuarios existentes. No asumir que el trigger crea perfiles retroactivamente.
-6. No hay todavía pruebas de rollback/reconstrucción, de carreras concurrentes ni de que un usuario B no pueda leer/actualizar/borrar recursos de A.
+6. Se añadió un segundo archivo pgTAP con dos identidades y negocios separados. Comprueba creación transaccional, visibilidad por usuario, denegación de UPDATE cruzado y bloqueo de inserciones directas de membresías. Estas pruebas aún no se han ejecutado.
+7. No hay todavía pruebas de carreras concurrentes de licencias/dispositivos ni de todas las operaciones CRUD de los módulos futuros.
 
 ## 2. Arquitectura objetivo y reglas de dependencia
 
@@ -190,6 +191,8 @@ Fixora no se declara lista para venta hasta que:
 - Inspeccionada la migración y su pgTAP actual.
 - Inspeccionado el estado remoto de solo lectura, historial, trigger y advisors.
 - Añadido .github/workflows/db-tests.yml para reconstruir un proyecto Supabase temporal en CI y ejecutar pgTAP.
+- Endurecida la migración: el endpoint público de creación es SECURITY INVOKER; la función privilegiada queda en private y con permisos explícitos.
+- Ampliada la suite pgTAP con un escenario de aislamiento A/B. La ejecución sigue pendiente de evidencia de workflow.
 - Ampliado docs/OPEN-SOURCE-RESEARCH.md con referencias de repositorios/estándares de alto uso y decisiones de adopción.
 - Ninguna migración se ha aplicado a Supabase remoto ni local en esta sesión. El nuevo workflow es la primera vía automatizada para ejecutar la migración en un stack local desechable de CI.
 
