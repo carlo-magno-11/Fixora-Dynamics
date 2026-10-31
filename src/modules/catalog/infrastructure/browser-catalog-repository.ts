@@ -1,3 +1,4 @@
+import type { CatalogRepositoryPort } from "../application/catalog-service";
 import type { CatalogItem } from "../domain/catalog";
 import { resolveKeyValueStorage, type KeyValueStorageSource } from "../../../shared/infrastructure/key-value-storage";
 
@@ -17,7 +18,7 @@ export function isStoredCatalogItem(value: unknown): value is CatalogItem {
     typeof item.active === "boolean";
 }
 
-export function createCatalogRepository(storageSource: KeyValueStorageSource) {
+export function createCatalogRepository(storageSource: KeyValueStorageSource): CatalogRepositoryPort {
   return {
     load(): CatalogItem[] {
       try {
