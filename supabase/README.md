@@ -39,6 +39,6 @@ El trigger remoto de Auth heredado es un bloqueo para habilitar registros remoto
 ## Estado
 
 - Runtime nativo local: iniciado y validado.
-- Migración Fixora: aún no creada/aplicada.
+- Migración Fixora: creada y versionada en Git; pendiente de aplicación y validación en Supabase local.
 - Auth remoto: aún no habilitado; trigger heredado requiere transición.
 - Cambios remotos: ninguno confirmado en esta etapa.
