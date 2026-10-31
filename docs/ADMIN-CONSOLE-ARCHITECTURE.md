@@ -90,3 +90,46 @@ La gestión de otros administradores es un permiso separado (`admins.manage`) re
 
 
 La elegibilidad de compra tiene una política pura inicial en `src/modules/licensing/domain/purchase-verification.ts`: exige referencia de pedido, SKU correcto, pago aprobado, verificación fechada y método de verificación; rechaza reembolso, disputa y contracargo. La función no autentica webhooks ni valida por sí sola una tienda: el backend debe obtener la evidencia directamente del proveedor o de una revisión manual del vendedor, registrar actor/evidencia mínima y proteger la operación contra duplicados.
+
+
+## Persistencia y controles de base de datos — 31 de octubre de 2026
+
+El proyecto de pruebas `eyesite-security-test` (`dclaebknyalimmtgppeg`) ya tiene el esquema administrativo privado. No se provisionó ningún administrador inicial y no se conectó la consola UI.
+
+### Roles y permisos sembrados
+
+- `platform_owner`: comodín de plataforma; único rol que puede invitar administradores.
+- `license_manager`: leer/emitir/suspender/revocar licencias, revocar dispositivos y consultar compras.
+- `purchase_reviewer`: consultar, verificar y rechazar compras.
+- `support_agent`: leer/responder soporte y consultar datos mínimos de usuario/licencia.
+- `auditor`: leer auditoría, seguridad, licencias y compras.
+
+### Tablas privadas
+
+- `fixora_admin_role_permissions`
+- `fixora_admin_memberships`
+- `fixora_admin_invites`
+- `fixora_admin_audit_events`
+- `fixora_security_events`
+
+Las tablas privadas tienen RLS + FORCE RLS y no son accesibles directamente por `anon` o `authenticated`. La auditoría y los eventos de seguridad son append-only.
+
+### Invitaciones y AAL2
+
+- Las invitaciones almacenan hash SHA-256 del token y del correo normalizado; nunca el token ni correo en claro.
+- La invitación tiene expiración, se consume una sola vez y valida que el correo del usuario autenticado coincida.
+- El flujo normal no puede invitar `platform_owner`. La primera cuenta debe crearse manualmente fuera del registro público, con MFA ya inscrito.
+- Las funciones privadas aceptan un parámetro AAL, pero solo son ejecutables por `service_role`. La Edge Function debe verificar el JWT del usuario y su claim AAL2 antes de llamar; nunca debe confiar en un valor enviado por el navegador.
+- La tabla impide que un administrador esté `active` sin `mfa_enrolled_at`.
+
+### Soporte
+
+Los tickets y mensajes están en tablas públicas con RLS por propietario y funciones SECURITY INVOKER. El cliente puede crear, consultar, responder y cerrar sus tickets, pero no puede asignarlos, falsificar remitente, insertar referencias de adjuntos, ni borrar historial. Los eventos internos se escriben en un esquema privado mediante triggers.
+
+### Pendiente antes de habilitar el panel
+
+1. Implementar Edge Functions para validar JWT/AAL2, aplicar permisos por operación y registrar auditoría.
+2. Crear el primer `platform_owner` fuera de banda, verificar MFA y probar recuperación.
+3. Implementar operaciones de compras/licencias y respuestas administrativas de soporte.
+4. Conectar `AdminConsolePage` a respuestas reales del backend; no usar fixtures ni métricas simuladas.
+5. Probar separación de roles, AAL1/AAL2, revocación de admin, sesión expirada, IDOR y auditoría en CI/staging.
