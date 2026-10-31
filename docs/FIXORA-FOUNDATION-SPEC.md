@@ -101,8 +101,11 @@ Requirements:
 - ignore any client-supplied owner/user ID;
 - validate and normalize input server-side;
 - use a fixed empty search_path and fully qualified names;
-- SECURITY DEFINER only for this narrow atomic operation;
-- revoke EXECUTE from PUBLIC and anon; grant to authenticated only;
+- expose a public SECURITY INVOKER wrapper only;
+- delegate the atomic write to a private SECURITY DEFINER implementation with a fixed empty search_path and fully qualified names;
+- revoke EXECUTE from PUBLIC/anon on the private implementation and grant only the permissions required by authenticated sessions;
+- revoke EXECUTE from PUBLIC/anon on the public wrapper and grant it to authenticated only;
+- keep the private schema outside PostgREST exposed schemas;
 - do not let the RPC accept role, membership status, license, or entitlement fields.
 
 ### 3.4 RLS and grants
