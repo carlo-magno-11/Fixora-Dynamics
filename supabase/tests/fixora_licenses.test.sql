@@ -2,7 +2,7 @@ BEGIN;
 
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 
-SELECT plan(23);
+SELECT plan(26);
 
 SELECT has_table('fixora_private', 'fixora_products', 'License product catalog exists');
 SELECT has_table('fixora_private', 'fixora_purchase_orders', 'Purchase orders exist');
@@ -83,6 +83,14 @@ SELECT ok(NOT EXISTS (SELECT 1 FROM information_schema.columns
     AND column_name IN ('code', 'raw_code', 'activation_code')),
   'Activation code plaintext is not stored');
 
+SELECT ok(has_function_privilege('authenticated', 'public.fixora_get_license_access()', 'EXECUTE'),
+  'Authenticated users can read their own license access');
+SELECT ok(NOT has_function_privilege('anon', 'public.fixora_get_license_access()', 'EXECUTE'),
+  'Anonymous users cannot read license access');
+SELECT ok((SELECT prosecdef AND proconfig @> ARRAY['search_path=""']
+  FROM pg_proc WHERE oid = 'public.fixora_get_license_access()'::regprocedure),
+  'Public license access RPC is SECURITY DEFINER with empty search_path');
+
 INSERT INTO auth.users (id, email, raw_user_meta_data)
 VALUES
   ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1', 'fixora-license-a@example.invalid', '{"display_name":"License A"}'::jsonb),
@@ -110,6 +118,7 @@ DECLARE
   v_replay record;
   v_activation record;
   v_license_row fixora_private.fixora_licenses%rowtype;
+  v_access record;
   v_count integer;
   v_event_hash bytea := extensions.digest(pg_catalog.convert_to('provider-event-1', 'UTF8'), 'sha256');
 BEGIN
@@ -273,9 +282,44 @@ BEGIN
     RAISE EXCEPTION 'Premium entitlements do not end with the license';
   END IF;
 
-  UPDATE fixora_private.fixora_purchase_orders
+  PERFORM pg_catalog.set_config('role', 'authenticated', true);
+  PERFORM pg_catalog.set_config('request.jwt.claim.sub', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1', true);
+  SELECT * INTO v_access FROM public.fixora_get_license_access();
+  IF v_access.license_id IS DISTINCT FROM v_license_id
+    OR v_access.status <> 'active'
+    OR cardinality(v_access.available_entitlements) <> 5 THEN
+    RAISE EXCEPTION 'Authenticated license access RPC returned incorrect active access';
+  END IF;
+
+  PERFORM pg_catalog.set_config('request.jwt.claim.sub', 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb2', true);
+  SELECT count(*) INTO v_count FROM public.fixora_get_license_access();
+  IF v_count <> 0 THEN
+    RAISE EXCEPTION 'License access RPC exposed another user license';
+  END IF;
+
+  PERFORM pg_catalog.set_config('role', 'service_role', true);
+
+    UPDATE fixora_private.fixora_purchase_orders
   SET refund_status = 'refunded'
   WHERE id = v_order_id;
+
+  SELECT * INTO v_license_row FROM fixora_private.fixora_licenses WHERE id = v_license_id;
+  IF v_license_row.status <> 'revoked' THEN
+    RAISE EXCEPTION 'Refund did not revoke the license';
+  END IF;
+
+  IF (SELECT count(*) FROM fixora_private.fixora_license_devices
+      WHERE license_id = v_license_id AND status = 'active') <> 0 THEN
+    RAISE EXCEPTION 'Refund did not revoke active devices';
+  END IF;
+
+  PERFORM pg_catalog.set_config('role', 'authenticated', true);
+  PERFORM pg_catalog.set_config('request.jwt.claim.sub', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1', true);
+  SELECT * INTO v_access FROM public.fixora_get_license_access();
+  IF v_access.status <> 'revoked' OR cardinality(v_access.available_entitlements) <> 0 THEN
+    RAISE EXCEPTION 'Revoked license still exposes entitlements';
+  END IF;
+  PERFORM pg_catalog.set_config('role', 'service_role', true);
 
   BEGIN
     PERFORM fixora_private.register_license_device(
