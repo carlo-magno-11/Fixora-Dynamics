@@ -2,7 +2,7 @@ BEGIN;
 
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 
-SELECT plan(26);
+SELECT plan(27);
 
 SELECT has_table('fixora_private', 'fixora_products', 'License product catalog exists');
 SELECT has_table('fixora_private', 'fixora_purchase_orders', 'Purchase orders exist');
@@ -26,10 +26,15 @@ SELECT ok(NOT has_table_privilege('anon', 'fixora_private.fixora_products', 'SEL
 
 SELECT ok(NOT has_table_privilege('authenticated', 'fixora_private.fixora_products', 'SELECT')
   AND NOT has_table_privilege('authenticated', 'fixora_private.fixora_purchase_orders', 'SELECT')
-  AND NOT has_table_privilege('authenticated', 'fixora_private.fixora_licenses', 'SELECT')
-  AND NOT has_table_privilege('authenticated', 'fixora_private.fixora_license_devices', 'SELECT')
   AND NOT has_table_privilege('authenticated', 'fixora_private.fixora_activation_code_hashes', 'SELECT')
-  , 'authenticated has no direct access to private licensing data');
+  AND NOT has_table_privilege('authenticated', 'fixora_private.fixora_provider_events', 'SELECT')
+  AND NOT has_table_privilege('authenticated', 'fixora_private.fixora_license_events', 'SELECT')
+  , 'Authenticated clients cannot read sensitive purchase, code or provider tables');
+
+SELECT ok(has_table_privilege('authenticated', 'fixora_private.fixora_licenses', 'SELECT')
+  AND has_table_privilege('authenticated', 'fixora_private.fixora_license_entitlements', 'SELECT')
+  AND has_table_privilege('authenticated', 'fixora_private.fixora_license_devices', 'SELECT')
+  , 'Authenticated license reads are granted only on RLS-protected owner-scoped tables');
 
 SELECT ok(has_table_privilege('service_role', 'fixora_private.fixora_products', 'SELECT')
   AND has_table_privilege('service_role', 'fixora_private.fixora_purchase_orders', 'INSERT')
@@ -87,9 +92,9 @@ SELECT ok(has_function_privilege('authenticated', 'public.fixora_get_license_acc
   'Authenticated users can read their own license access');
 SELECT ok(NOT has_function_privilege('anon', 'public.fixora_get_license_access()', 'EXECUTE'),
   'Anonymous users cannot read license access');
-SELECT ok((SELECT prosecdef AND proconfig @> ARRAY['search_path=""']
+SELECT ok((SELECT NOT prosecdef AND proconfig @> ARRAY['search_path=""']
   FROM pg_proc WHERE oid = 'public.fixora_get_license_access()'::regprocedure),
-  'Public license access RPC is SECURITY DEFINER with empty search_path');
+  'Public license access RPC is SECURITY INVOKER with empty search_path');
 
 INSERT INTO auth.users (id, email, raw_user_meta_data)
 VALUES
