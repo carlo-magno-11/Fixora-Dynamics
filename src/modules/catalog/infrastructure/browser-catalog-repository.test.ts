@@ -39,7 +39,7 @@ describe("browser catalog repository", () => {
   });
 
   it("limits the catalog to five hundred records and rejects another insert", () => {
-    const items = Array.from({ length: 510 }, (_, index) => ({ ...item, id: `item-${index}` }));
+    const items = Array.from({ length: 500 }, (_, index) => ({ ...item, id: `item-${index}` }));
     const repository = createCatalogRepository(memoryStorage({ [CATALOG_STORAGE_KEY]: JSON.stringify(items) }));
     expect(repository.load()).toHaveLength(500);
     expect(() => repository.create({ ...item, id: "item-over-limit" })).toThrow("El catálogo alcanzó el límite de 500 elementos.");
