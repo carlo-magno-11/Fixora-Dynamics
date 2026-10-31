@@ -39,10 +39,28 @@ export function createCatalogRepository(storageSource: KeyValueStorageSource): C
     }
   }
 
+  function readForMutation(): CatalogItem[] {
+    const raw = resolveKeyValueStorage(storageSource).getItem(CATALOG_STORAGE_KEY);
+    if (!raw) return [];
+
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      throw new Error("No se puede modificar el catálogo porque los datos guardados están dañados.");
+    }
+
+    if (!Array.isArray(parsed) || parsed.length > MAX_CATALOG_ITEMS || !parsed.every(isStoredCatalogItem)) {
+      throw new Error("No se puede modificar el catálogo porque los datos guardados no son válidos.");
+    }
+
+    return parsed;
+  }
+
   return {
     load,
     create(item: CatalogItem): void {
-      const current = load();
+      const current = readForMutation();
       if (current.length >= MAX_CATALOG_ITEMS) {
         throw new Error("El catálogo alcanzó el límite de 500 elementos.");
       }
