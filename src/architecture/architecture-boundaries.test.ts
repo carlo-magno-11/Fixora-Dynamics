@@ -1,66 +1,62 @@
-import { readdirSync, readFileSync } from "node:fs";
-import { dirname, relative, resolve, sep } from "node:path";
-import { fileURLToPath } from "node:url";
+/// <reference types="vite/client" />
+
 import { describe, expect, it } from "vitest";
 
-const sourceRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+const moduleSources = import.meta.glob("/src/modules/**/*.{ts,tsx}", {
+  eager: true,
+  query: "?raw",
+  import: "default",
+}) as Record<string, string>;
 
-function collectSourceFiles(directory: string): string[] {
-  return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
-    const path = resolve(directory, entry.name);
-    if (entry.isDirectory()) return collectSourceFiles(path);
-    if (entry.isFile() && /\.tsx?$/.test(entry.name) && !/\.test\.tsx?$/.test(entry.name)) {
-      return [path];
-    }
-    return [];
-  });
-}
+function normalizedImportPath(sourcePath: string, specifier: string): string | null {
+  if (!specifier.startsWith(".")) return null;
 
-function readImportSpecifiers(source: string): string[] {
-  const specifiers = new Set<string>();
-  const patterns = [
-    /\bfrom\s*["']([^"']+)["']/g,
-    /\bimport\s*["']([^"']+)["']/g,
-    /\bimport\s*\(\s*["']([^"']+)["']\s*\)/g,
-  ];
-
-  for (const pattern of patterns) {
-    for (const match of source.matchAll(pattern)) {
-      specifiers.add(match[1]);
+  const segments = sourcePath.replace(/^\//, "").split("/").slice(0, -1);
+  for (const segment of specifier.split("/")) {
+    if (segment === "." || segment === "") continue;
+    if (segment === "..") {
+      segments.pop();
+    } else {
+      segments.push(segment);
     }
   }
 
-  return [...specifiers];
-}
-
-function normalizedSourcePath(path: string): string {
-  return relative(sourceRoot, path).split(sep).join("/");
-}
-
-function normalizedTargetPath(sourceFile: string, specifier: string): string | null {
-  if (!specifier.startsWith(".")) return null;
-  return normalizedSourcePath(resolve(dirname(sourceFile), specifier));
+  return segments.join("/");
 }
 
 describe("architecture boundaries", () => {
   it("keeps module dependencies flowing inward and prevents UI/infrastructure leaks", () => {
     const violations: string[] = [];
 
-    for (const file of collectSourceFiles(sourceRoot)) {
-      const sourcePath = normalizedSourcePath(file);
-      const segments = sourcePath.split("/");
-      if (segments[0] !== "modules" || segments.length < 3) continue;
+    for (const [absolutePath, source] of Object.entries(moduleSources)) {
+      if (/\.test\.tsx?$/.test(absolutePath)) continue;
 
-      const sourceModule = segments[1];
-      const sourceLayer = segments[2];
+      const sourcePath = absolutePath.replace(/^\//, "");
+      const segments = sourcePath.split("/");
+      if (segments[0] !== "src" || segments[1] !== "modules" || segments.length < 4) continue;
+
+      const sourceModule = segments[2];
+      const sourceLayer = segments[3];
       if (!["domain", "application", "infrastructure", "ui"].includes(sourceLayer)) continue;
 
-      const source = readFileSync(file, "utf8");
-      for (const specifier of readImportSpecifiers(source)) {
-        const targetPath = normalizedTargetPath(file, specifier);
+      const specifiers = new Set<string>();
+      for (const match of source.matchAll(/\bfrom\s*["']([^"']+)["']/g)) {
+        specifiers.add(match[1]);
+      }
+      for (const match of source.matchAll(/\bimport\s*["']([^"']+)["']/g)) {
+        specifiers.add(match[1]);
+      }
+      for (const match of source.matchAll(/\bimport\s*\(\s*["']([^"']+)["']\s*\)/g)) {
+        specifiers.add(match[1]);
+      }
+
+      for (const specifier of specifiers) {
+        const targetPath = normalizedImportPath(sourcePath, specifier);
         const targetSegments = targetPath?.split("/") ?? [];
-        const targetModule = targetSegments[0] === "modules" ? targetSegments[1] : null;
-        const targetLayer = targetModule ? targetSegments[2] : null;
+        const targetModule = targetSegments[0] === "src" && targetSegments[1] === "modules"
+          ? targetSegments[2]
+          : null;
+        const targetLayer = targetModule ? targetSegments[3] : null;
 
         if (
           ["domain", "application"].includes(sourceLayer) &&
@@ -71,6 +67,13 @@ describe("architecture boundaries", () => {
 
         if (sourceLayer === "domain" && targetLayer && ["application", "infrastructure", "ui"].includes(targetLayer)) {
           violations.push(`${sourcePath} depends outward on ${targetPath}`);
+        }
+
+        if (
+          ["domain", "application"].includes(sourceLayer) &&
+          targetPath?.startsWith("src/shared/infrastructure/")
+        ) {
+          violations.push(`${sourcePath} depends on shared infrastructure ${targetPath}`);
         }
 
         if (sourceLayer === "application" && targetLayer && ["infrastructure", "ui"].includes(targetLayer)) {
@@ -93,7 +96,7 @@ describe("architecture boundaries", () => {
           violations.push(`${sourcePath} imports another module's private layer ${targetPath}`);
         }
 
-        if (targetPath && targetSegments[0] === "app") {
+        if (targetPath?.startsWith("src/app/")) {
           violations.push(`${sourcePath} imports the application composition layer ${targetPath}`);
         }
       }
