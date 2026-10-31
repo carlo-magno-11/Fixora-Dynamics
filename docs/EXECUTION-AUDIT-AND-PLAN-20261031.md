@@ -3,7 +3,7 @@
 Fecha: 31 de octubre de 2026
 Rama: foundation/bootstrap-20261029
 PR: #1 (abierto, borrador)
-Último HEAD confirmado al redactar: fb301b84a764ceedfa205c0bcf6f563cab3535ce
+Último HEAD confirmado al redactar: face760a14521ea49a17d4e2f0c76e0bac7f3c29
 
 Este documento distingue hechos comprobados, evaluación técnica y tareas pendientes. No declara el producto terminado ni convierte una validación de CI en una prueba de producción.
 
@@ -14,6 +14,7 @@ Este documento distingue hechos comprobados, evaluación técnica y tareas pendi
 - El PR #1 sigue abierto y en borrador; no está fusionado.
 - El HEAD anterior af696c20c5d2e6d1f28d4f3b9a1fb97b5a042792 tuvo CI #466 aprobada: instalación congelada, typecheck, 96 pruebas Vitest y build.
 - En esta sesión se añadió el workflow .github/workflows/db-tests.yml. Este crea un proyecto Supabase temporal en CI, copia migraciones/pruebas, inicia el stack local, reconstruye la base y ejecuta pgTAP.
+- Se agregó un paso de mutación RLS: instala temporalmente una policy SELECT permisiva sobre fixora_businesses y exige que la suite falle; luego elimina la policy temporal. Si la suite no detecta la fuga, el workflow falla.
 - El workflow de base de datos todavía debe completar su primera ejecución en el nuevo HEAD. No se declara que ya haya pasado.
 - La aplicación tiene motor financiero con Decimal.js, gastos, catálogo, punto de equilibrio, snapshots e historial local.
 - El estado de perfil e historial mostrado por App.tsx sigue siendo localStorage; no es persistencia multiusuario.
@@ -192,7 +193,7 @@ Fixora no se declara lista para venta hasta que:
 - Inspeccionado el estado remoto de solo lectura, historial, trigger y advisors.
 - Añadido .github/workflows/db-tests.yml para reconstruir un proyecto Supabase temporal en CI y ejecutar pgTAP.
 - Endurecida la migración: el endpoint público de creación es SECURITY INVOKER; la función privilegiada queda en private y con permisos explícitos.
-- Ampliada la suite pgTAP con un escenario de aislamiento A/B. La ejecución sigue pendiente de evidencia de workflow.
+- Ampliada la suite pgTAP con un escenario de aislamiento A/B y un control de mutación RLS en CI. La ejecución sigue pendiente de evidencia de workflow.
 - Ampliado docs/OPEN-SOURCE-RESEARCH.md con referencias de repositorios/estándares de alto uso y decisiones de adopción.
 - Ninguna migración se ha aplicado a Supabase remoto ni local en esta sesión. El nuevo workflow es la primera vía automatizada para ejecutar la migración en un stack local desechable de CI.
 
