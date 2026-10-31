@@ -47,7 +47,7 @@ La especificación vigente está en `docs/FIXORA-FOUNDATION-SPEC.md`. La migraci
 
 `supabase/migrations/20261030165305_fixora_identity_and_businesses.sql`
 
-Existen dos suites pgTAP: `supabase/tests/fixora_foundation.test.sql` (25 aserciones de estructura y privilegios) y `supabase/tests/fixora_business_rls.test.sql` (18 aserciones con dos usuarios y dos negocios). Ambas siguen pendientes de ejecución comprobada.
+Existen dos suites pgTAP: `supabase/tests/fixora_foundation.test.sql` (25 aserciones de estructura y privilegios) y `supabase/tests/fixora_business_rls.test.sql` (20 aserciones con dos usuarios y dos negocios). Ambas siguen pendientes de ejecución comprobada.
 
 El workflow `.github/workflows/db-tests.yml` crea un proyecto Supabase temporal, fija PostgreSQL 17, aplica las migraciones y ejecuta las pruebas. Su primera corrida todavía no tiene un job completado visible.
 
