@@ -26,21 +26,23 @@ export function createCatalogRepository(storageSource: KeyValueStorageSource): C
     );
   }
 
+  function load(): CatalogItem[] {
+    try {
+      const raw = resolveKeyValueStorage(storageSource).getItem(CATALOG_STORAGE_KEY);
+      if (!raw) return [];
+      const parsed: unknown = JSON.parse(raw);
+      return Array.isArray(parsed)
+        ? parsed.filter(isStoredCatalogItem).slice(0, MAX_CATALOG_ITEMS)
+        : [];
+    } catch {
+      return [];
+    }
+  }
+
   return {
-    load(): CatalogItem[] {
-      try {
-        const raw = resolveKeyValueStorage(storageSource).getItem(CATALOG_STORAGE_KEY);
-        if (!raw) return [];
-        const parsed: unknown = JSON.parse(raw);
-        return Array.isArray(parsed)
-          ? parsed.filter(isStoredCatalogItem).slice(0, MAX_CATALOG_ITEMS)
-          : [];
-      } catch {
-        return [];
-      }
-    },
+    load,
     create(item: CatalogItem): void {
-      const current = this.load();
+      const current = load();
       if (current.length >= MAX_CATALOG_ITEMS) {
         throw new Error("El catálogo alcanzó el límite de 500 elementos.");
       }
@@ -50,7 +52,7 @@ export function createCatalogRepository(storageSource: KeyValueStorageSource): C
       write([item, ...current]);
     },
     update(item: CatalogItem): void {
-      const current = this.load();
+      const current = load();
       if (!current.some((entry) => entry.id === item.id)) {
         throw new Error("No se encontró el elemento que quieres actualizar.");
       }
