@@ -9,7 +9,9 @@ export function CatalogPage({ service, currency, formatMoney, onUseInCalculator 
   formatMoney: (value: number, currency: CatalogCurrency) => string;
   onUseInCalculator: (item: CatalogItem) => void;
 }) {
-  const [items, setItems] = useState<CatalogItem[]>(() => service.load());
+  const [catalogLoadState] = useState(() => service.loadState());
+  const [items, setItems] = useState<CatalogItem[]>(catalogLoadState.items);
+  const [needsRecovery, setNeedsRecovery] = useState(catalogLoadState.needsRecovery);
   const [name, setName] = useState("");
   const [kind, setKind] = useState<CatalogItemKind>("product");
   const [unit, setUnit] = useState("pieza");
@@ -45,6 +47,7 @@ export function CatalogPage({ service, currency, formatMoney, onUseInCalculator 
   }
 
   function toggleActive(item: CatalogItem) {
+    if (needsRecovery) return;
     try {
       const next = service.setActive(item.id, !item.active, items);
       setItems(next);
@@ -54,8 +57,24 @@ export function CatalogPage({ service, currency, formatMoney, onUseInCalculator 
     }
   }
 
+
+  function startNewCatalog() {
+    try {
+      service.reset();
+      setItems([]);
+      setNeedsRecovery(false);
+      setMessage("Se inició un catálogo nuevo en este navegador.");
+    } catch {
+      setMessage("No fue posible reiniciar el catálogo. Los datos anteriores no se modificaron.");
+    }
+  }
+
   function saveItem(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (needsRecovery) {
+      setMessage("Revisa o reinicia el catálogo antes de modificarlo.");
+      return;
+    }
     const draft: CatalogDraft = { name, kind, unit, sku, currency: draftCurrency, referenceCost };
     try {
       if (editingId) {
@@ -78,6 +97,13 @@ export function CatalogPage({ service, currency, formatMoney, onUseInCalculator 
       <p className="eyebrow">FIXORA ESSENTIALS <span> / </span> 06</p>
       <h1>Tu catálogo de productos y servicios.</h1>
       <p className="page-lead">Mantén una lista sencilla de lo que vendes o prestas. El coste de referencia es informativo; cada cálculo guardado conservará sus propios valores.</p>
+      {needsRecovery && (
+        <div className="guide-callout" role="alert">
+          <strong>El catálogo contiene datos que no se pueden leer.</strong>
+          <p>Fixora conserva el almacenamiento original y no lo reemplazará automáticamente. Puedes seguir consultando los elementos legibles o iniciar un catálogo nuevo; esta acción sustituirá el contenido local actual.</p>
+          <button className="outline-button" onClick={startNewCatalog}>Iniciar un catálogo nuevo</button>
+        </div>
+      )}
       <section className="surface-card catalog-form-card">
         <div className="section-heading"><div className="section-number">01</div><div><h2>{editingId ? "Editar elemento" : "Añadir al catálogo"}</h2><p>Usa unidades claras y conserva la moneda correcta de cada registro.</p></div></div>
         <form className="catalog-form" onSubmit={saveItem}>
@@ -87,7 +113,7 @@ export function CatalogPage({ service, currency, formatMoney, onUseInCalculator 
           <label className="field"><span>SKU / código (opcional)</span><input value={sku} maxLength={40} placeholder="Código interno" onChange={(event) => setSku(event.target.value)} /></label>
           <label className="field"><span>Moneda</span><select value={draftCurrency} onChange={(event) => setDraftCurrency(event.target.value as CatalogCurrency)}><option value="MXN">MXN</option><option value="USD">USD</option></select></label>
           <label className="field"><span>Coste de referencia ({draftCurrency})</span><input type="number" min="0" step="0.01" value={referenceCost} onChange={(event) => setReferenceCost(Math.max(0, Number(event.target.value) || 0))} /></label>
-          <div className="catalog-form-actions"><button className="primary-button compact" type="submit">{editingId ? "Guardar cambios" : "Añadir al catálogo"} <span>↗</span></button>{editingId && <button className="outline-button" type="button" onClick={resetForm}>Cancelar</button>}</div>
+          <div className="catalog-form-actions"><button className="primary-button compact" type="submit" disabled={needsRecovery}>{editingId ? "Guardar cambios" : "Añadir al catálogo"} <span>↗</span></button>{editingId && <button className="outline-button" type="button" onClick={resetForm}>Cancelar</button>}</div>
         </form>
         <p className="save-message" role="status">{message}</p>
       </section>
@@ -103,7 +129,7 @@ export function CatalogPage({ service, currency, formatMoney, onUseInCalculator 
                 <div className="catalog-main"><strong>{item.name}</strong><span>{item.sku ? `SKU ${item.sku} · ` : ""}Por {item.unit}</span></div>
                 <div className="catalog-cost"><span>COSTE REFERENCIA</span><strong>{formatMoney(item.referenceCost, item.currency)}</strong></div>
                 <button className="outline-button catalog-use-button" onClick={() => onUseInCalculator(item)} disabled={!item.active}>Costear</button>
-                <div className="catalog-row-actions"><button className="outline-button" onClick={() => startEditing(item)}>Editar</button><button className="text-button" onClick={() => toggleActive(item)}>{item.active ? "Archivar" : "Reactivar"}</button></div>
+                <div className="catalog-row-actions"><button className="outline-button" onClick={() => startEditing(item)} disabled={needsRecovery}>Editar</button><button className="text-button" onClick={() => toggleActive(item)} disabled={needsRecovery}>{item.active ? "Archivar" : "Reactivar"}</button></div>
               </article>
             ))}
           </div>
