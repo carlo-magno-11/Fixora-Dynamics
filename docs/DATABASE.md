@@ -29,3 +29,8 @@ Fuente oficial: https://supabase.com/changelog/45329-breaking-change-tables-not-
 ## Frontera con EYESITE
 
 No recuperar ni reproducir las migraciones históricas EYESITE. No mover, borrar ni modificar objetos remotos como atajo. El trigger Auth remoto heredado debe resolverse en una migración de transición separada antes de habilitar signup remoto. Ninguna operación remota se realiza sin inspección, respaldo, plan y aprobación explícita.
+
+
+## Estado de ejecución — 31 de octubre de 2026
+
+El proyecto de pruebas `eyesite-security-test` (`dclaebknyalimmtgppeg`) ya contiene el esquema Fixora de identidad, negocio, operación, licencias, administración y soporte. RLS está habilitado en todas las tablas Fixora y FORCE RLS en tablas privadas. Security Advisor no reporta hallazgos; Performance Advisor no reporta FKs sin índice. No hay datos de prueba persistidos. Falta CI de reconstrucción completa, Auth/Edge Functions en la app, backup/restore, staging y borrar por Storage API el bucket vacío heredado `eyesite-media`. El proyecto oficial EYESITE no se ha tocado.
