@@ -39,6 +39,16 @@ describe("Fixora annual license policy", () => {
     }, "2026-11-01T12:00:00.000Z")).toBe("pending");
   });
 
+  it("does not grant an active license before its activation timestamp", () => {
+    const state = getEffectiveLicenseState({
+      status: "active",
+      activatedAt: "2027-01-01T00:00:00.000Z",
+      expiresAt: "2028-01-01T00:00:00.000Z",
+    }, "2026-12-31T23:59:59.999Z");
+    expect(state).toBe("pending");
+    expect(getLicenseCapabilities(state)).not.toContain("premium.tools");
+  });
+
   it("rejects a license whose expiry is not after activation", () => {
     expect(() => getEffectiveLicenseState({
       status: "active",
