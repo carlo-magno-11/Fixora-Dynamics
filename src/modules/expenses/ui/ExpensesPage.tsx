@@ -1,19 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
-import { summarizeExpenses } from "../domain/expenses";
+import type { ExpensesApplicationService, ExpenseCurrency } from "../application/expenses-service";
 import type { ExpensePeriod } from "../domain/expenses";
-import { createExpensesRepository, type ExpenseCurrency } from "../infrastructure/browser-expenses-repository";
 
 type CurrencyCode = ExpenseCurrency;
 
-export function ExpensesPage({ currency, formatMoney }: {
+export function ExpensesPage({ service, currency, formatMoney }: {
+  service: ExpensesApplicationService;
   currency: CurrencyCode;
   formatMoney: (value: number, currency: CurrencyCode) => string;
 }) {
-  const repository = useMemo(
-    () => createExpensesRepository(() => window.localStorage),
-    [],
-  );
-  const [saved] = useState(() => repository.load(currency));
+  const [saved] = useState(() => service.load(currency));
   const [fixed, setFixed] = useState(saved.fixed);
   const [variable, setVariable] = useState(saved.variable);
   const [expectedUnits, setExpectedUnits] = useState(saved.expectedUnits);
@@ -24,11 +20,11 @@ export function ExpensesPage({ currency, formatMoney }: {
 
   const summary = useMemo(() => {
     try {
-      return { result: summarizeExpenses({ fixedExpenses: fixed, variableExpenses: variable, expectedUnits, period }), error: null };
+      return { result: service.summarize({ fixedExpenses: fixed, variableExpenses: variable, expectedUnits, period }), error: null };
     } catch (error) {
       return { result: null, error: error instanceof Error ? error.message : "Revisa los datos de tus gastos." };
     }
-  }, [fixed, variable, expectedUnits, period]);
+  }, [fixed, variable, expectedUnits, period, service]);
 
   useEffect(() => {
     if (needsCurrencyReview) {
@@ -36,7 +32,7 @@ export function ExpensesPage({ currency, formatMoney }: {
       return;
     }
     try {
-      repository.save({
+      service.save({
         fixed,
         variable,
         expectedUnits,
@@ -47,7 +43,7 @@ export function ExpensesPage({ currency, formatMoney }: {
     } catch {
       setMessage("No fue posible guardar los gastos en este navegador.");
     }
-  }, [fixed, variable, expectedUnits, period, expenseCurrency, needsCurrencyReview, repository]);
+  }, [fixed, variable, expectedUnits, period, expenseCurrency, needsCurrencyReview, service]);
 
   function updateFixed(id: string, key: "name" | "amount", value: string) {
     setFixed((current) => current.map((item) => item.id === id
@@ -76,7 +72,7 @@ export function ExpensesPage({ currency, formatMoney }: {
               <button className="delete-button" aria-label={`Eliminar ${item.name || "gasto fijo"}`} onClick={() => setFixed((current) => current.filter((entry) => entry.id !== item.id))}>×</button>
             </div>
           ))}
-          <button className="outline-button" onClick={() => setFixed((current) => [...current, { id: crypto.randomUUID(), name: "", amount: 0 }])}>+ Añadir gasto fijo</button>
+          <button className="outline-button" onClick={() => setFixed((current) => [...current, service.createFixedExpense()])}>+ Añadir gasto fijo</button>
         </section>
         <section className="surface-card">
           <div className="section-heading"><div className="section-number">02</div><div><h2>Costes variables por unidad</h2><p>Importes que se generan con cada producto o servicio vendido.</p></div></div>
@@ -87,7 +83,7 @@ export function ExpensesPage({ currency, formatMoney }: {
               <button className="delete-button" aria-label={`Eliminar ${item.name || "coste variable"}`} onClick={() => setVariable((current) => current.filter((entry) => entry.id !== item.id))}>×</button>
             </div>
           ))}
-          <button className="outline-button" onClick={() => setVariable((current) => [...current, { id: crypto.randomUUID(), name: "", costPerUnit: 0 }])}>+ Añadir coste variable</button>
+          <button className="outline-button" onClick={() => setVariable((current) => [...current, service.createVariableExpense()])}>+ Añadir coste variable</button>
         </section>
       </div>
       <section className="surface-card expense-allocation">
