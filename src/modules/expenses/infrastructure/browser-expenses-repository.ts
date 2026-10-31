@@ -12,7 +12,7 @@ export const EXPENSES_STORAGE_KEY = "fixora.expenses.v1";
 function isFixedExpense(value: unknown): value is FixedExpense {
   if (!value || typeof value !== "object") return false;
   const item = value as Record<string, unknown>;
-  return typeof item.id === "string" &&
+  return typeof item.id === "string" && item.id.trim().length > 0 &&
     typeof item.name === "string" &&
     typeof item.amount === "number" &&
     Number.isFinite(item.amount) &&
