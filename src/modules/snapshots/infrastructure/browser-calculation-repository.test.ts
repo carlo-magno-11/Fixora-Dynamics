@@ -99,18 +99,32 @@ describe("browser calculation history repository", () => {
     })).load()).toEqual([]);
   });
 
-  it("limits loaded and saved history to one hundred records", () => {
+  it("limits loaded and new history to one hundred records without truncating an oversized existing file", () => {
     const records = Array.from({ length: 105 }, (_, index) => ({
       ...validRecord,
       id: `calc-${index}`,
     }));
-    const storage = createMemoryStorage({
+    const existingStorage = createMemoryStorage({
       [CALCULATION_HISTORY_STORAGE_KEY]: JSON.stringify(records),
     });
+    const existingRepository = createCalculationHistoryRepository(existingStorage);
+    expect(existingRepository.load()).toHaveLength(100);
+    expect(() => existingRepository.save(records)).toThrow("No se puede modificar el historial porque los datos guardados no son válidos.");
+    expect(JSON.parse(existingStorage.getItem(CALCULATION_HISTORY_STORAGE_KEY) ?? "[]")).toHaveLength(105);
+
+    const newStorage = createMemoryStorage();
+    createCalculationHistoryRepository(newStorage).save(records);
+    expect(JSON.parse(newStorage.getItem(CALCULATION_HISTORY_STORAGE_KEY) ?? "[]")).toHaveLength(100);
+  });
+
+  it("does not overwrite malformed or partially invalid history", () => {
+    const storage = createMemoryStorage({
+      [CALCULATION_HISTORY_STORAGE_KEY]: "{",
+    });
     const repository = createCalculationHistoryRepository(storage);
-    expect(repository.load()).toHaveLength(100);
-    repository.save(records);
-    expect(JSON.parse(storage.getItem(CALCULATION_HISTORY_STORAGE_KEY) ?? "[]")).toHaveLength(100);
+    expect(repository.load()).toEqual([]);
+    expect(() => repository.save([validRecord])).toThrow("No se puede modificar el historial porque los datos guardados están dañados.");
+    expect(storage.getItem(CALCULATION_HISTORY_STORAGE_KEY)).toBe("{");
   });
 
   it("handles storage access failures without breaking history loading", () => {
