@@ -50,15 +50,19 @@ export function validateCatalogDraft(
 
 export function createCatalogItem(
   draft: CatalogDraft,
-  existing: CatalogItem[] = [],
+  existing: CatalogItem[],
+  id: string,
 ): CatalogItem {
   const errors = validateCatalogDraft(draft, existing);
   if (errors.length > 0) {
     throw new Error(errors[0]);
   }
+  if (typeof id !== "string" || !id.trim()) {
+    throw new Error("No se pudo generar un identificador para el elemento.");
+  }
   return {
     ...draft,
-    id: crypto.randomUUID(),
+    id,
     name: draft.name.trim(),
     unit: draft.unit.trim(),
     sku: draft.sku.trim(),
