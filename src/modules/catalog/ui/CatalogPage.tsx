@@ -46,7 +46,8 @@ export function CatalogPage({ service, currency, formatMoney, onUseInCalculator 
 
   function toggleActive(item: CatalogItem) {
     try {
-      setItems((current) => service.setActive(item.id, !item.active, current));
+      const next = service.setActive(item.id, !item.active, items);
+      setItems(next);
       setMessage(item.active ? "Elemento archivado." : "Elemento reactivado.");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "No fue posible actualizar el catálogo.");
@@ -58,10 +59,12 @@ export function CatalogPage({ service, currency, formatMoney, onUseInCalculator 
     const draft: CatalogDraft = { name, kind, unit, sku, currency: draftCurrency, referenceCost };
     try {
       if (editingId) {
-        setItems((current) => service.update(editingId, draft, current));
+        const next = service.update(editingId, draft, items);
+        setItems(next);
         setMessage("Cambios guardados en el catálogo.");
       } else {
-        setItems((current) => service.create(draft, current));
+        const next = service.create(draft, items);
+        setItems(next);
         setMessage("Elemento añadido al catálogo.");
       }
       resetForm();
