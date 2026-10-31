@@ -1,14 +1,23 @@
 import { createCatalogItem, updateCatalogItem } from "../domain/catalog";
 import type { CatalogDraft, CatalogItem } from "../domain/catalog";
 
+export interface CatalogRepositoryLoadState {
+  items: CatalogItem[];
+  needsRecovery: boolean;
+}
+
 export interface CatalogRepositoryPort {
   load(): CatalogItem[];
+  loadState(): CatalogRepositoryLoadState;
   create(item: CatalogItem): void;
   update(item: CatalogItem): void;
+  reset(): void;
 }
 
 export interface CatalogApplicationService {
   load(): CatalogItem[];
+  loadState(): CatalogRepositoryLoadState;
+  reset(): void;
   create(draft: CatalogDraft, current: CatalogItem[]): CatalogItem[];
   update(id: string, draft: CatalogDraft, current: CatalogItem[]): CatalogItem[];
   setActive(id: string, active: boolean, current: CatalogItem[]): CatalogItem[];
@@ -20,6 +29,8 @@ export function createCatalogApplicationService(
 ): CatalogApplicationService {
   return {
     load: () => repository.load(),
+    loadState: () => repository.loadState(),
+    reset: () => repository.reset(),
 
     create(draft, current) {
       if (current.length >= 500) {
