@@ -443,3 +443,8 @@ La base de pruebas ya contiene el esquema Fixora de identidad, operación, licen
 - Se limpiaron las filas temporales de usuario, pedido, licencia y dispositivos; todos los recuentos quedaron en cero.
 - Mutation test manual de soporte: policy SELECT permisiva temporal permitió que la prueba detectara el acceso cruzado de Customer B al ticket de Customer A; el test falló como se esperaba y la transacción revirtió la policy. Recuento de la policy temporal después: cero.
 - `scripts/test-license-concurrency.sh` se incorporó al workflow DB CI, con guard que impide ejecutarlo fuera del puerto local de Supabase.
+
+
+## 19. Revalidación de reintentos de activación — 31 de octubre de 2026
+
+Se corrigió una rama idempotente: un código redimido previamente ya no devuelve una respuesta de activación si, entre el primer uso y el reintento, la compra fue reembolsada, la licencia quedó suspendida/revocada/expirada o el dispositivo fue revocado. Se comprueban de nuevo compra, licencia y dispositivo activo. La prueba de licencias incluye ahora el reintento posterior a reembolso y terminó en `ok 27`.
