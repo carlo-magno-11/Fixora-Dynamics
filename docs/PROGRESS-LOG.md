@@ -542,3 +542,13 @@ Proyecto de destino verificado antes de las operaciones: `eyesite-security-test`
 - Las migraciones de Fixora se versionaron en `supabase/migrations`; la migración de identidad se renombró al timestamp registrado en el proyecto de pruebas y se incorporó la limpieza EYESITE idempotente.
 - La CI #749/#283 anterior valida la fundación previa. Falta una nueva ejecución DB CI que reconstruya desde cero todas las migraciones y ejecute las suites actuales.
 - La app sigue usando persistencia local; no se desplegaron Edge Functions ni se conectó Supabase Auth en la app. No hay administrador inicial provisionado. No está listo para producción.
+
+
+## 2026-10-31 — Entrega 14: concurrencia e integridad RLS
+
+- Se ejecutaron las cinco suites de base de datos en el proyecto de pruebas: fundación 25, negocio/RLS 20, operación 71, licencias 27 y administración/soporte 23; total 166 aserciones pgTAP, sin fallos en la última ejecución. Los bloques funcionales de licencias y administración/soporte también terminaron sin error.
+- Se ejecutó una prueba de carrera real con dos conexiones concurrentes sobre una licencia con dos dispositivos activos: una tercera alta fue aceptada, la cuarta concurrente fue rechazada con `Active device limit reached`, y el total final quedó exactamente en 3.
+- El fixture concurrente se limpió: usuario, pedido, licencia y dispositivos = 0 filas tras el test.
+- Se introdujo `scripts/test-license-concurrency.sh`, restringido a la URL local de Supabase `127.0.0.1:54322`, y se añadió al workflow DB CI.
+- Mutation test manual: se creó temporalmente una policy permisiva SELECT para tickets; la suite falló exactamente al detectar que Customer B podía ver el ticket de Customer A. La transacción revirtió la policy; verificación posterior: policy temporal = 0.
+- La CI que ejecuta el nuevo script y todas las migraciones sigue pendiente de nueva corrida en el HEAD actual.
