@@ -62,6 +62,43 @@ describe("browser calculation history repository", () => {
     })).load()).toEqual([]);
   });
 
+  it("rejects pricing rates at or above one hundred percent", () => {
+    const invalid = { ...validRecord, input: { ...validRecord.input, targetMarginRate: 1 } };
+    expect(createCalculationHistoryRepository(createMemoryStorage({
+      [CALCULATION_HISTORY_STORAGE_KEY]: JSON.stringify([invalid]),
+    })).load()).toEqual([]);
+  });
+
+  it("rejects catalog snapshots whose currency differs from the calculation", () => {
+    const invalid = {
+      ...validRecord,
+      catalogItem: {
+        id: "item-1",
+        name: "Jabón",
+        kind: "product",
+        unit: "pieza",
+        sku: "JAB-01",
+        currency: "USD",
+        referenceCost: 25,
+      },
+    };
+    expect(createCalculationHistoryRepository(createMemoryStorage({
+      [CALCULATION_HISTORY_STORAGE_KEY]: JSON.stringify([invalid]),
+    })).load()).toEqual([]);
+  });
+
+  it("rejects empty identities and negative cost or price results", () => {
+    const invalidRecords = [
+      { ...validRecord, id: " " },
+      { ...validRecord, name: " " },
+      { ...validRecord, result: { ...validRecord.result, suggestedPrice: -1 } },
+      { ...validRecord, result: { ...validRecord.result, totalUnitCost: -1 } },
+    ];
+    expect(createCalculationHistoryRepository(createMemoryStorage({
+      [CALCULATION_HISTORY_STORAGE_KEY]: JSON.stringify(invalidRecords),
+    })).load()).toEqual([]);
+  });
+
   it("limits loaded and saved history to one hundred records", () => {
     const records = Array.from({ length: 105 }, (_, index) => ({
       ...validRecord,
