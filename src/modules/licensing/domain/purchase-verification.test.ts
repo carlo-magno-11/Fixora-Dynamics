@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { evaluatePurchaseEligibility, type PurchaseVerification } from "./purchase-verification";
 
 const verifiedPurchase: PurchaseVerification = {
-  provider: "manual",
+  provider: "etsy",
   externalOrderId: "ORDER-2026-001",
   productSku: "FIXORA-ESSENTIALS-ANNUAL",
   paymentStatus: "approved",
