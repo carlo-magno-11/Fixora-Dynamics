@@ -349,3 +349,24 @@ CI #524 pasó typecheck, pero el test de arquitectura detectó dos dependencias 
 - Se añadió SnapshotApplicationService con reloj y generador de ID inyectados. El dominio de snapshots ahora requiere ID/fecha y dejó de invocar crypto.randomUUID() o new Date() por su cuenta.
 - Se añadieron pruebas del servicio de snapshots y se reforzó el test de arquitectura para prohibir globals de navegador/red y crypto en domain/application.
 - El repositorio de gastos continúa tratando sus listas como un agregado completo; antes de edición cloud multiusuario se añadirá revisión/versionado optimista para evitar lost updates.
+
+
+## 2026-10-31 — Entrega 7: integridad local, reglas de licencia y modelo de datos
+
+### Cambios adicionales
+
+- Catálogo: el puerto de repositorio ahora usa operaciones por entidad (create/update), no reemplazo de la colección completa. El adaptador local rechaza escrituras si el JSON existente está dañado, contiene filas inválidas o supera el límite, evitando sobrescribir silenciosamente datos no legibles.
+- Gastos: el repositorio diferencia registros sin moneda (requieren confirmación) de datos corruptos (requieren recuperación explícita). La UI no persiste una lista vacía hasta que el usuario elige iniciar una nueva lista.
+- Historial: el repositorio no sobrescribe JSON dañado, filas inválidas ni archivos existentes por encima del límite. El snapshot recibe ID y fecha desde SnapshotApplicationService.
+- Licencias: la vigencia activa exige exactamente un año calendario desde la primera activación; una fecha futura de activación no concede acceso; los conteos de dispositivos inválidos se rechazan.
+- Compras: la política valida proveedores conocidos y obliga a que el método de verificación corresponda al proveedor (Etsy API/revisión manual, Gumroad API, Hotmart webhook firmado, manual/revisión manual).
+- Se añadió `docs/DATA-MODEL.md` con el modelo objetivo de negocio, catálogo, gastos, snapshots, compras, licencias, dispositivos, administración, auditoría y secuencia de migraciones. Es especificación, no DDL ejecutable.
+- Se corrigieron documentos que tenían una copia duplicada del SQL o instrucciones históricas que podían sugerir mover objetos EYESITE. La migración canónica tiene una sola fuente de verdad.
+
+### Evidencia pendiente
+
+- CI #524 pasó typecheck, pero falló la prueba de arquitectura antes de que se eliminaran las dos dependencias UI → infraestructura. Ese refactor y las nuevas pruebas todavía no tienen una corrida nueva confirmada.
+- Database tests #25 continúa pendiente sin jobs visibles.
+- No se ha aplicado la migración en local o remoto. No se ha escrito en Supabase Cloud.
+- PR #1 permanece abierto en borrador.
+
