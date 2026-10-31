@@ -57,6 +57,37 @@ describe("purchase verification policy", () => {
     });
   });
 
+  it("rejects unsupported commerce providers at runtime", () => {
+    const invalid = { ...verifiedPurchase, provider: "unknown" } as unknown as PurchaseVerification;
+    expect(evaluatePurchaseEligibility(invalid, "FIXORA-ESSENTIALS-ANNUAL")).toMatchObject({
+      eligible: false,
+      reason: "unsupported_provider",
+    });
+  });
+
+  it("requires a verification method appropriate to the provider", () => {
+    expect(evaluatePurchaseEligibility({
+      ...verifiedPurchase,
+      provider: "hotmart",
+      verificationMethod: "manual_seller_review",
+    }, "FIXORA-ESSENTIALS-ANNUAL")).toMatchObject({
+      eligible: false,
+      reason: "verification_method_mismatch",
+    });
+  });
+
+  it("rejects empty product identifiers and malformed payment states", () => {
+    expect(evaluatePurchaseEligibility(verifiedPurchase, " ")).toMatchObject({
+      eligible: false,
+      reason: "product_mismatch",
+    });
+    const invalid = { ...verifiedPurchase, paymentStatus: "paid" } as unknown as PurchaseVerification;
+    expect(evaluatePurchaseEligibility(invalid, "FIXORA-ESSENTIALS-ANNUAL")).toMatchObject({
+      eligible: false,
+      reason: "purchase_data_invalid",
+    });
+  });
+
   it("rejects malformed verification timestamps", () => {
     expect(evaluatePurchaseEligibility({
       ...verifiedPurchase,
