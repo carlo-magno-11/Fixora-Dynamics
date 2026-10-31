@@ -281,3 +281,27 @@ Rama: `foundation/bootstrap-20261029`. PR #1 permanece abierto en borrador.
 - Commit de corrección: `a7f94f9a35146dbab7da41aabb02e63353cba9de`.
 - La corrección todavía requiere typecheck/test/build verde en un nuevo run. El workflow de base de datos #25 continúa pendiente de que GitHub inicie el job; no se declara aprobado.
 
+
+
+## 2026-10-31 — Entrega 5: pruebas de aislamiento, guardrails y reglas de licencia
+
+### Cambios de código y base de datos
+
+| Commit | Cambio |
+|---|---|
+| `a7f94f9a35146dbab7da41aabb02e63353cba9de` | La prueba de arquitectura usa Vite glob imports; elimina la dependencia no instalada de tipos Node. |
+| `77d3dc4dc61131d9081a0e259252b2abc9354296` | pgTAP amplía grants mínimos: sin INSERT/DELETE de negocios, sin mutación directa de perfiles/membresías y sin ejecución directa del trigger Auth. |
+| `169309012d571a0258d573b723bcdbd714abaea2` | pgTAP demuestra que el propietario sí puede actualizar su propio negocio. |
+| `a35ebd1bd40d521073eb0e8529ea4c852885f2bb` | La licencia con estado active no concede premium antes de activatedAt; antes de esa fecha se resuelve como pending. |
+| `514bf2f2948df10e9811b8094a1dc37ff2cc50df` | Prueba del límite temporal de activación futura y de ausencia de capacidades premium antes de la fecha. |
+| `8ae80f80b7a3a0c73456af89276fb59561dd3f60` | Pruebas parametrizadas de los cuatro porcentajes críticos de precio (merma, comisión, margen y descuento) al 100%. |
+| `e88ce3f543684fc34611c0c13dab77c16eb0a939` | Pipeline DB fija Supabase CLI 2.122.0 y alinea el PostgreSQL local de CI a la versión mayor 17. |
+
+### Validación
+
+- CI #491 sobre el commit anterior detectó el error de tipos Node. El código fue corregido con Vite sin añadir dependencias.
+- El job Database tests #25 fue creado pero seguía pendiente sin jobs visibles en la última consulta.
+- No hay todavía una corrida verde posterior a estas correcciones. No se afirma que typecheck, Vitest, build, migración o pgTAP hayan pasado en el HEAD actual.
+- La suite de fundación tiene 25 comprobaciones planificadas y 25 llamadas de aserción; la suite de aislamiento A/B tiene 17 comprobaciones planificadas.
+- La prueba de arquitectura sigue siendo un guardrail inicial y debe ampliarse conforme se extraigan módulos.
+
