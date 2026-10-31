@@ -109,3 +109,10 @@ Lectura adicional de catálogos PostgreSQL:
 - El bucket `eyesite-media` existe y es público. No se elimina ni se reutiliza en Fixora.
 
 La transición debe preservar las relaciones FK al mover tablas de esquema (PostgreSQL conserva referencias por OID), pero las políticas de Storage que llaman a `public.is_admin()` deben revisarse y retirarse o sustituirse en el mismo plan controlado antes de mover/retirar esa función. No se debe mover o borrar la función sin revisar primero esas políticas.
+
+
+## Seguimiento — 31 de octubre de 2026
+
+La decisión posterior fue usar el proyecto separado `eyesite-security-test` (`dclaebknyalimmtgppeg`) como entorno de pruebas Fixora. No es el proyecto oficial EYESITE `xhvpvpvtkdgnnxdwdrkn`.
+
+En el proyecto de pruebas se retiraron las políticas, funciones y triggers Auth/Storage heredados que no pertenecían a Fixora; el esquema activo contiene únicamente tablas públicas Fixora y el esquema privado Fixora. El historial de migraciones conserva sus entradas históricas EYESITE, sin que ello implique que sigan activos sus objetos. El bucket `eyesite-media` sigue vacío y pendiente de borrar mediante Storage API. No se modificó el proyecto oficial EYESITE.
