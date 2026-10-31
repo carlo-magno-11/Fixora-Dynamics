@@ -7,7 +7,7 @@ Estado: diseño para revisión; no es DDL aplicado. La única migración de fund
 1. Todo dato operativo pertenece a un `business_id`; no se confía en el ID enviado por el cliente sin comprobar membresía activa en servidor/RLS.
 2. Los roles de negocio (`owner`, `admin`, `editor`, `viewer`) no conceden roles administrativos de plataforma.
 3. Las tablas expuestas por PostgREST tienen RLS habilitado, grants mínimos y pruebas positivas/negativas.
-4. El schema `fixora_private` no se expone por PostgREST. Códigos, órdenes, dispositivos, roles admin, eventos de proveedor y auditoría no se leen directamente desde el cliente.
+4. El schema `fixora_private` no se agrega a `api.schemas` de PostgREST. Aunque `authenticated` necesita USAGE/EXECUTE mínimos para el wrapper SECURITY INVOKER de creación de negocio, no se habilitan RPC directos del schema privado ni tablas privadas al cliente. Códigos, órdenes, dispositivos, roles admin, eventos de proveedor y auditoría no se leen directamente desde el cliente.
 5. Las operaciones privilegiadas usan funciones internas SECURITY DEFINER con `search_path = ''`, nombres totalmente calificados y permisos EXECUTE mínimos. El endpoint público, si se necesita, es un wrapper SECURITY INVOKER.
 6. El cliente no decide vencimiento, estado de compra, activación, cantidad de dispositivos, privilegios ni auditoría.
 7. Los cálculos guardados son snapshots inmutables: conservar inputs, outputs, versión de fórmula y versión de esquema.
