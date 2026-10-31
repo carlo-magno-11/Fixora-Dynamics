@@ -141,7 +141,7 @@ returns trigger
 language plpgsql
 security definer
 set search_path = ''
-as $
+as $$
 begin
   update public.fixora_profiles
   set email = new.email,
@@ -149,7 +149,7 @@ begin
   where id = new.id;
   return new;
 end;
-$;
+$$;
 
 revoke all on function fixora_private.sync_auth_user_email() from public, anon, authenticated;
 
