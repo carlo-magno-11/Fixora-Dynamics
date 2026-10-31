@@ -2,7 +2,7 @@ BEGIN;
 
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 
-SELECT plan(12);
+SELECT plan(16);
 
 SELECT has_table('public', 'fixora_profiles', 'Fixora profiles table exists');
 SELECT has_table('public', 'fixora_businesses', 'Fixora businesses table exists');
@@ -49,6 +49,42 @@ SELECT ok(
     'EXECUTE'
   ),
   'authenticated can execute business creation RPC'
+);
+
+SELECT ok(
+  NOT (
+    SELECT procedure.prosecdef
+    FROM pg_catalog.pg_proc AS procedure
+    WHERE procedure.oid = 'public.fixora_create_business(text,text,text,text)'::regprocedure
+  ),
+  'public business RPC is SECURITY INVOKER'
+);
+
+SELECT ok(
+  (
+    SELECT procedure.prosecdef
+    FROM pg_catalog.pg_proc AS procedure
+    WHERE procedure.oid = 'private.create_business_for_authenticated_user(text,text,text,text)'::regprocedure
+  ),
+  'privileged business creation implementation is private SECURITY DEFINER'
+);
+
+SELECT ok(
+  NOT has_function_privilege(
+    'anon',
+    'private.create_business_for_authenticated_user(text,text,text,text)',
+    'EXECUTE'
+  ),
+  'anon cannot execute the private business creation function'
+);
+
+SELECT ok(
+  has_function_privilege(
+    'authenticated',
+    'private.create_business_for_authenticated_user(text,text,text,text)',
+    'EXECUTE'
+  ),
+  'authenticated can call the private function through the public wrapper'
 );
 
 SELECT ok(
