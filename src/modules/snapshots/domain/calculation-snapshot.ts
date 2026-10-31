@@ -16,8 +16,9 @@ export type CreatePricingSnapshotInput = {
   name: string;
   currency: "MXN" | "USD";
   pricingInput: PricingInput;
+  id: string;
+  createdAt: string;
   catalogItem?: CatalogItemSnapshot;
-  createdAt?: string;
 };
 
 export type PricingSnapshot = {
@@ -37,10 +38,13 @@ export function createPricingSnapshot(input: CreatePricingSnapshotInput): Pricin
   if (!name) {
     throw new Error("El cálculo necesita un nombre.");
   }
+  if (!input.id.trim()) {
+    throw new Error("El cálculo necesita un identificador.");
+  }
   if (input.currency !== "MXN" && input.currency !== "USD") {
     throw new Error("Selecciona una moneda válida.");
   }
-  const createdAt = input.createdAt ?? new Date().toISOString();
+  const createdAt = input.createdAt;
   if (!Number.isFinite(Date.parse(createdAt))) {
     throw new Error("La fecha del cálculo no es válida.");
   }
@@ -66,7 +70,7 @@ export function createPricingSnapshot(input: CreatePricingSnapshotInput): Pricin
   return Object.freeze({
     schemaVersion: 1,
     formulaVersion: PRICING_FORMULA_VERSION,
-    id: crypto.randomUUID(),
+    id: input.id,
     name,
     createdAt,
     currency: input.currency,
