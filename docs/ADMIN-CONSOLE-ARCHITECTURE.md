@@ -40,10 +40,10 @@ Los permisos se asignan por acción, no por nombre de pantalla. El módulo de do
 ## Modelo de datos previsto
 
 Objetos internos en esquema no expuesto:
-- `private.fixora_admin_memberships`: user_id, role, status, created_by, created_at, revoked_at.
-- `private.fixora_audit_events`: actor_id, action, target_type, target_id, reason, request_id, metadata minimizada, created_at.
-- `private.fixora_activation_code_hashes`: code_hash, product_id, status, expires_at, redeemed_at, license_id.
-- `private.fixora_license_secrets`: proveedor y secretos cifrados/gestionados fuera del cliente cuando proceda.
+- `fixora_private.fixora_admin_memberships`: user_id, role, status, created_by, created_at, revoked_at.
+- `fixora_private.fixora_audit_events`: actor_id, action, target_type, target_id, reason, request_id, metadata minimizada, created_at.
+- `fixora_private.fixora_activation_code_hashes`: code_hash, product_id, status, expires_at, redeemed_at, license_id.
+- `fixora_private.fixora_license_secrets`: proveedor y secretos cifrados/gestionados fuera del cliente cuando proceda.
 
 Tablas operativas con RLS estricta:
 - `public.fixora_orders`, `public.fixora_licenses`, `public.fixora_license_entitlements`, `public.fixora_license_devices`, `public.fixora_support_tickets`.
