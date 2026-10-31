@@ -20,7 +20,7 @@ function createSnapshot(input: Omit<CreatePricingSnapshotInput, "id" | "createdA
   id?: string;
   createdAt?: string;
 }) {
-  return createSnapshot({
+  return createPricingSnapshot({
     id: input.id ?? "snapshot-test",
     createdAt: input.createdAt ?? "2026-10-30T12:00:00.000Z",
     ...input,
@@ -29,7 +29,7 @@ function createSnapshot(input: Omit<CreatePricingSnapshotInput, "id" | "createdA
 
 describe("createPricingSnapshot", () => {
   it("stores a versioned result calculated from the captured inputs", () => {
-    const snapshot = createPricingSnapshot({
+    const snapshot = createSnapshot({
       name: " Jabón artesanal ",
       currency: "MXN",
       pricingInput,
@@ -45,7 +45,7 @@ describe("createPricingSnapshot", () => {
   });
 
   it("captures the catalog description without treating reference cost as a calculation input", () => {
-    const snapshot = createPricingSnapshot({
+    const snapshot = createSnapshot({
       name: "Producto vinculado",
       currency: "MXN",
       pricingInput,
@@ -69,12 +69,12 @@ describe("createPricingSnapshot", () => {
   });
 
   it("rejects an empty name and invalid currency", () => {
-    expect(() => createPricingSnapshot({ name: " ", currency: "MXN", pricingInput })).toThrow("El cálculo necesita un nombre.");
-    expect(() => createPricingSnapshot({ name: "Prueba", currency: "EUR" as "MXN", pricingInput })).toThrow("Selecciona una moneda válida.");
+    expect(() => createSnapshot({ name: " ", currency: "MXN", pricingInput })).toThrow("El cálculo necesita un nombre.");
+    expect(() => createSnapshot({ name: "Prueba", currency: "EUR" as "MXN", pricingInput })).toThrow("Selecciona una moneda válida.");
   });
 
   it("rejects an invalid timestamp", () => {
-    expect(() => createPricingSnapshot({
+    expect(() => createSnapshot({
       name: "Prueba",
       currency: "MXN",
       pricingInput,
@@ -83,7 +83,7 @@ describe("createPricingSnapshot", () => {
   });
 
   it("rejects catalog snapshots with a different currency", () => {
-    expect(() => createPricingSnapshot({
+    expect(() => createSnapshot({
       name: "Prueba",
       currency: "MXN",
       pricingInput,
@@ -100,7 +100,7 @@ describe("createPricingSnapshot", () => {
   });
 
   it("rejects invalid catalog references", () => {
-    expect(() => createPricingSnapshot({
+    expect(() => createSnapshot({
       name: "Prueba",
       currency: "MXN",
       pricingInput,
@@ -117,7 +117,7 @@ describe("createPricingSnapshot", () => {
   });
 
   it("rejects invalid pricing parameters rather than saving an invalid result", () => {
-    expect(() => createPricingSnapshot({
+    expect(() => createSnapshot({
       name: "Prueba",
       currency: "MXN",
       pricingInput: { ...pricingInput, targetMarginRate: 1 },
