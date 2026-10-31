@@ -225,3 +225,19 @@ Fixora no se declara lista para venta hasta que:
 - Database tests #25 quedó pendiente sin jobs visibles en la última consulta; no se ha demostrado todavía que el stack local temporal se inicie ni que la migración pase.
 - Por tanto, las pruebas nuevas y la migración siguen pendientes de evidencia de ejecución. El único CI verde confirmado sigue siendo el #466 del commit anterior af696c20c5d2e6d1f28d4f3b9a1fb97b5a042792.
 
+
+
+## 9. Refactor de capas — catálogo y gastos
+
+La prueba de arquitectura encontró dos violaciones reales: las pantallas CatalogPage y ExpensesPage importaban repositorios del navegador. En lugar de relajar el test, se añadió una capa de aplicación:
+
+- CatalogApplicationService y CatalogRepositoryPort encapsulan load/create/update/archive.
+- ExpensesApplicationService y ExpensesRepositoryPort encapsulan load/save/summarize y la creación de filas.
+- Los repositorios browser implementan los puertos; las pantallas ya no importan infraestructura.
+- App.tsx actúa como composition root: instancia adaptadores, inyecta generadores de ID y pasa servicios a las páginas.
+- El dominio de catálogo recibe ahora el ID desde fuera; no depende de crypto global.
+- Se evitaron efectos secundarios de persistencia dentro de React state updater callbacks.
+- Se añadieron nueve pruebas de los servicios de aplicación.
+
+Este cambio deja preparado el límite para sustituir browser localStorage por repositorios Supabase sin acoplar la UI al proveedor. No significa que la persistencia cloud esté conectada. CI #524 detectó las dos violaciones antes del refactor; el nuevo HEAD aún necesita una corrida verde. El total Vitest esperado tras estas nueve pruebas es 110, pendiente de ejecución comprobada.
+
