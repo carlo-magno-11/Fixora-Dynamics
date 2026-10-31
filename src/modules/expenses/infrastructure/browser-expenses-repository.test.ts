@@ -35,6 +35,7 @@ describe("browser expenses repository", () => {
     })).load("MXN")).toMatchObject({
       currency: "MXN",
       needsCurrencyReview: true,
+      needsDataRecovery: false,
     });
   });
 
@@ -46,10 +47,14 @@ describe("browser expenses repository", () => {
       variable: [],
       currency: "USD",
       needsCurrencyReview: false,
+      needsDataRecovery: false,
     });
     expect(createExpensesRepository(() => {
       throw new Error("blocked");
-    }).load("MXN").fixed).toEqual([]);
+    }).load("MXN")).toMatchObject({
+      fixed: [],
+      needsDataRecovery: true,
+    });
   });
 
   it("rejects invalid expense rows rather than partially trusting them", () => {
