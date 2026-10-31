@@ -96,3 +96,6 @@ Proyecto verificado: `eyesite-security-test` (`dclaebknyalimmtgppeg`), PostgreSQ
 - **Límite concurrente de dispositivos:** verificado con dos sesiones reales en el proyecto de pruebas. Un alta ganó el último cupo y la otra fue rechazada; quedaron exactamente 3 dispositivos activos. El fixture se limpió.
 - **Mutation test de soporte:** una policy temporal `USING (true)` hizo que la suite detectara acceso cruzado entre dos clientes. La transacción revirtió la policy y se comprobó que no quedó instalada.
 - El workflow incluye ahora el script de concurrencia, pero su ejecución en GitHub Actions sigue pendiente.
+
+
+- Reintento de código de activación después de reembolso: corregido y probado. La rama idempotente vuelve a validar compra, licencia y dispositivo activo antes de devolver acceso.
