@@ -123,8 +123,19 @@ describe("browser calculation history repository", () => {
     });
     const repository = createCalculationHistoryRepository(storage);
     expect(repository.load()).toEqual([]);
+    expect(repository.loadState()).toMatchObject({ records: [], needsRecovery: true });
     expect(() => repository.save([validRecord])).toThrow("No se puede modificar el historial porque los datos guardados están dañados.");
     expect(storage.getItem(CALCULATION_HISTORY_STORAGE_KEY)).toBe("{");
+  });
+
+  it("allows an explicit reset after the user chooses to replace unreadable history", () => {
+    const storage = createMemoryStorage({
+      [CALCULATION_HISTORY_STORAGE_KEY]: "{",
+    });
+    const repository = createCalculationHistoryRepository(storage);
+    repository.reset();
+    expect(storage.getItem(CALCULATION_HISTORY_STORAGE_KEY)).toBe("[]");
+    expect(repository.loadState()).toEqual({ records: [], needsRecovery: false });
   });
 
   it("handles storage access failures without breaking history loading", () => {
