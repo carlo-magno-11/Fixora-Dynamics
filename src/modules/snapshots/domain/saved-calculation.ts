@@ -71,5 +71,9 @@ export function isSavedCalculation(value: unknown): value is SavedCalculation {
     "materialCost", "laborCost", "wasteCost", "directCost",
     "totalUnitCost", "suggestedPrice",
   ];
-  return nonNegativeResultKeys.every((key) => (result[key] as number) >= 0);
+  if (!nonNegativeResultKeys.every((key) => (result[key] as number) >= 0)) return false;
+  return (result.profitAtSuggestedPrice as number) >= 0 &&
+    (result.effectiveMargin as number) >= 0 &&
+    (result.effectiveMargin as number) < 1 &&
+    (result.markup as number) >= 0;
 }
