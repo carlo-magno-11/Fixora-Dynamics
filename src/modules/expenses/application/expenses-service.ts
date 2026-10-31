@@ -15,6 +15,7 @@ export interface StoredExpenses {
   period: ExpensePeriod;
   currency: ExpenseCurrency;
   needsCurrencyReview: boolean;
+  needsDataRecovery: boolean;
 }
 
 export interface ExpensesDraft {
