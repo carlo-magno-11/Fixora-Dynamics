@@ -25,3 +25,8 @@ This document is retained as a navigation point. Its former proposal to recover 
 ## Remote state distinction
 
 The remote project reserved for Fixora was observed to contain historical EYESITE objects and a legacy Auth trigger. This document does not claim the remote database is clean. The user has chosen not to spend further time reconstructing that history. Local development proceeds independently; remote transition is a later, separately approved deployment task.
+
+
+## Estado posterior — 31 de octubre de 2026
+
+La base dedicada de pruebas `eyesite-security-test` (`dclaebknyalimmtgppeg`) recibió las migraciones Fixora versionadas. Este proyecto no es el proyecto oficial EYESITE `xhvpvpvtkdgnnxdwdrkn`. La secuencia local/CI debe reconstruir desde cero todas las migraciones de `supabase/migrations`; no usar `db push` para resolver el historial remoto heredado. La limpieza de objetos Auth/Storage EYESITE está versionada, pero el bucket vacío `eyesite-media` debe eliminarse mediante Storage API. No desplegar a producción sin backup/restore, CI completo, Edge Functions, Auth/AAL2 y staging.
