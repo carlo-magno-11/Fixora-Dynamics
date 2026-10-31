@@ -24,6 +24,8 @@ jobs:
 
       - name: Set up Supabase CLI
         uses: supabase/setup-cli@v1
+        with:
+          version: 2.122.0
 
       - name: Prepare isolated local Supabase project
         shell: bash
@@ -32,6 +34,7 @@ jobs:
           mkdir -p /tmp/fixora-db-ci
           cd /tmp/fixora-db-ci
           supabase init
+          sed -i 's/^major_version = .*/major_version = 17/' supabase/config.toml
           cp -R "$GITHUB_WORKSPACE/supabase/migrations" supabase/
           cp -R "$GITHUB_WORKSPACE/supabase/tests" supabase/
 
