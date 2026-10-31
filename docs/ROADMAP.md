@@ -144,3 +144,18 @@ ERP completo, contabilidad fiscal, declaraciones, nómina, sincronización banca
 - [x] Repositorio de gastos separado de ExpensesPage; conserva confirmación de moneda de registros heredados.
 - [ ] Crear puertos de aplicación orientados a negocio/tenant y adaptadores Supabase.
 - [ ] Migrar los datos locales existentes con una experiencia explícita de importación; no asumir sincronización automática.
+
+
+## Estado actualizado — 31 de octubre de 2026
+
+La base de pruebas `eyesite-security-test` (`dclaebknyalimmtgppeg`) ya contiene identidad/negocios, catálogo/gastos/snapshots, compras/licencias/dispositivos, administración, auditoría y soporte. El proyecto oficial EYESITE `xhvpvpvtkdgnnxdwdrkn` no se tocó.
+
+- 9 tablas públicas Fixora, 14 privadas.
+- RLS en todas; FORCE RLS en tablas privadas.
+- Security Advisor: 0 hallazgos; Performance Advisor: 0 FKs sin índice.
+- Suites pgTAP operativas/licencias/admin-soporte ejecutadas contra el proyecto de pruebas; la nueva reconstrucción CI completa sigue pendiente.
+- Sin usuarios ni datos de prueba persistidos; solo SKU anual y matriz de permisos sembrados.
+- El bucket vacío `eyesite-media` sigue pendiente de eliminar mediante Storage API.
+- La app todavía usa persistencia local; Auth cloud, Edge Functions, AAL2 real, consola conectada y staging no están listos.
+
+No considerar el producto comercial terminado hasta cerrar CI desde cero, Edge Functions, conexión de la app, prueba de concurrencia, Storage privado, backup/restore, staging y prueba física.
