@@ -264,3 +264,11 @@ Rama: `foundation/bootstrap-20261029`. PR #1 permanece abierto en borrador.
 6. Conectar Auth y repositorios Supabase solo después de aprobar migración y RLS.
 7. Implementar licencias, activaciones, tres dispositivos, panel admin AAL2 y auditoría en servidor.
 
+
+
+### Addendum de arquitectura — 31 de octubre de 2026
+
+- Commit `b39980cfd9d7ca514582a5dce89c5a7680316414`: se añadió `src/architecture/architecture-boundaries.test.ts`.
+- La prueba verifica que los módulos respeten el sentido de las capas, que dominio/aplicación no dependan de React ni Supabase, que UI no importe infraestructura y que un módulo no consuma directamente UI/infraestructura privadas de otro módulo.
+- Es un guardrail inicial ejecutado por Vitest; no sustituye ESLint ni una revisión completa de dependencias.
+- La CI #491 y Database tests #25 se iniciaron para el HEAD que contiene esta prueba. Sus resultados deben consultarse antes de aceptar el cambio.
