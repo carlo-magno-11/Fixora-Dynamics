@@ -37,10 +37,11 @@ export function createCatalogApplicationService(
     },
 
     setActive(id, active, current) {
-      if (!current.some((item) => item.id === id)) {
+      const existing = current.find((item) => item.id === id);
+      if (!existing) {
         throw new Error("No se encontró el elemento que quieres actualizar.");
       }
-      const updated = { ...current.find((item) => item.id === id)!, active };
+      const updated = { ...existing, active };
       repository.update(updated);
       return current.map((item) => item.id === id ? updated : item);
     },
