@@ -31,3 +31,8 @@ Este documento ya no duplica el SQL. Mantener una copia del DDL aquí creaba dos
 - El proyecto remoto reservado para Fixora mantiene objetos EYESITE heredados y su transición de Auth sigue siendo un bloqueo independiente.
 
 No crear otra migración con el mismo nombre ni copiar este SQL a otro archivo. No enlazar ni modificar el proyecto remoto para probar esta migración.
+
+
+## Nota de estado — 31 de octubre de 2026
+
+Este archivo es una referencia histórica de revisión. La migración canónica está versionada como `supabase/migrations/20261031230444_fixora_identity_and_businesses.sql` y fue aplicada únicamente al proyecto de pruebas `eyesite-security-test` (`dclaebknyalimmtgppeg`). No volver a ejecutar el SQL de este documento manualmente ni usarlo como sustituto de la migración versionada.
