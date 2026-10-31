@@ -484,3 +484,61 @@ La migración de identidad y negocios está probada en un Supabase local aislado
 - Licencias, compras, códigos de activación, dispositivos y control transaccional de tres dispositivos todavía no existen en el esquema.
 - Administración, MFA AAL2, auditoría y soporte siguen pendientes.
 - El bucket público vacío `eyesite-media` permanece y requiere eliminación por Storage API/Dashboard.
+
+
+## 2026-10-31 — Entrega 11: compras, licencias y dispositivos
+
+Proyecto de destino verificado antes de las operaciones: `eyesite-security-test`, ref `dclaebknyalimmtgppeg`, región `us-east-2`, PostgreSQL 17.11. El proyecto oficial EYESITE `xhvpvpvtkdgnnxdwdrkn` no se utilizó.
+
+### Esquema privado añadido
+
+- Catálogo de productos/licencias con `FIXORA-ESSENTIALS-ANNUAL`, 12 meses, máximo 3 dispositivos.
+- Pedidos con proveedor, ID externo único, pago/reembolso, verificación, hashes de correo/evidencia y metadata limitada.
+- Licencias, entitlements, dispositivos con hash de 32 bytes, hashes SHA-256 de códigos de activación, eventos de proveedor idempotentes e historial append-only.
+- Funciones privadas de emisión, creación/redención de código, alta/revocación de dispositivo; solo `service_role` puede ejecutarlas.
+- RPC público `fixora_get_license_access` como SECURITY INVOKER; RLS deja ver al usuario solo sus licencias, dispositivos y entitlements.
+- Trigger de compra: disputa suspende; reembolso/chargeback/rechazo revoca licencia, dispositivos y códigos pendientes.
+- Vencimiento conserva los entitlements base `account.read`, `history.read`, `data.export`; premium termina con la fecha de vencimiento.
+
+### Pruebas ejecutadas
+
+- `supabase/tests/fixora_licenses.test.sql`: 26 aserciones pgTAP más bloque funcional transaccional.
+- Se probaron emisión idempotente, activación, cálculo de 12 meses desde primera activación, hash del código, reintento mismo dispositivo, rechazo de replay en otro dispositivo, 3 dispositivos, rechazo del cuarto, revocación que libera cupo, rechazo de otro usuario, rechazo de compra pendiente, idempotencia de evento de proveedor, estado de reembolso y RPC de acceso por usuario.
+- Dos defectos de resolución SQL en `redeem_activation_code` (columnas ambiguas y objetivo ON CONFLICT) fueron detectados por la ejecución y corregidos en migraciones posteriores antes de registrar el resultado funcional.
+- El RPC de acceso se cambió a SECURITY INVOKER y reloj `clock_timestamp()` para evitar una ventana donde una activación recién creada pareciera futura dentro de la misma transacción.
+- No se afirma todavía una corrida CI completa de este archivo; la ejecución remota no expuso el resumen TAP completo.
+
+## 2026-10-31 — Entrega 12: administración, auditoría y soporte
+
+### Esquema
+
+- Matriz de permisos para `platform_owner`, `license_manager`, `purchase_reviewer`, `support_agent` y `auditor`.
+- Membresías administrativas con estado y MFA obligatorio para estado activo.
+- Invitaciones con hash de token y hash de correo, expiración, un solo uso y verificación de coincidencia de correo.
+- El flujo normal no puede invitar/provisionar `platform_owner`; la primera cuenta se debe provisionar fuera de banda.
+- Auditoría administrativa y eventos de seguridad append-only.
+- Tickets y mensajes de soporte con RLS de propietario, SECURITY INVOKER y grants limitados por columna.
+- Eventos internos de tickets registrados por triggers privados.
+- Funciones privadas de permisos/invitaciones/auditoría solo para `service_role`; las Edge Functions deberán verificar JWT/AAL2 antes de invocarlas.
+
+### Pruebas ejecutadas
+
+- `supabase/tests/fixora_admin_support.test.sql`: 23 aserciones pgTAP más bloque funcional.
+- Se probaron invitación AAL2, rechazo de AAL1, rechazo de correo diferente, rechazo de invitación de platform_owner, permisos por rol, auditoría AAL2, creación/respuesta/cierre de ticket, mensajes y aislamiento entre dos clientes.
+- Se retiró SECURITY DEFINER de RPCs públicos de cliente; ahora son SECURITY INVOKER y dependen de RLS. Los únicos SECURITY DEFINER administrativos permanecen en esquema privado y no son ejecutables por `anon` ni `authenticated`.
+- La suite se volvió a ejecutar después de agregar la prueba directa de aislamiento de mensajes.
+
+## 2026-10-31 — Entrega 13: saneamiento y verificación del proyecto de pruebas
+
+- Confirmado por `get_project`: nombre `eyesite-security-test`, ref `dclaebknyalimmtgppeg`, ACTIVE_HEALTHY, PostgreSQL 17.11, us-east-2.
+- El proyecto oficial EYESITE `xhvpvpvtkdgnnxdwdrkn` no fue modificado.
+- Esquema activo: 9 tablas públicas Fixora y 14 tablas privadas Fixora. No quedan tablas públicas de EYESITE.
+- Funciones públicas y triggers Auth restantes son Fixora; políticas públicas solo pertenecen a Fixora. Se retiraron políticas/funciones/triggers heredados EYESITE mediante migración idempotente versionada.
+- Todas las tablas públicas Fixora tienen RLS; todas las tablas privadas Fixora tienen RLS + FORCE RLS.
+- Security Advisor: 0 hallazgos. Performance Advisor: 0 FKs sin índice; los avisos restantes son índices sin uso en base vacía y configuración de conexiones Auth.
+- Datos operativos y de usuarios: 0 filas; no se dejó ningún usuario, negocio, catálogo, gasto, snapshot, pedido, licencia, ticket o mensaje de prueba. Se conservan solamente 1 producto configurado y 18 permisos de rol.
+- El bucket heredado `eyesite-media` sigue vacío, pero no se eliminó porque las herramientas disponibles no incluyen Storage API para borrar buckets. No declarar limpieza física completa hasta borrarlo desde Supabase Storage/Dashboard.
+- Se actualizó `.github/workflows/db-tests.yml` para mutation testing de RLS en negocios, catálogo, tickets y mensajes.
+- Las migraciones de Fixora se versionaron en `supabase/migrations`; la migración de identidad se renombró al timestamp registrado en el proyecto de pruebas y se incorporó la limpieza EYESITE idempotente.
+- La CI #749/#283 anterior valida la fundación previa. Falta una nueva ejecución DB CI que reconstruya desde cero todas las migraciones y ejecute las suites actuales.
+- La app sigue usando persistencia local; no se desplegaron Edge Functions ni se conectó Supabase Auth en la app. No hay administrador inicial provisionado. No está listo para producción.
