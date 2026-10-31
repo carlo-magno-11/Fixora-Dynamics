@@ -5,9 +5,16 @@ import { resolveKeyValueStorage, type KeyValueStorageSource } from "../../../sha
 export const CALCULATION_HISTORY_STORAGE_KEY = "fixora.calculations.v1";
 const MAX_HISTORY_RECORDS = 100;
 
+export interface CalculationHistoryLoadState {
+  records: SavedCalculation[];
+  needsRecovery: boolean;
+}
+
 export interface CalculationHistoryRepository {
   load(): SavedCalculation[];
+  loadState(): CalculationHistoryLoadState;
   save(records: readonly SavedCalculation[]): void;
+  reset(): void;
 }
 
 export function createCalculationHistoryRepository(
@@ -36,20 +43,27 @@ export function createCalculationHistoryRepository(
   }
 
   return {
-    load() {
+    load(): SavedCalculation[] {
+      return this.loadState().records;
+    },
+    loadState() {
       try {
         const raw = resolveKeyValueStorage(storageSource).getItem(CALCULATION_HISTORY_STORAGE_KEY);
-        if (!raw) return [];
+        if (!raw) return { records: [], needsRecovery: false };
         const parsed: unknown = JSON.parse(raw);
-        return Array.isArray(parsed)
-          ? parsed.filter(isSavedCalculation).slice(0, MAX_HISTORY_RECORDS).map((record) => ({
-              ...record,
-              formulaVersion: record.formulaVersion ?? PRICING_FORMULA_VERSION,
-              snapshotVersion: record.snapshotVersion ?? 1,
-            }))
-          : [];
+        if (!Array.isArray(parsed)) return { records: [], needsRecovery: true };
+        const validRecords = parsed.filter(isSavedCalculation);
+        const records = validRecords.slice(0, MAX_HISTORY_RECORDS).map((record) => ({
+          ...record,
+          formulaVersion: record.formulaVersion ?? PRICING_FORMULA_VERSION,
+          snapshotVersion: record.snapshotVersion ?? 1,
+        }));
+        return {
+          records,
+          needsRecovery: validRecords.length !== parsed.length || parsed.length > MAX_HISTORY_RECORDS,
+        };
       } catch {
-        return [];
+        return { records: [], needsRecovery: true };
       }
     },
     save(records) {
@@ -60,6 +74,9 @@ export function createCalculationHistoryRepository(
         CALCULATION_HISTORY_STORAGE_KEY,
         JSON.stringify(records.slice(0, MAX_HISTORY_RECORDS)),
       );
+    },
+    reset() {
+      resolveKeyValueStorage(storageSource).setItem(CALCULATION_HISTORY_STORAGE_KEY, "[]");
     },
   };
 }
