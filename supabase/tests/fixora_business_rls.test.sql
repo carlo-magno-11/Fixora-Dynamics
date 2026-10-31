@@ -2,7 +2,7 @@ BEGIN;
 
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 
-SELECT plan(16);
+SELECT plan(17);
 
 INSERT INTO auth.users (id, email)
 VALUES
@@ -116,13 +116,24 @@ SELECT throws_ok(
 SET LOCAL request.jwt.claim.sub = '123e4567-e89b-12d3-a456-426614174001';
 
 SELECT results_eq(
-  $$
+  $
     SELECT name
     FROM public.fixora_businesses
     WHERE name = 'Fixora Business A'
-  $$,
+  $,
   ARRAY['Fixora Business A'::text],
   'User A business remains unchanged after User B attempts to update it'
+);
+
+SELECT results_eq(
+  $
+    UPDATE public.fixora_businesses
+    SET name = 'Fixora Business A Updated'
+    WHERE name = 'Fixora Business A'
+    RETURNING name
+  $,
+  ARRAY['Fixora Business A Updated'::text],
+  'Owner can update their own business'
 );
 
 SELECT throws_ok(
