@@ -2,12 +2,13 @@ BEGIN;
 
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 
-SELECT plan(18);
+SELECT plan(20);
 
 INSERT INTO auth.users (id, email)
 VALUES
   ('123e4567-e89b-12d3-a456-426614174001', 'fixora-rls-a-20261031@example.invalid'),
-  ('987fcdeb-51a2-43d7-9012-345678901235', 'fixora-rls-b-20261031@example.invalid');
+  ('987fcdeb-51a2-43d7-9012-345678901235', 'fixora-rls-b-20261031@example.invalid'),
+  ('987fcdeb-51a2-43d7-9012-345678901236', 'fixora-rls-c-20261031@example.invalid');
 
 UPDATE auth.users
 SET email = 'fixora-rls-a-updated-20261031@example.invalid'
@@ -51,11 +52,39 @@ SELECT throws_ok(
     SELECT id, auth.uid(), 'admin', 'active'
     FROM public.fixora_businesses
     WHERE name = 'Fixora Business A'
-  $$,
+  $,
   '42501',
   NULL,
   'User A cannot assign platform/business membership directly'
 );
+
+RESET ROLE;
+
+INSERT INTO public.fixora_business_memberships (business_id, user_id, role, status)
+SELECT id, '987fcdeb-51a2-43d7-9012-345678901236'::uuid, 'viewer', 'active'
+FROM public.fixora_businesses
+WHERE name = 'Fixora Business A';
+
+SET LOCAL ROLE authenticated;
+SET LOCAL request.jwt.claim.sub = '987fcdeb-51a2-43d7-9012-345678901236';
+
+SELECT results_eq(
+  'SELECT count(*) FROM public.fixora_businesses',
+  ARRAY[1::bigint],
+  'Active viewer can read the business they belong to'
+);
+
+SELECT is_empty(
+  $$
+    UPDATE public.fixora_businesses
+    SET name = 'Viewer Must Not Edit'
+    WHERE name = 'Fixora Business A'
+    RETURNING id
+  $,
+  'Viewer cannot update business settings'
+);
+
+SET LOCAL request.jwt.claim.sub = '987fcdeb-51a2-43d7-9012-345678901235';
 
 SET LOCAL request.jwt.claim.sub = '987fcdeb-51a2-43d7-9012-345678901235';
 
@@ -126,7 +155,7 @@ SELECT throws_ok(
 SET LOCAL request.jwt.claim.sub = '123e4567-e89b-12d3-a456-426614174001';
 
 SELECT results_eq(
-  $
+  $$
     SELECT name
     FROM public.fixora_businesses
     WHERE name = 'Fixora Business A'
@@ -136,7 +165,7 @@ SELECT results_eq(
 );
 
 SELECT results_eq(
-  $
+  $$
     UPDATE public.fixora_businesses
     SET name = 'Fixora Business A Updated'
     WHERE name = 'Fixora Business A'
