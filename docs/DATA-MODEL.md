@@ -134,3 +134,8 @@ El historial remoto también conserva las tres migraciones históricas EYESITE q
 - El fixture fue eliminado después de la prueba; usuario, compra, licencia y dispositivos quedaron en cero.
 - Mutation test de soporte con policy SELECT permisiva detectó el acceso cruzado entre dos clientes y revirtió la policy temporal.
 - El mismo test de concurrencia está versionado en `scripts/test-license-concurrency.sh` y agregado al workflow DB CI; falta su primera ejecución en GitHub Actions.
+
+
+### Reintento de código después de reembolso
+
+La última migración `20261031234007_fixora_redeemed_code_rechecks_license_state` refuerza la rama idempotente de redención: un código ya redimido no devuelve acceso si la licencia fue suspendida/revocada/expirada, si la compra dejó de ser elegible o si el dispositivo ya no está activo. La suite de licencias prueba este caso tras un reembolso.
