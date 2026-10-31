@@ -136,7 +136,7 @@ create trigger fixora_on_auth_user_created
 after insert on auth.users
 for each row execute function private.handle_new_auth_user();
 
-create or replace function public.fixora_create_business(
+create or replace function private.create_business_for_authenticated_user(
   p_name text,
   p_business_type text default 'general',
   p_currency_code text default 'MXN',
@@ -227,6 +227,30 @@ begin
 
   return v_business_id;
 end;
+$$;
+
+revoke all on function private.create_business_for_authenticated_user(text, text, text, text)
+  from public, anon, authenticated;
+grant execute on function private.create_business_for_authenticated_user(text, text, text, text)
+  to authenticated;
+
+create or replace function public.fixora_create_business(
+  p_name text,
+  p_business_type text default 'general',
+  p_currency_code text default 'MXN',
+  p_timezone text default 'America/Merida'
+)
+returns uuid
+language sql
+security invoker
+set search_path = ''
+as $$
+  select private.create_business_for_authenticated_user(
+    p_name,
+    p_business_type,
+    p_currency_code,
+    p_timezone
+  );
 $$;
 
 revoke all on function public.fixora_create_business(text, text, text, text)
