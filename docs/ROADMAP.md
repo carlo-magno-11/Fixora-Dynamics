@@ -49,6 +49,7 @@
 La decisión vigente es continuar con una base local limpia y un modelo propio de Fixora. No recuperar, reproducir ni reparar migraciones históricas de EYESITE. No borrar ni mover objetos heredados del proyecto remoto como atajo.
 
 Documentos vigentes:
+- `docs/EXECUTION-AUDIT-AND-PLAN-20261031.md`: auditoría comprobada, riesgos, matriz de pruebas y plan de ejecución por fases.
 - `docs/FIXORA-FOUNDATION-SPEC.md`: arquitectura de identidad, negocios, membresías y roadmap de datos.
 - `docs/FIXORA-FOUNDATION-MIGRATION-SQL.md`: borrador SQL revisado para la primera migración local.
 - `docs/DATABASE-LOCAL-SETUP.md`: stack local y comandos de validación.
