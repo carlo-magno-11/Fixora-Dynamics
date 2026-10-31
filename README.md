@@ -43,7 +43,7 @@ Requisitos: Node.js 24 y pnpm 9.15.9. Ejecutar `pnpm install`, `pnpm dev`, `pnpm
 - `docs/ADMIN-CONSOLE-ARCHITECTURE.md`: roles, permisos, operaciones y auditoría del panel administrativo.
 - `docs/DESIGN-SYSTEM.md`: identidad visual y paleta prémium.
 - `docs/CALCULATIONS.md`: fórmulas y convenciones.
-- `docs/DATABASE.md` y `docs/DATABASE-BOOTSTRAP-PLAN.md`: datos, grants, RLS y migraciones.
+- `docs/DATABASE.md`, `docs/DATA-MODEL.md` y `docs/DATABASE-BOOTSTRAP-PLAN.md`: datos, grants, RLS, modelo objetivo y migraciones.
 - `docs/SECURITY.md` y `docs/LICENSES.md`: seguridad y licenciamiento.
 - `docs/ROADMAP.md`: estado y puertas de lanzamiento.
 - `docs/MASTER-IMPLEMENTATION-PLAN.md` y `docs/PROGRESS-LOG.md`: plan maestro y registro por commit.
