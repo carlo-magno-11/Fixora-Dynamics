@@ -308,6 +308,18 @@ BEGIN
   SET refund_status = 'refunded'
   WHERE id = v_order_id;
 
+  BEGIN
+    PERFORM * FROM fixora_private.redeem_activation_code(
+      v_code_hash,
+      'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1',
+      v_device_hash_one,
+      'Test device one'
+    );
+    RAISE EXCEPTION 'Redeemed code retry returned access after refund' USING ERRCODE = 'P0002';
+  EXCEPTION WHEN check_violation THEN
+    NULL;
+  END;
+
   SELECT * INTO v_license_row FROM fixora_private.fixora_licenses WHERE id = v_license_id;
   IF v_license_row.status <> 'revoked' THEN
     RAISE EXCEPTION 'Refund did not revoke the license';
