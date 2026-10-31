@@ -8,11 +8,11 @@ const MAX_CATALOG_ITEMS = 500;
 export function isStoredCatalogItem(value: unknown): value is CatalogItem {
   if (!value || typeof value !== "object") return false;
   const item = value as Record<string, unknown>;
-  return typeof item.id === "string" &&
-    typeof item.name === "string" && item.name.trim().length > 0 &&
+  return typeof item.id === "string" && item.id.trim().length > 0 &&
+    typeof item.name === "string" && item.name.trim().length > 0 && item.name.length <= 100 &&
     (item.kind === "product" || item.kind === "service") &&
-    typeof item.unit === "string" && item.unit.trim().length > 0 &&
-    typeof item.sku === "string" &&
+    typeof item.unit === "string" && item.unit.trim().length > 0 && item.unit.length <= 40 &&
+    typeof item.sku === "string" && item.sku.length <= 40 &&
     (item.currency === "MXN" || item.currency === "USD") &&
     typeof item.referenceCost === "number" && Number.isFinite(item.referenceCost) && item.referenceCost >= 0 &&
     typeof item.active === "boolean";
