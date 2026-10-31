@@ -211,22 +211,22 @@ La base será el proyecto Supabase ya reservado exclusivamente para Fixora: `dcl
 
 ### Dominios y tablas a diseñar por etapas
 
-- Identidad: `profiles`.
-- Tenant: `businesses`, `business_memberships`.
-- Operación: `products`, `materials`, `product_materials`, `labor_rates`, `fixed_expenses`, `variable_costs`.
-- Cálculos: `calculations` y snapshots/versiones.
-- Licencias: `orders`, `licenses`, `license_entitlements`, `license_devices`, `activation_codes`.
-- Canales: `commerce_providers`, `provider_connections`, `provider_events` y referencias mínimas de pedido.
-- Administración: `audit_events`, soporte/tickets si se justifica.
+- Identidad: `fixora_profiles`.
+- Tenant: `fixora_businesses`, `fixora_business_memberships`.
+- Operación: `fixora_catalog_items`, `fixora_materials`, `fixora_product_materials`, `fixora_labor_rates`, `fixora_expenses`.
+- Cálculos: `fixora_calculation_snapshots` y versiones.
+- Licencias: `fixora_orders`, `fixora_licenses`, `fixora_license_entitlements`, `fixora_license_devices`, `fixora_activation_codes`.
+- Canales: `fixora_commerce_providers`, `fixora_provider_connections`, `fixora_provider_events` y referencias mínimas de pedido.
+- Administración: `fixora_admin_roles`, `fixora_audit_events`, soporte/tickets si se justifica.
 - Documentación legal: versiones y aceptación de términos/privacidad con fecha y versión.
 
 Cada tabla de negocio debe tener tenant `business_id`, restricciones e índices adecuados. Secretos, hashes y tokens internos deben permanecer en un esquema no expuesto. No guardar datos de tarjeta ni credenciales de plataformas en tablas públicas.
 
 ### Migraciones y aislamiento heredado
 
-Seguir `docs/DATABASE-BOOTSTRAP-PLAN.md`: inicializar Supabase CLI local, conciliar historial, aislar las tablas/funciones heredadas EYESITE en esquema privado, reemplazar el trigger de Auth con creación de perfil Fixora y aplicar grants mínimos + RLS. Conservar datos heredados; no borrar ni exponerlos.
+Seguir `docs/DATABASE-BOOTSTRAP-PLAN.md` y `docs/FIXORA-FOUNDATION-SPEC.md`: desarrollar únicamente contra el stack Supabase local aislado, usar tablas públicas con prefijo `fixora_`, RLS y grants mínimos. No recuperar, copiar, reproducir, reparar, mover ni borrar objetos o migraciones históricas de EYESITE. La transición del trigger Auth remoto es un despliegue separado y bloquea el signup remoto hasta contar con respaldo, migración revisada, plan de reversión y aprobación explícita.
 
-Crear archivos solo con `supabase migration new <nombre>`. Antes de cualquier aplicación remota: revisar ref exacta, historial, diff, respaldo, pruebas locales y SQL completo. La migración remota requiere revisión explícita final.
+Crear archivos solo con `supabase migration new <nombre>`. La migración local se versiona y prueba desde cero. No aplicar SQL remoto en esta fase.
 
 ## 9. Guía, manual y centro de ayuda
 
@@ -311,13 +311,13 @@ Salida: flujos de producto completos con datos ficticios; textos centralizados; 
 ### Fase 2 — Supabase local y seguridad de datos
 
 - Inicializar CLI y Docker local.
-- Conciliar las migraciones remotas existentes y aislar EYESITE.
-- Crear perfiles, negocios, membresías y tablas operativas mínimas.
-- RLS, grants explícitos, triggers/RPC mínimos y pruebas multiusuario.
-- Aplicar Auth con verificación de correo, recuperación y sesiones.
-- Sustituir localStorage por persistencia cloud con migración/importación controlada.
+- Reconstruir la base local desde cero con la migración Fixora versionada.
+- Completar perfiles, negocios, membresías, RLS, grants, trigger y RPC con pruebas pgTAP A/B.
+- Añadir las migraciones operativas de catálogo, gastos e historial cuando su modelo y casos de uso estén cerrados.
+- Integrar Auth primero en entorno local aprobado; no habilitar signup remoto mientras exista el trigger heredado.
+- Sustituir localStorage por persistencia cloud con migración/importación controlada y pruebas de no pérdida de datos.
 
-Salida: pruebas de usuario A/B, anónimo, roles, tenant, signup y legacy isolation aprobadas localmente; despliegue remoto revisado.
+Salida: reconstrucción local reproducible, pruebas A/B, anon, roles, tenant y triggers aprobadas; transición remota documentada y aprobada por separado. No mover ni reconstruir objetos históricos EYESITE.
 
 ### Fase 3 — Licencias, QR, compras y administración
 
