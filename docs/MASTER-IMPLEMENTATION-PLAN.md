@@ -410,3 +410,12 @@ Estado real: el shell de la aplicación todavía concentra parte de la navegaci�
 El módulo `src/modules/licensing/domain/license-policy.ts` establece reglas puras de vigencia anual, conservación de historial/exportación, acceso premium, límite lógico de tres dispositivos y requisitos de canje. Las pruebas cubren vencimiento exacto, año bisiesto, fechas inválidas, suspensión/revocación y códigos ya consumidos.
 
 La consola administrativa tiene ahora un shell de presentación en `src/modules/admin/ui/AdminConsolePage.tsx`, contratos de datos tipados y navegación filtrada por permiso. Solo renderiza métricas cuando recibe un snapshot del servidor; no contiene datos de demostración. Aún no está integrada en la navegación ni conectada a backend, porque hacerlo sin Auth/RLS/roles reales sería inseguro.
+
+
+## Anexo de estado de ejecución — 31 de octubre de 2026
+
+La base de pruebas Fixora está construida en `eyesite-security-test` (`dclaebknyalimmtgppeg`), PostgreSQL 17.11. Contiene 9 tablas públicas y 14 privadas para identidad, negocios, operación, snapshots, licencias, dispositivos, compras, administración, auditoría y soporte. Todas las tablas Fixora tienen RLS; las privadas además usan FORCE RLS. Security Advisor: cero hallazgos; Performance Advisor: cero FKs sin índice.
+
+El proyecto oficial EYESITE `xhvpvpvtkdgnnxdwdrkn` no fue modificado. No hay datos de prueba persistidos. El único recurso EYESITE que queda es el bucket vacío `eyesite-media`, pendiente de eliminar con Storage API.
+
+Las suites nuevas se ejecutaron contra el proyecto de pruebas; falta una nueva corrida CI que reconstruya todas las migraciones desde cero. La app todavía conserva persistencia local y no usa Supabase Auth/repositorios cloud. No hay Edge Functions ni administrador inicial. Por tanto, el esquema de base de datos de prueba está implementado, pero el producto completo no está listo para producción.
