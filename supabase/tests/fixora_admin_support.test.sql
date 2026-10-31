@@ -2,7 +2,7 @@ BEGIN;
 
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 
-SELECT plan(31);
+SELECT plan(23);
 
 SELECT has_table('fixora_private', 'fixora_admin_role_permissions', 'Admin permission matrix exists');
 SELECT has_table('fixora_private', 'fixora_admin_memberships', 'Admin memberships exist');
