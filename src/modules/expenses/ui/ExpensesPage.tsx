@@ -57,6 +57,16 @@ export function ExpensesPage({ service, currency, formatMoney }: {
       : item));
   }
 
+  function addFixedExpense() {
+    const expense = service.createFixedExpense();
+    setFixed((current) => [...current, expense]);
+  }
+
+  function addVariableExpense() {
+    const expense = service.createVariableExpense();
+    setVariable((current) => [...current, expense]);
+  }
+
   return (
     <div className="secondary-page expenses-page">
       <p className="eyebrow">FIXORA ESSENTIALS <span> / </span> 05</p>
@@ -72,7 +82,7 @@ export function ExpensesPage({ service, currency, formatMoney }: {
               <button className="delete-button" aria-label={`Eliminar ${item.name || "gasto fijo"}`} onClick={() => setFixed((current) => current.filter((entry) => entry.id !== item.id))}>×</button>
             </div>
           ))}
-          <button className="outline-button" onClick={() => setFixed((current) => [...current, service.createFixedExpense()])}>+ Añadir gasto fijo</button>
+          <button className="outline-button" onClick={addFixedExpense}>+ Añadir gasto fijo</button>
         </section>
         <section className="surface-card">
           <div className="section-heading"><div className="section-number">02</div><div><h2>Costes variables por unidad</h2><p>Importes que se generan con cada producto o servicio vendido.</p></div></div>
@@ -83,7 +93,7 @@ export function ExpensesPage({ service, currency, formatMoney }: {
               <button className="delete-button" aria-label={`Eliminar ${item.name || "coste variable"}`} onClick={() => setVariable((current) => current.filter((entry) => entry.id !== item.id))}>×</button>
             </div>
           ))}
-          <button className="outline-button" onClick={() => setVariable((current) => [...current, service.createVariableExpense()])}>+ Añadir coste variable</button>
+          <button className="outline-button" onClick={addVariableExpense}>+ Añadir coste variable</button>
         </section>
       </div>
       <section className="surface-card expense-allocation">
