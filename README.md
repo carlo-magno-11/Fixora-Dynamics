@@ -18,6 +18,10 @@ Aplicación web adaptable para que profesionales independientes y pequeños nego
 - Borradores internos de términos y privacidad claramente marcados como no vigentes.
 - El perfil, gastos, catálogo e historial actuales se conservan solo en el almacenamiento local del navegador. No representan todavía una cuenta, sincronización cloud ni licencia activa.
 
+## Estado de lanzamiento
+
+Fixora sigue en desarrollo y no está lista para venderse ni para almacenar datos de clientes. La autenticación, sincronización Supabase, licencias verificadas en servidor, panel administrativo operativo y conexión con Etsy todavía están pendientes. La migración de fundación está versionada, pero no se ha aplicado; no habilitar registro remoto ni publicar builds hasta superar las pruebas locales/CI, la transición segura del trigger Auth heredado y la revisión de seguridad.
+
 ## Principios técnicos
 
 - React + TypeScript estricto + Vite.
@@ -46,6 +50,6 @@ Requisitos: Node.js 24 y pnpm 9.15.9. Ejecutar `pnpm install`, `pnpm dev`, `pnpm
 - `docs/EXECUTION-AUDIT-AND-PLAN-20261031.md`: auditoría de estado, hallazgos, pruebas de aceptación y secuencia de ejecución.
 - `docs/I18N.md`: convenciones para centralizar textos y agregar idiomas.
 - `docs/legal/`: borradores legales sujetos a revisión.
-- `docs/DATABASE-LOCAL-SETUP.md`: preparación segura de Supabase local y flujo de migraciones.\n- `docs/FIXORA-FOUNDATION-SPEC.md`: arquitectura de la primera base propia de Fixora.\n- `docs/FIXORA-FOUNDATION-MIGRATION-SQL.md`: borrador SQL revisado para la primera migración local; aún no aplicado.
+- `docs/DATABASE-LOCAL-SETUP.md`: preparación segura de Supabase local y flujo de migraciones.\n- `docs/FIXORA-FOUNDATION-SPEC.md`: arquitectura de la primera base propia de Fixora.\n- `docs/FIXORA-FOUNDATION-MIGRATION-SQL.md`: registro de revisión y referencia a la migración canónica; aún no aplicada.
 - `docs/OPEN-SOURCE-RESEARCH.md`: repositorios evaluados, estrellas, licencias y decisiones de adopción.
 - `docs/DECISIONS/ADR-003-essentials-and-business-kits.md`: decisión de producto modular.
