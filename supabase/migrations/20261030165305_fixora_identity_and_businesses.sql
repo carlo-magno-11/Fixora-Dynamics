@@ -1,8 +1,8 @@
 create schema if not exists private;
-revoke all on schema private from public;
-revoke all on schema private from anon;
-revoke all on schema private from authenticated;
-grant usage on schema private to authenticated;
+revoke all on schema fixora_private from public;
+revoke all on schema fixora_private from anon;
+revoke all on schema fixora_private from authenticated;
+grant usage on schema fixora_private to authenticated;
 
 create table public.fixora_profiles (
   id uuid primary key references auth.users(id) on delete cascade,
@@ -54,7 +54,7 @@ create index fixora_business_memberships_user_status_idx
 create index fixora_business_memberships_business_status_idx
   on public.fixora_business_memberships (business_id, status);
 
-create or replace function private.set_updated_at()
+create or replace function fixora_private.set_updated_at()
 returns trigger
 language plpgsql
 set search_path = ''
@@ -65,21 +65,21 @@ begin
 end;
 $$;
 
-revoke all on function private.set_updated_at() from public, anon, authenticated;
+revoke all on function fixora_private.set_updated_at() from public, anon, authenticated;
 
 create trigger fixora_profiles_set_updated_at
 before update on public.fixora_profiles
-for each row execute function private.set_updated_at();
+for each row execute function fixora_private.set_updated_at();
 
 create trigger fixora_businesses_set_updated_at
 before update on public.fixora_businesses
-for each row execute function private.set_updated_at();
+for each row execute function fixora_private.set_updated_at();
 
 create trigger fixora_memberships_set_updated_at
 before update on public.fixora_business_memberships
-for each row execute function private.set_updated_at();
+for each row execute function fixora_private.set_updated_at();
 
-create or replace function private.has_active_business_role(
+create or replace function fixora_private.has_active_business_role(
   p_business_id uuid,
   p_allowed_roles text[] default null
 )
@@ -102,10 +102,10 @@ as $$
   );
 $$;
 
-revoke all on function private.has_active_business_role(uuid, text[]) from public, anon;
-grant execute on function private.has_active_business_role(uuid, text[]) to authenticated;
+revoke all on function fixora_private.has_active_business_role(uuid, text[]) from public, anon;
+grant execute on function fixora_private.has_active_business_role(uuid, text[]) to authenticated;
 
-create or replace function private.handle_new_auth_user()
+create or replace function fixora_private.handle_new_auth_user()
 returns trigger
 language plpgsql
 security definer
@@ -130,13 +130,13 @@ begin
 end;
 $$;
 
-revoke all on function private.handle_new_auth_user() from public, anon, authenticated;
+revoke all on function fixora_private.handle_new_auth_user() from public, anon, authenticated;
 
 create trigger fixora_on_auth_user_created
 after insert on auth.users
-for each row execute function private.handle_new_auth_user();
+for each row execute function fixora_private.handle_new_auth_user();
 
-create or replace function private.sync_auth_user_email()
+create or replace function fixora_private.sync_auth_user_email()
 returns trigger
 language plpgsql
 security definer
@@ -151,15 +151,15 @@ begin
 end;
 $;
 
-revoke all on function private.sync_auth_user_email() from public, anon, authenticated;
+revoke all on function fixora_private.sync_auth_user_email() from public, anon, authenticated;
 
 create trigger fixora_on_auth_user_email_updated
 after update of email on auth.users
 for each row
 when (old.email is distinct from new.email)
-execute function private.sync_auth_user_email();
+execute function fixora_private.sync_auth_user_email();
 
-create or replace function private.create_business_for_authenticated_user(
+create or replace function fixora_private.create_business_for_authenticated_user(
   p_name text,
   p_business_type text default 'general',
   p_currency_code text default 'MXN',
@@ -252,9 +252,9 @@ begin
 end;
 $$;
 
-revoke all on function private.create_business_for_authenticated_user(text, text, text, text)
+revoke all on function fixora_private.create_business_for_authenticated_user(text, text, text, text)
   from public, anon, authenticated;
-grant execute on function private.create_business_for_authenticated_user(text, text, text, text)
+grant execute on function fixora_private.create_business_for_authenticated_user(text, text, text, text)
   to authenticated;
 
 create or replace function public.fixora_create_business(
@@ -268,7 +268,7 @@ language sql
 security invoker
 set search_path = ''
 as $$
-  select private.create_business_for_authenticated_user(
+  select fixora_private.create_business_for_authenticated_user(
     p_name,
     p_business_type,
     p_currency_code,
@@ -303,7 +303,7 @@ on public.fixora_businesses
 for select
 to authenticated
 using (
-  (select private.has_active_business_role(id, null))
+  (select fixora_private.has_active_business_role(id, null))
 );
 
 create policy "fixora_businesses_update_owner_admin"
@@ -311,10 +311,10 @@ on public.fixora_businesses
 for update
 to authenticated
 using (
-  (select private.has_active_business_role(id, array['owner', 'admin']::text[]))
+  (select fixora_private.has_active_business_role(id, array['owner', 'admin']::text[]))
 )
 with check (
-  (select private.has_active_business_role(id, array['owner', 'admin']::text[]))
+  (select fixora_private.has_active_business_role(id, array['owner', 'admin']::text[]))
 );
 
 create policy "fixora_memberships_select_active_member"
@@ -322,7 +322,7 @@ on public.fixora_business_memberships
 for select
 to authenticated
 using (
-  (select private.has_active_business_role(business_id, null))
+  (select fixora_private.has_active_business_role(business_id, null))
 );
 
 revoke all on table public.fixora_profiles
