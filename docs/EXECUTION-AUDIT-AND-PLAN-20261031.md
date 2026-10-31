@@ -247,3 +247,22 @@ Este cambio deja preparado el límite para sustituir browser localStorage por re
 - El catálogo usa ahora operaciones de repositorio por entidad (create/update) en lugar de reemplazar la colección completa; esto reduce el riesgo de sobrescribir cambios ajenos al implementar un repositorio cloud.
 - El dominio de snapshots recibe ID y timestamp desde fuera. Se añadió SnapshotApplicationService para inyectar generador de ID y reloj; el dominio ya no llama a crypto ni toma la hora actual.
 - Gastos sigue modelado como un agregado local completo; el adaptador Supabase deberá añadir control de versión/actualización condicional antes de permitir edición concurrente entre miembros del mismo negocio.
+
+
+## 10. Integridad de datos y licencias — 31 de octubre
+
+- El catálogo ya no expone reemplazo de colección completa en su puerto: usa comandos por entidad. El adaptador local rechaza mutaciones sobre JSON dañado o inválido para no perder datos silenciosamente.
+- Gastos distingue moneda heredada por confirmar de datos corruptos. La UI exige una acción explícita para iniciar una lista nueva.
+- Historial protege el almacenamiento existente ante JSON dañado, registros inválidos o archivos que superan el límite; no trunca silenciosamente una colección preexistente.
+- La creación de snapshots inyecta ID y reloj por aplicación; el dominio es determinista.
+- La política de licencias valida que expires_at corresponda exactamente a un año calendario desde activated_at. La fecha de activación futura no concede premium.
+- La política de compra valida provider y el método de verificación permitido para ese provider. Esto es validación de dominio; el backend aún debe obtener la evidencia real y autenticar webhooks.
+- Se creó docs/DATA-MODEL.md como especificación objetivo para migraciones operativas, licencias, dispositivos, administración y auditoría. No es SQL ni está aplicado.
+
+### Estado de ejecución actualizado
+
+- El último workflow CI disponible (#524) pasó typecheck y falló Vitest en la prueba de arquitectura porque encontró dos imports directos de infraestructura desde UI. Los imports fueron eliminados mediante servicios de aplicación; aún no hay una corrida posterior que pruebe la corrección.
+- El workflow DB #25 sigue pending sin jobs visibles.
+- Los cambios recientes de dominio, repositorios, UI, migraciones y pruebas no se declaran aprobados hasta contar con CI verde y pgTAP ejecutado.
+- El proyecto remoto permanece sin cambios.
+
