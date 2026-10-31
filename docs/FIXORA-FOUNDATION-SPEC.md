@@ -105,7 +105,7 @@ Requirements:
 - delegate the atomic write to a private SECURITY DEFINER implementation with a fixed empty search_path and fully qualified names;
 - revoke EXECUTE from PUBLIC/anon on the private implementation and grant only the permissions required by authenticated sessions;
 - revoke EXECUTE from PUBLIC/anon on the public wrapper and grant it to authenticated only;
-- keep the private schema outside PostgREST exposed schemas;
+- keep the schema privado `fixora_private` outside PostgREST exposed schemas;
 - do not let the RPC accept role, membership status, license, or entitlement fields.
 
 ### 3.4 RLS and grants
