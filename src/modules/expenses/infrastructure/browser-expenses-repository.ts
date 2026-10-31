@@ -22,7 +22,7 @@ function isFixedExpense(value: unknown): value is FixedExpense {
 function isVariableExpense(value: unknown): value is VariableExpense {
   if (!value || typeof value !== "object") return false;
   const item = value as Record<string, unknown>;
-  return typeof item.id === "string" &&
+  return typeof item.id === "string" && item.id.trim().length > 0 &&
     typeof item.name === "string" &&
     typeof item.costPerUnit === "number" &&
     Number.isFinite(item.costPerUnit) &&
