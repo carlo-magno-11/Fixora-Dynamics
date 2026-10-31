@@ -55,3 +55,37 @@ Cada control debe tener evidencia reproducible: prueba automatizada, revisión d
 3. Implementar compras/proveedor, códigos de activación hasheados y webhooks idempotentes.
 4. Conectar Auth y repositorios cloud; retirar persistencia local como fuente de verdad para cuentas con licencia.
 5. Integrar la consola administrativa solo después de tener funciones backend, MFA/AAL2, RBAC y auditoría verificables.
+
+
+## Estado actualizado — 31 de octubre de 2026
+
+Proyecto verificado: `eyesite-security-test` (`dclaebknyalimmtgppeg`), PostgreSQL 17.11. No se tocó el proyecto oficial EYESITE.
+
+| Control | Estado actual | Evidencia / límite |
+|---|---|---|
+| Identidad/negocio | Parcial validado | 45/45 pgTAP en CI anterior; usuarios y negocios de prueba revertidos. |
+| Aislamiento de tenant | Parcial validado | Dos usuarios, negocio A/B, viewer; suites y mutation test inicial. Nueva CI integral pendiente. |
+| Datos operativos | Aplicado en test | Catálogo, gastos, settings optimistas y snapshots append-only; 71 assertions ejecutadas, resumen TAP completo no visible en conector. |
+| Licencias | Aplicado en test | Emisión, código hasheado, 12 meses desde activación, máximo 3 dispositivos, idempotencia, revocación y reembolso; 26 assertions + bloque funcional ejecutados. |
+| Acceso a licencia | RLS | RPC SECURITY INVOKER; usuario ve solo sus licencias/entitlements/dispositivos. |
+| Administración | Parcial validado | Matriz de roles, invitación con hash de correo, AAL2 requerido por backend, sin platform_owner seed; 23 assertions + bloque funcional ejecutados. |
+| Auditoría | Parcial validado | Admin/security events append-only; Edge Functions y pruebas de operación real pendientes. |
+| Soporte | Parcial validado | Tickets/mensajes SECURITY INVOKER, RLS por propietario, eventos privados por triggers; 23 assertions + bloque funcional ejecutados. |
+| Secretos | Parcial | Códigos de activación hasheados; no hay service_role en cliente. HMAC de dispositivo y gestión de secretos Edge Function pendientes. |
+| RLS y grants | Configurado | 9 tablas públicas RLS; 14 privadas RLS + FORCE; Security Advisor sin hallazgos. |
+| Claves foráneas | Configurado | Performance Advisor sin FKs sin índice. |
+| Auth/AAL2 real | Pendiente | No se ha conectado Auth en la app ni implementado Edge Function para validar claims. |
+| Storage privado | Pendiente | Bucket de soporte/adjuntos y políticas no implementados. El bucket heredado vacío `eyesite-media` sigue presente. |
+| CI reconstrucción completa | Pendiente | Workflow actualizado para mutation tests de negocio, catálogo y soporte; falta corrida DB en HEAD actual. |
+| Backup/restore y staging | Pendiente | No se ha realizado un ciclo de restauración ni despliegue staging. |
+
+### Invariantes obligatorias antes de producción
+
+1. Confirmar `fixora_private` fuera de los esquemas expuestos por PostgREST.
+2. Ejecutar `supabase db reset` desde cero en CI con todas las migraciones versionadas y las cinco suites pgTAP.
+3. Probar concurrencia real de activaciones simultáneas para el mismo cupo de dispositivo.
+4. Implementar Edge Functions que validen JWT, AAL2, firma/token de proveedor, idempotencia y HMAC de dispositivo; no aceptar `p_aal` del cliente.
+5. Provisionar el primer `platform_owner` fuera del registro público y exigir MFA.
+6. Configurar Storage privado para adjuntos, borrar el bucket EYESITE vacío mediante Storage API y probar acceso/retención.
+7. Probar backup/restore, rollback, monitorización, rate limits, DAST/SCA y E2E en staging.
+8. Mantener el proyecto oficial EYESITE fuera de cualquier despliegue Fixora.
