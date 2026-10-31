@@ -109,7 +109,7 @@ SELECT ok(
     'fixora_private.create_business_for_authenticated_user(text,text,text,text)',
     'EXECUTE'
   ),
-  'authenticated can call the private function through the public wrapper'
+  'authenticated has the EXECUTE grant required by the invoker wrapper; PostgREST must not expose this schema'
 );
 
 SELECT ok(
