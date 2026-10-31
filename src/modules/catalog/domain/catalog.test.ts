@@ -49,7 +49,7 @@ describe("catalog domain", () => {
   });
 
   it("prevents duplicate SKU values regardless of letter case", () => {
-    const existing = [{ ...createCatalogItem(draft), id: "existing" }] as CatalogItem[];
+    const existing = [{ ...createCatalogItem(draft, [], "existing-source"), id: "existing" }] as CatalogItem[];
     expect(validateCatalogDraft({ ...draft, sku: "jab-01" }, existing)).toContain("Ese código SKU ya existe en tu catálogo.");
   });
 
@@ -62,7 +62,7 @@ describe("catalog domain", () => {
     expect(validateCatalogDraft({ ...draft, referenceCost: Number.POSITIVE_INFINITY })).toContain("El coste de referencia debe ser finito y no negativo.");
   });
   it("updates an existing item without losing its active state or allowing duplicate SKUs", () => {
-    const existing = createCatalogItem(draft);
+    const existing = createCatalogItem(draft, [], "existing-item");
     const updated = updateCatalogItem(existing.id, {
       ...draft,
       name: "Jabón de avena",
