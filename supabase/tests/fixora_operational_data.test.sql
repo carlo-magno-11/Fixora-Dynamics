@@ -2,7 +2,7 @@ BEGIN;
 
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 
-SELECT plan(65);
+SELECT plan(66);
 
 SELECT has_table('public', 'fixora_catalog_items', 'Catalog table exists');
 SELECT has_table('public', 'fixora_expenses', 'Expenses table exists');
@@ -64,11 +64,15 @@ SELECT lives_ok(
 );
 
 SELECT lives_ok(
-  $$INSERT INTO public.fixora_expenses (business_id, expense_type, name, amount)
-    SELECT id, 'fixed', 'Rent', 1000 FROM public.fixora_businesses WHERE name = 'Fixora Operational A';
-    INSERT INTO public.fixora_expenses (business_id, expense_type, name, amount)
-    SELECT id, 'variable', 'Packaging', 2.5 FROM public.fixora_businesses WHERE name = 'Fixora Operational A'$$,
-  'Owner can create fixed and variable expenses'
+  $INSERT INTO public.fixora_expenses (business_id, expense_type, name, amount)
+    SELECT id, 'fixed', 'Rent', 1000 FROM public.fixora_businesses WHERE name = 'Fixora Operational A'$,
+  'Owner can create a fixed expense'
+);
+
+SELECT lives_ok(
+  $INSERT INTO public.fixora_expenses (business_id, expense_type, name, amount)
+    SELECT id, 'variable', 'Packaging', 2.5 FROM public.fixora_businesses WHERE name = 'Fixora Operational A'$,
+  'Owner can create a variable expense'
 );
 
 SELECT lives_ok(
