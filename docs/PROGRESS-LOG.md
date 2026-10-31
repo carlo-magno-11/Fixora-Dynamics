@@ -305,3 +305,40 @@ Rama: `foundation/bootstrap-20261029`. PR #1 permanece abierto en borrador.
 - La suite de fundación tiene 25 comprobaciones planificadas y 25 llamadas de aserción; la suite de aislamiento A/B tiene 17 comprobaciones planificadas.
 - La prueba de arquitectura sigue siendo un guardrail inicial y debe ampliarse conforme se extraigan módulos.
 
+
+
+## 2026-10-31 — Entrega 6: aplicación y dominio separados en catálogo y gastos
+
+### Hallazgo que disparó el refactor
+
+CI #524 pasó typecheck, pero el test de arquitectura detectó dos dependencias indebidas: CatalogPage y ExpensesPage importaban directamente sus repositorios browser. Se mantuvo el test estricto y se corrigió la estructura.
+
+### Cambios
+
+| Commit | Cambio |
+|---|---|
+| `53ef6f6bc54f1408f863422fd061725b0cebe8cd` | Añade CatalogApplicationService y CatalogRepositoryPort. |
+| `5dcda765d51293d8746c9b6e6bbc5a676594a3e7` | La fábrica de dominio de catálogo recibe un ID inyectado; dominio deja de depender de crypto global. |
+| `a5058a6efa73af66fd6f3444379b8cde94e46e52` | Pruebas de dominio usan IDs deterministas y validan el contrato del identificador. |
+| `3b0872c33add42f05ab3383a89d8c6f96c23afbd` | Pruebas de CatalogApplicationService: load/create/update/archive/reactivate y persistencia. |
+| `cf34a328f390b681a8021b5854d376a1a3102f2c` | Browser catalog repository implementa el puerto de aplicación. |
+| `f7222731f99cff1736d7f13baf696edfbbf86168` | CatalogPage consume el servicio; elimina import directo de infraestructura. |
+| `2bb007aca5ee292e9cc4aaf362d77a58b63c690e` | Añade ExpensesApplicationService, puerto y contratos de persistencia. |
+| `217797d03ad1f1458bdb61477f6b439b9e33fd14` | Browser expenses repository implementa el puerto de aplicación. |
+| `ffc4fdd385c6f0aa0f98fb8b5bbd1df6014b4100` | ExpensesPage consume el servicio; elimina import directo de infraestructura. |
+| `f6e12b7dcdb1bbaa395f1d4d62be5f746412a47f` | App composition root inyecta repositorios locales y generador de IDs. |
+| `103851659cc2f77c7b331dd26155ba9a4822bc6e` | Corrige las pruebas de catálogo para no depender de IDs globales. |
+| `4a37a54ab817a7db40db24148de90f61b7638c67` | Evita persistencia dentro de React state updaters en catálogo. |
+| `856e9247e37146129299af12df5f33bb5f3f1b61` | Genera IDs de gastos antes de actualizar estado React. |
+| `8bd70dc2364534d8cc359a922a2c95977ca8d68e` | Añade pruebas de ExpensesApplicationService. |
+
+### Resultado arquitectónico esperado
+
+- UI → application → domain.
+- Infrastructure implementa puertos de application.
+- App construye los adaptadores concretos e inyecta servicios.
+- El dominio de catálogo ya no genera IDs con una API global.
+- El almacenamiento sigue siendo localStorage; todavía no es Supabase ni multiusuario.
+- Se agregaron nueve pruebas de aplicación; el total esperado de Vitest es 110, pendiente de corrida verde.
+- El test de arquitectura que detectó el problema aún debe pasar en una nueva ejecución CI. No declarar el refactor validado hasta comprobarlo.
+
