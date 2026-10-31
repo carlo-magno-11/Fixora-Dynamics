@@ -52,7 +52,7 @@ SELECT throws_ok(
     SELECT id, auth.uid(), 'admin', 'active'
     FROM public.fixora_businesses
     WHERE name = 'Fixora Business A'
-  $,
+  $$,
   '42501',
   NULL,
   'User A cannot assign platform/business membership directly'
@@ -80,11 +80,9 @@ SELECT is_empty(
     SET name = 'Viewer Must Not Edit'
     WHERE name = 'Fixora Business A'
     RETURNING id
-  $,
+  $$,
   'Viewer cannot update business settings'
 );
-
-SET LOCAL request.jwt.claim.sub = '987fcdeb-51a2-43d7-9012-345678901235';
 
 SET LOCAL request.jwt.claim.sub = '987fcdeb-51a2-43d7-9012-345678901235';
 
@@ -159,7 +157,7 @@ SELECT results_eq(
     SELECT name
     FROM public.fixora_businesses
     WHERE name = 'Fixora Business A'
-  $,
+  $$,
   ARRAY['Fixora Business A'::text],
   'User A business remains unchanged after User B attempts to update it'
 );
@@ -170,7 +168,7 @@ SELECT results_eq(
     SET name = 'Fixora Business A Updated'
     WHERE name = 'Fixora Business A'
     RETURNING name
-  $,
+  $$,
   ARRAY['Fixora Business A Updated'::text],
   'Owner can update their own business'
 );
