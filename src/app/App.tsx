@@ -6,7 +6,7 @@ import { createExpensesRepository } from "../modules/expenses/infrastructure/bro
 import { CatalogPage } from "../modules/catalog/ui/CatalogPage";
 import { createCatalogApplicationService } from "../modules/catalog/application/catalog-service";
 import { createCatalogRepository } from "../modules/catalog/infrastructure/browser-catalog-repository";
-import { createPricingSnapshot } from "../modules/snapshots/domain/calculation-snapshot";
+import { createSnapshotApplicationService } from "../modules/snapshots/application/snapshot-service";
 import type { CatalogItem } from "../modules/catalog/domain/catalog";
 import type { CatalogItemSnapshot } from "../modules/snapshots/domain/calculation-snapshot";
 import { calculateBreakEven } from "../modules/break-even/domain/break-even";
@@ -90,6 +90,13 @@ function percent(value: number) {
 export function App() {
   const historyRepository = useMemo(
     () => createCalculationHistoryRepository(() => window.localStorage),
+    [],
+  );
+  const snapshotService = useMemo(
+    () => createSnapshotApplicationService({
+      generateId: () => crypto.randomUUID(),
+      now: () => new Date().toISOString(),
+    }),
     [],
   );
   const catalogService = useMemo(
@@ -191,10 +198,8 @@ export function App() {
   function saveCalculation() {
     if (!calculation.result) return;
     try {
-      const snapshot = createPricingSnapshot({
-        id: crypto.randomUUID(),
+      const snapshot = snapshotService.create({
         name: name.trim() || "Cálculo sin nombre",
-        createdAt: new Date().toISOString(),
         currency,
         pricingInput: input,
         catalogItem: selectedCatalogItem,
