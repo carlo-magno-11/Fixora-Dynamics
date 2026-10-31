@@ -70,7 +70,7 @@ export function createCatalogRepository(storageSource: KeyValueStorageSource): C
       write([item, ...current]);
     },
     update(item: CatalogItem): void {
-      const current = load();
+      const current = readForMutation();
       if (!current.some((entry) => entry.id === item.id)) {
         throw new Error("No se encontró el elemento que quieres actualizar.");
       }
