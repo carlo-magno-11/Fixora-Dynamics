@@ -13,6 +13,28 @@ export interface CalculationHistoryRepository {
 export function createCalculationHistoryRepository(
   storageSource: KeyValueStorageSource,
 ): CalculationHistoryRepository {
+  function readForMutation() {
+    const storage = resolveKeyValueStorage(storageSource);
+    const raw = storage.getItem(CALCULATION_HISTORY_STORAGE_KEY);
+    if (!raw) return storage;
+
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      throw new Error("No se puede modificar el historial porque los datos guardados están dañados.");
+    }
+
+    if (
+      !Array.isArray(parsed) ||
+      parsed.length > MAX_HISTORY_RECORDS ||
+      !parsed.every(isSavedCalculation)
+    ) {
+      throw new Error("No se puede modificar el historial porque los datos guardados no son válidos.");
+    }
+    return storage;
+  }
+
   return {
     load() {
       try {
@@ -31,7 +53,10 @@ export function createCalculationHistoryRepository(
       }
     },
     save(records) {
-      resolveKeyValueStorage(storageSource).setItem(
+      if (!records.every(isSavedCalculation)) {
+        throw new Error("No se puede guardar un historial con registros no válidos.");
+      }
+      readForMutation().setItem(
         CALCULATION_HISTORY_STORAGE_KEY,
         JSON.stringify(records.slice(0, MAX_HISTORY_RECORDS)),
       );
