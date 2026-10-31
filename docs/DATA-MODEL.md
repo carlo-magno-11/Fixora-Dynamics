@@ -126,3 +126,11 @@ El historial remoto también conserva las tres migraciones históricas EYESITE q
 - El workflow CI fue actualizado para reconstruir el esquema y ejecutar pruebas de mutación en aislamiento de negocio, catálogo y soporte. Falta una nueva corrida CI sobre el HEAD que contiene todas las migraciones.
 - La app todavía conserva persistencia local y no usa Supabase Auth/repositorios cloud; no se debe declarar el producto listo para producción.
 - No se ha aplicado ninguna migración al proyecto oficial EYESITE ni a una base de producción.
+
+
+### Evidencia de concurrencia y mutation testing
+
+- Carrera concurrente ejecutada en el proyecto de pruebas: con dos dispositivos activos, dos altas simultáneas compitieron por el tercero; una fue aceptada y la otra rechazada con `Active device limit reached`. Recuento final: 3.
+- El fixture fue eliminado después de la prueba; usuario, compra, licencia y dispositivos quedaron en cero.
+- Mutation test de soporte con policy SELECT permisiva detectó el acceso cruzado entre dos clientes y revirtió la policy temporal.
+- El mismo test de concurrencia está versionado en `scripts/test-license-concurrency.sh` y agregado al workflow DB CI; falta su primera ejecución en GitHub Actions.
