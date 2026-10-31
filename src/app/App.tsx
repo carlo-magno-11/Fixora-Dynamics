@@ -121,7 +121,9 @@ export function App() {
   const [breakEvenInput, setBreakEvenInput] = useState<BreakEvenInput>(initialBreakEven);
   const [name, setName] = useState("Mi primer producto");
   const [selectedCatalogItem, setSelectedCatalogItem] = useState<CatalogItemSnapshot | undefined>();
-  const [history, setHistory] = useState<SavedCalculation[]>(() => historyRepository.load());
+  const [historyLoadState] = useState(() => historyRepository.loadState());
+  const [history, setHistory] = useState<SavedCalculation[]>(historyLoadState.records);
+  const [historyNeedsRecovery, setHistoryNeedsRecovery] = useState(historyLoadState.needsRecovery);
   const [savedMessage, setSavedMessage] = useState("");
 
   const breakEvenCalculation = useMemo(() => {
@@ -152,12 +154,13 @@ export function App() {
   }, [businessType]);
 
   useEffect(() => {
+    if (historyNeedsRecovery) return;
     try {
       historyRepository.save(history);
     } catch {
       setSavedMessage("No fue posible guardar en este navegador.");
     }
-  }, [history, historyRepository]);
+  }, [history, historyNeedsRecovery, historyRepository]);
 
   function chooseBusinessType(type: BusinessType) {
     setBusinessType(type);
@@ -196,6 +199,10 @@ export function App() {
   }
 
   function saveCalculation() {
+    if (historyNeedsRecovery) {
+      setSavedMessage("Revisa o reinicia el historial antes de guardar un cálculo nuevo.");
+      return;
+    }
     if (!calculation.result) return;
     try {
       const snapshot = snapshotService.create({
@@ -239,7 +246,19 @@ export function App() {
   }
 
   function deleteCalculation(id: string) {
+    if (historyNeedsRecovery) return;
     setHistory((current) => current.filter((record) => record.id !== id));
+  }
+
+  function resetHistory() {
+    try {
+      historyRepository.reset();
+      setHistory([]);
+      setHistoryNeedsRecovery(false);
+      setSavedMessage("Se inició un historial nuevo en este navegador.");
+    } catch {
+      setSavedMessage("No fue posible reiniciar el historial. Los datos anteriores no se modificaron.");
+    }
   }
 
   return (
@@ -439,7 +458,7 @@ export function App() {
                         </div>
                       </>
                     ) : null}
-                    <button className="primary-button" onClick={saveCalculation} disabled={!calculation.result}>
+                    <button className="primary-button" onClick={saveCalculation} disabled={!calculation.result || historyNeedsRecovery}>
                       Guardar cálculo <span>↗</span>
                     </button>
                     {savedMessage && <p className="save-message" role="status">{savedMessage}</p>}
@@ -491,8 +510,15 @@ export function App() {
               <p className="eyebrow">TU ACTIVIDAD <span> / </span> 02</p>
               <h1>Mis cálculos.</h1>
               <p className="page-lead">Consulta y recupera los análisis que has guardado en este dispositivo.</p>
+              {historyNeedsRecovery && (
+                <div className="guide-callout" role="alert">
+                  <strong>El historial contiene datos que no se pueden leer.</strong>
+                  <p>Fixora conserva los datos originales y no los reemplazará automáticamente. Puedes exportar los registros legibles o iniciar un historial nuevo; esta acción sustituirá el contenido local actual.</p>
+                  <button className="outline-button" onClick={resetHistory}>Iniciar un historial nuevo</button>
+                </div>
+              )}
               {history.length > 0 && <div className="history-actions"><span>{history.length} {history.length === 1 ? "registro" : "registros"}</span><button className="outline-button" onClick={() => downloadHistoryCsv(history)}>Exportar CSV ↓</button></div>}
-              {history.length === 0 ? (
+              {history.length === 0 && !historyNeedsRecovery ? (
                 <div className="empty-state"><span>◷</span><h2>Aún no hay cálculos guardados</h2><p>Cuando guardes un análisis, aparecerá aquí para que puedas consultarlo después.</p><button className="primary-button compact" onClick={() => setView("calculator")}>Crear primer cálculo</button></div>
               ) : (
                 <div className="history-list">
@@ -502,7 +528,7 @@ export function App() {
                       <div className="history-main"><strong>{record.name}</strong><span>{new Date(record.createdAt).toLocaleString("es-MX", { dateStyle: "medium", timeStyle: "short" })}</span></div>
                       <div className="history-price"><span>PRECIO SUGERIDO</span><strong>{formatMoney(record.result.suggestedPrice, record.currency)}</strong></div>
                       <button className="outline-button" onClick={() => openCalculation(record)}>Abrir</button>
-                      <button className="delete-button" aria-label={`Eliminar ${record.name}`} onClick={() => deleteCalculation(record.id)}>×</button>
+                      <button className="delete-button" aria-label={`Eliminar ${record.name}`} onClick={() => deleteCalculation(record.id)} disabled={historyNeedsRecovery}>×</button>
                     </article>
                   ))}
                 </div>
