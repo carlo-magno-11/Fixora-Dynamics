@@ -288,6 +288,7 @@ BEGIN
     NULL;
   END;
 
+  PERFORM pg_catalog.set_config('role', 'service_role', true);
   SELECT count(*) INTO v_count
   FROM fixora_private.fixora_support_ticket_events
   WHERE ticket_id = v_ticket_a;
