@@ -414,7 +414,7 @@ El proyecto de pruebas ya tiene siete tablas Fixora, 15 políticas RLS y cero da
 
 ### Pruebas ejecutadas
 
-- `fixora_licenses.test.sql`: 26 aserciones estructurales y bloque funcional; sin error SQL tras las correcciones de ambigüedad.
+- `fixora_licenses.test.sql`: 27 aserciones estructurales y bloque funcional; sin error SQL tras las correcciones de ambigüedad.
 - `fixora_admin_support.test.sql`: 23 aserciones estructurales y bloque funcional; se ejecutó después de agregar aislamiento de mensajes.
 - Las pruebas funcionales cubren compra no verificada, reembolso, idempotencia, límite de dispositivos, roles, AAL2, invitaciones, soporte y separación entre clientes.
 - No se declara CI completa para estas suites: falta una nueva ejecución del workflow DB en el HEAD que contiene todas las migraciones.
