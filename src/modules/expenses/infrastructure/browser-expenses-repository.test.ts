@@ -25,6 +25,7 @@ describe("browser expenses repository", () => {
     expect(repository.load("MXN")).toMatchObject({
       currency: "USD",
       needsCurrencyReview: false,
+      needsDataRecovery: false,
       fixed: oldExpenses.fixed,
     });
   });
@@ -39,7 +40,7 @@ describe("browser expenses repository", () => {
     });
   });
 
-  it("returns safe defaults for malformed data or blocked storage", () => {
+  it("requires explicit recovery for malformed JSON or blocked storage", () => {
     expect(createExpensesRepository(memoryStorage({
       [EXPENSES_STORAGE_KEY]: "{",
     })).load("USD")).toMatchObject({
@@ -47,7 +48,7 @@ describe("browser expenses repository", () => {
       variable: [],
       currency: "USD",
       needsCurrencyReview: false,
-      needsDataRecovery: false,
+      needsDataRecovery: true,
     });
     expect(createExpensesRepository(() => {
       throw new Error("blocked");
@@ -57,14 +58,22 @@ describe("browser expenses repository", () => {
     });
   });
 
-  it("rejects invalid expense rows rather than partially trusting them", () => {
+  it("requires explicit recovery for invalid expense rows or periods", () => {
+    const invalidRows = {
+      ...oldExpenses,
+      currency: "MXN",
+      fixed: [{ id: "bad", name: "Renta", amount: -1 }],
+    };
+    const invalidPeriod = { ...oldExpenses, currency: "MXN", period: "daily" };
     expect(createExpensesRepository(memoryStorage({
-      [EXPENSES_STORAGE_KEY]: JSON.stringify({
-        ...oldExpenses,
-        currency: "MXN",
-        fixed: [{ id: "bad", name: "Renta", amount: -1 }],
-      }),
-    })).load("MXN").fixed).toEqual([]);
+      [EXPENSES_STORAGE_KEY]: JSON.stringify(invalidRows),
+    })).load("MXN")).toMatchObject({
+      fixed: [],
+      needsDataRecovery: true,
+    });
+    expect(createExpensesRepository(memoryStorage({
+      [EXPENSES_STORAGE_KEY]: JSON.stringify(invalidPeriod),
+    })).load("MXN").needsDataRecovery).toBe(true);
   });
 
   it("persists currency and period without converting values", () => {
