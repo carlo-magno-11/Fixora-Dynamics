@@ -284,3 +284,37 @@ Esta corrida confirma el código frontend y sus pruebas unitarias actuales. No v
 
 El workflow Database tests #214 permanece `pending` sin jobs visibles. La migración de fundación y las dos suites pgTAP siguen sin evidencia de ejecución. No hay despliegue remoto.
 
+
+
+## 12. Resultado de PostgreSQL 17 y pgTAP — 31 de octubre de 2026
+
+<badge color="success">Database tests #265 — SUCCESS</badge>
+
+El workflow #265 terminó correctamente en el commit `aa72d18d23f4abe9cbfa20ffd12b9d012c1afdf7`.
+
+### Evidencia
+
+1. Supabase CLI creó un stack local aislado en GitHub Actions.
+2. `supabase db reset` reconstruyó PostgreSQL 17 desde `supabase/migrations/20261030165305_fixora_identity_and_businesses.sql`.
+3. `supabase test db` pasó los dos archivos:
+   - `fixora_business_rls.test.sql`: 20 aserciones.
+   - `fixora_foundation.test.sql`: 25 aserciones.
+   - Total: **45/45**.
+4. La prueba de mutación creó temporalmente `fixora_ci_mutation_allow_all` en SELECT sobre `fixora_businesses`. El test de aislamiento detectó la fuga en dos comprobaciones (el usuario B vio dos negocios y pudo leer el negocio A). La policy temporal se eliminó y una nueva ejecución pasó 45/45.
+5. CI #731 también pasó: instalación congelada, `pnpm typecheck`, 127 pruebas Vitest en 18 archivos y `pnpm build`.
+
+### Correcciones aplicadas antes de la aprobación
+
+- El schema de funciones internas se crea ahora como `fixora_private`, consistente con grants, funciones y tests.
+- La función `sync_auth_user_email` quedó con delimitadores `$$` válidos.
+- Los bloques dinámicos del test pgTAP quedaron correctamente delimitados.
+- La prueba de aislamiento quedó con plan 20 y cubre roles owner/viewer, dos negocios y tres identidades.
+
+### Lo que NO demuestra
+
+- No se aplicó ni modificó el proyecto Supabase Cloud reservado.
+- No valida la coexistencia con el trigger heredado de Auth ni las funciones SECURITY DEFINER antiguas detectadas allí.
+- No prueba backfill de usuarios Auth preexistentes, producción, despliegue, backups ni rollback remoto.
+- No valida todavía los módulos de datos operativos, licencias, dispositivos, compras, webhooks, administración ni soporte.
+
+El estado de esta migración queda aprobado **solo como fundación local reproducible**. La siguiente migración debe ser la de datos operativos y snapshots, con RLS y pruebas A/B antes de avanzar a licencias.
