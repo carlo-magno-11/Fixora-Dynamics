@@ -1,12 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { calculatePrice } from "../modules/pricing/domain/pricing";
 import { ExpensesPage } from "../modules/expenses/ui/ExpensesPage";
-import { createExpensesApplicationService } from "../modules/expenses/application/expenses-service";
-import { createExpensesRepository } from "../modules/expenses/infrastructure/browser-expenses-repository";
 import { CatalogPage } from "../modules/catalog/ui/CatalogPage";
-import { createCatalogApplicationService } from "../modules/catalog/application/catalog-service";
-import { createCatalogRepository } from "../modules/catalog/infrastructure/browser-catalog-repository";
-import { createSnapshotApplicationService } from "../modules/snapshots/application/snapshot-service";
 import type { CatalogItem } from "../modules/catalog/domain/catalog";
 import type { CatalogItemSnapshot } from "../modules/snapshots/domain/calculation-snapshot";
 import { calculateBreakEven } from "../modules/break-even/domain/break-even";
@@ -14,9 +9,9 @@ import type { BreakEvenInput } from "../modules/break-even/domain/break-even";
 import type { PricingInput } from "../modules/pricing/domain/pricing";
 import { AboutPage, AccountPage, GuidePage } from "./BrandPages";
 import { LegalPage } from "./LegalPages";
+import { createAppServices } from "./create-app-services";
 import { calculationsToCsv } from "../modules/snapshots/domain/calculation-export";
 import type { SavedCalculation } from "../modules/snapshots/domain/saved-calculation";
-import { createCalculationHistoryRepository } from "../modules/snapshots/infrastructure/browser-calculation-repository";
 
 type View = "essentials" | "calculator" | "breakEven" | "expenses" | "catalog" | "kits" | "history" | "guide" | "account" | "about" | "terms" | "privacy";
 type BusinessType = "general" | "retail" | "food" | "services_beauty" | "digital_products" | "workshop";
@@ -88,31 +83,15 @@ function percent(value: number) {
 }
 
 export function App() {
-  const historyRepository = useMemo(
-    () => createCalculationHistoryRepository(() => window.localStorage),
-    [],
-  );
-  const snapshotService = useMemo(
-    () => createSnapshotApplicationService({
+  const appServices = useMemo(
+    () => createAppServices({
+      storage: () => window.localStorage,
       generateId: () => crypto.randomUUID(),
       now: () => new Date().toISOString(),
     }),
     [],
   );
-  const catalogService = useMemo(
-    () => createCatalogApplicationService(
-      createCatalogRepository(() => window.localStorage),
-      () => crypto.randomUUID(),
-    ),
-    [],
-  );
-  const expensesService = useMemo(
-    () => createExpensesApplicationService(
-      createExpensesRepository(() => window.localStorage),
-      () => crypto.randomUUID(),
-    ),
-    [],
-  );
+  const { historyRepository, snapshotService, catalogService, expensesService } = appServices;
   const [input, setInput] = useState<PricingInput>(initial);
   const [currency, setCurrency] = useState<CurrencyCode>("MXN");
   const [view, setView] = useState<View>("essentials");
