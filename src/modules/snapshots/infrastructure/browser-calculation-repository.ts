@@ -42,30 +42,30 @@ export function createCalculationHistoryRepository(
     return storage;
   }
 
+  function loadState(): CalculationHistoryLoadState {
+    try {
+      const raw = resolveKeyValueStorage(storageSource).getItem(CALCULATION_HISTORY_STORAGE_KEY);
+      if (!raw) return { records: [], needsRecovery: false };
+      const parsed: unknown = JSON.parse(raw);
+      if (!Array.isArray(parsed)) return { records: [], needsRecovery: true };
+      const validRecords = parsed.filter(isSavedCalculation);
+      const records = validRecords.slice(0, MAX_HISTORY_RECORDS).map((record) => ({
+        ...record,
+        formulaVersion: record.formulaVersion ?? PRICING_FORMULA_VERSION,
+        snapshotVersion: record.snapshotVersion ?? 1,
+      }));
+      return {
+        records,
+        needsRecovery: validRecords.length !== parsed.length || parsed.length > MAX_HISTORY_RECORDS,
+      };
+    } catch {
+      return { records: [], needsRecovery: true };
+    }
+  }
+
   return {
-    load(): SavedCalculation[] {
-      return this.loadState().records;
-    },
-    loadState() {
-      try {
-        const raw = resolveKeyValueStorage(storageSource).getItem(CALCULATION_HISTORY_STORAGE_KEY);
-        if (!raw) return { records: [], needsRecovery: false };
-        const parsed: unknown = JSON.parse(raw);
-        if (!Array.isArray(parsed)) return { records: [], needsRecovery: true };
-        const validRecords = parsed.filter(isSavedCalculation);
-        const records = validRecords.slice(0, MAX_HISTORY_RECORDS).map((record) => ({
-          ...record,
-          formulaVersion: record.formulaVersion ?? PRICING_FORMULA_VERSION,
-          snapshotVersion: record.snapshotVersion ?? 1,
-        }));
-        return {
-          records,
-          needsRecovery: validRecords.length !== parsed.length || parsed.length > MAX_HISTORY_RECORDS,
-        };
-      } catch {
-        return { records: [], needsRecovery: true };
-      }
-    },
+    load: () => loadState().records,
+    loadState,
     save(records) {
       if (!records.every(isSavedCalculation)) {
         throw new Error("No se puede guardar un historial con registros no válidos.");
