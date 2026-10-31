@@ -3,7 +3,8 @@ import type { CatalogDraft, CatalogItem } from "../domain/catalog";
 
 export interface CatalogRepositoryPort {
   load(): CatalogItem[];
-  save(items: readonly CatalogItem[]): void;
+  create(item: CatalogItem): void;
+  update(item: CatalogItem): void;
 }
 
 export interface CatalogApplicationService {
@@ -21,26 +22,27 @@ export function createCatalogApplicationService(
     load: () => repository.load(),
 
     create(draft, current) {
+      if (current.length >= 500) {
+        throw new Error("El catálogo alcanzó el límite de 500 elementos.");
+      }
       const item = createCatalogItem(draft, current, generateId());
-      const next = [item, ...current].slice(0, 500);
-      repository.save(next);
-      return next;
+      repository.create(item);
+      return [item, ...current];
     },
 
     update(id, draft, current) {
       const updated = updateCatalogItem(id, draft, current);
-      const next = current.map((item) => item.id === id ? updated : item);
-      repository.save(next);
-      return next;
+      repository.update(updated);
+      return current.map((item) => item.id === id ? updated : item);
     },
 
     setActive(id, active, current) {
       if (!current.some((item) => item.id === id)) {
         throw new Error("No se encontró el elemento que quieres actualizar.");
       }
-      const next = current.map((item) => item.id === id ? { ...item, active } : item);
-      repository.save(next);
-      return next;
+      const updated = { ...current.find((item) => item.id === id)!, active };
+      repository.update(updated);
+      return current.map((item) => item.id === id ? updated : item);
     },
   };
 }
