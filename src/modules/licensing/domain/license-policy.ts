@@ -55,6 +55,10 @@ export function getEffectiveLicenseState(
   if (expiry.getTime() <= activated.getTime()) {
     throw new RangeError("El vencimiento debe ser posterior a la activación.");
   }
+  const expectedExpiry = Date.parse(calculateLicenseExpiry(license.activatedAt));
+  if (expiry.getTime() !== expectedExpiry) {
+    throw new RangeError("El vencimiento debe corresponder a un año calendario desde la activación.");
+  }
   if (current.getTime() < activated.getTime()) {
     return "pending";
   }
