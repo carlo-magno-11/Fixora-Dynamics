@@ -2,7 +2,7 @@ BEGIN;
 
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 
-SELECT plan(16);
+SELECT plan(25);
 
 SELECT has_table('public', 'fixora_profiles', 'Fixora profiles table exists');
 SELECT has_table('public', 'fixora_businesses', 'Fixora businesses table exists');
@@ -32,6 +32,31 @@ SELECT ok(
 SELECT ok(
   NOT has_table_privilege('authenticated', 'public.fixora_business_memberships', 'INSERT'),
   'authenticated cannot mutate memberships directly'
+);
+
+SELECT ok(
+  NOT has_table_privilege('authenticated', 'public.fixora_profiles', 'INSERT'),
+  'authenticated cannot create profiles directly'
+);
+
+SELECT ok(
+  NOT has_table_privilege('authenticated', 'public.fixora_businesses', 'INSERT'),
+  'authenticated must use the transactional business creation RPC'
+);
+
+SELECT ok(
+  NOT has_table_privilege('authenticated', 'public.fixora_businesses', 'DELETE'),
+  'authenticated cannot delete businesses directly'
+);
+
+SELECT ok(
+  NOT has_table_privilege('authenticated', 'public.fixora_business_memberships', 'UPDATE'),
+  'authenticated cannot change membership roles or status directly'
+);
+
+SELECT ok(
+  NOT has_table_privilege('authenticated', 'public.fixora_business_memberships', 'DELETE'),
+  'authenticated cannot delete memberships directly'
 );
 
 SELECT ok(
@@ -85,6 +110,26 @@ SELECT ok(
     'EXECUTE'
   ),
   'authenticated can call the private function through the public wrapper'
+);
+
+SELECT ok(
+  NOT has_function_privilege('anon', 'private.handle_new_auth_user()', 'EXECUTE'),
+  'anon cannot execute the Auth trigger function directly'
+);
+
+SELECT ok(
+  NOT has_function_privilege('authenticated', 'private.handle_new_auth_user()', 'EXECUTE'),
+  'authenticated cannot execute the Auth trigger function directly'
+);
+
+SELECT ok(
+  NOT has_function_privilege('anon', 'private.has_active_business_role(uuid,text[])', 'EXECUTE'),
+  'anon cannot execute the membership policy helper'
+);
+
+SELECT ok(
+  has_function_privilege('authenticated', 'private.has_active_business_role(uuid,text[])', 'EXECUTE'),
+  'authenticated can execute the membership helper used by RLS'
 );
 
 SELECT ok(
