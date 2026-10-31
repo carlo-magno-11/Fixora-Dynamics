@@ -16,6 +16,7 @@ export function ExpensesPage({ service, currency, formatMoney }: {
   const [period, setPeriod] = useState<ExpensePeriod>(saved.period);
   const [expenseCurrency, setExpenseCurrency] = useState<CurrencyCode>(saved.currency);
   const [needsCurrencyReview, setNeedsCurrencyReview] = useState(saved.needsCurrencyReview);
+  const [needsDataRecovery, setNeedsDataRecovery] = useState(saved.needsDataRecovery);
   const [message, setMessage] = useState("");
 
   const summary = useMemo(() => {
@@ -27,6 +28,10 @@ export function ExpensesPage({ service, currency, formatMoney }: {
   }, [fixed, variable, expectedUnits, period, service]);
 
   useEffect(() => {
+    if (needsDataRecovery) {
+      setMessage("Los datos anteriores no se reemplazarán hasta que elijas cómo continuar.");
+      return;
+    }
     if (needsCurrencyReview) {
       setMessage("Confirma la moneda de tus registros anteriores antes de guardarlos.");
       return;
@@ -43,7 +48,7 @@ export function ExpensesPage({ service, currency, formatMoney }: {
     } catch {
       setMessage("No fue posible guardar los gastos en este navegador.");
     }
-  }, [fixed, variable, expectedUnits, period, expenseCurrency, needsCurrencyReview, service]);
+  }, [fixed, variable, expectedUnits, period, expenseCurrency, needsCurrencyReview, needsDataRecovery, service]);
 
   function updateFixed(id: string, key: "name" | "amount", value: string) {
     setFixed((current) => current.map((item) => item.id === id
@@ -65,6 +70,25 @@ export function ExpensesPage({ service, currency, formatMoney }: {
   function addVariableExpense() {
     const expense = service.createVariableExpense();
     setVariable((current) => [...current, expense]);
+  }
+
+  function startNewExpenseList() {
+    try {
+      service.save({
+        fixed: [],
+        variable: [],
+        expectedUnits,
+        period,
+        currency: expenseCurrency,
+      });
+      setFixed([]);
+      setVariable([]);
+      setNeedsCurrencyReview(false);
+      setNeedsDataRecovery(false);
+      setMessage("Se creó una lista nueva de gastos.");
+    } catch {
+      setMessage("No fue posible guardar una lista nueva. Tus datos anteriores no se modificaron.");
+    }
   }
 
   return (
@@ -109,6 +133,13 @@ export function ExpensesPage({ service, currency, formatMoney }: {
           </select>
         </label>
         <p className="field-hint">La moneda queda guardada con los gastos y es independiente del selector de la calculadora. Cambiarla no convierte los importes: revisa y actualiza las cantidades si corresponde.</p>
+        {needsDataRecovery && (
+          <div className="guide-callout" role="alert">
+            <strong>No pudimos leer tus gastos guardados.</strong>
+            <p>Para proteger tus datos, Fixora no los reemplazará automáticamente. Puedes revisar el almacenamiento o iniciar una lista nueva; esta acción sustituirá el contenido que no pudo leerse.</p>
+            <button className="outline-button" onClick={startNewExpenseList}>Iniciar una lista nueva</button>
+          </div>
+        )}
         {needsCurrencyReview && (
           <div className="guide-callout" role="alert">
             <strong>Confirma la moneda de tus registros anteriores.</strong>
