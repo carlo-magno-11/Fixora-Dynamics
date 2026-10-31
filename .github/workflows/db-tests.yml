@@ -67,3 +67,4 @@ jobs:
             exit 1
           fi
           echo "RLS mutation detected: tenant isolation tests failed as expected."
+          supabase test db
