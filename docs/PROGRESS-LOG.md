@@ -302,7 +302,7 @@ Rama: `foundation/bootstrap-20261029`. PR #1 permanece abierto en borrador.
 - CI #491 sobre el commit anterior detectó el error de tipos Node. El código fue corregido con Vite sin añadir dependencias.
 - El job Database tests #25 fue creado pero seguía pendiente sin jobs visibles en la última consulta.
 - No hay todavía una corrida verde posterior a estas correcciones. No se afirma que typecheck, Vitest, build, migración o pgTAP hayan pasado en el HEAD actual.
-- La suite de fundación tiene 25 comprobaciones planificadas y 25 llamadas de aserción; la suite de aislamiento A/B tiene 17 comprobaciones planificadas.
+- La suite de fundación tiene 25 comprobaciones planificadas y 25 llamadas de aserción; la suite de aislamiento A/B tiene 18 comprobaciones planificadas.
 - La prueba de arquitectura sigue siendo un guardrail inicial y debe ampliarse conforme se extraigan módulos.
 
 
