@@ -89,6 +89,8 @@ A local-only trigger function may create one `fixora_profiles` row after Auth si
 - safely handle absent optional email/display name;
 - not reference or write to any EYESITE table.
 
+A separate Auth email-update trigger keeps the copied `fixora_profiles.email` field synchronized when `auth.users.email` changes. It must also be SECURITY DEFINER with a fixed empty search_path, update only the matching Fixora profile, and revoke direct EXECUTE from client roles. The profile display name remains user-editable and is not overwritten by email synchronization.
+
 Remote signup remains disabled until the legacy trigger has been handled in a reviewed deployment migration.
 
 ### 3.3 Business creation
@@ -102,8 +104,8 @@ Requirements:
 - validate and normalize input server-side;
 - use a fixed empty search_path and fully qualified names;
 - expose a public SECURITY INVOKER wrapper only;
-- delegate the atomic write to a private SECURITY DEFINER implementation with a fixed empty search_path and fully qualified names;
-- revoke EXECUTE from PUBLIC/anon on the private implementation and grant only the permissions required by authenticated sessions;
+- delegate the atomic write to a SECURITY DEFINER implementation in `fixora_private` with a fixed empty search_path and fully qualified names;
+- revoke EXECUTE from PUBLIC/anon on the `fixora_private` implementation and grant only the permissions required by authenticated sessions;
 - revoke EXECUTE from PUBLIC/anon on the public wrapper and grant it to authenticated only;
 - keep the schema privado `fixora_private` outside PostgREST exposed schemas;
 - do not let the RPC accept role, membership status, license, or entitlement fields.
