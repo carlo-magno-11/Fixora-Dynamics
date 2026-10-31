@@ -1,19 +1,15 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
-import { createCatalogItem, updateCatalogItem } from "../domain/catalog";
+import type { CatalogApplicationService } from "../application/catalog-service";
 import type { CatalogCurrency, CatalogDraft, CatalogItem, CatalogItemKind } from "../domain/catalog";
-import { createCatalogRepository } from "../infrastructure/browser-catalog-repository";
 
-export function CatalogPage({ currency, formatMoney, onUseInCalculator }: {
+export function CatalogPage({ service, currency, formatMoney, onUseInCalculator }: {
+  service: CatalogApplicationService;
   currency: CatalogCurrency;
   formatMoney: (value: number, currency: CatalogCurrency) => string;
   onUseInCalculator: (item: CatalogItem) => void;
 }) {
-  const repository = useMemo(
-    () => createCatalogRepository(() => window.localStorage),
-    [],
-  );
-  const [items, setItems] = useState<CatalogItem[]>(() => repository.load());
+  const [items, setItems] = useState<CatalogItem[]>(() => service.load());
   const [name, setName] = useState("");
   const [kind, setKind] = useState<CatalogItemKind>("product");
   const [unit, setUnit] = useState("pieza");
@@ -22,14 +18,6 @@ export function CatalogPage({ currency, formatMoney, onUseInCalculator }: {
   const [draftCurrency, setDraftCurrency] = useState(currency);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [message, setMessage] = useState("");
-
-  useEffect(() => {
-    try {
-      repository.save(items);
-    } catch {
-      setMessage("No fue posible guardar el catálogo en este navegador.");
-    }
-  }, [items, repository]);
 
   useEffect(() => {
     if (!editingId) setDraftCurrency(currency);
@@ -56,17 +44,24 @@ export function CatalogPage({ currency, formatMoney, onUseInCalculator }: {
     setMessage("Editando elemento. Guarda los cambios o cancela para salir.");
   }
 
+  function toggleActive(item: CatalogItem) {
+    try {
+      setItems((current) => service.setActive(item.id, !item.active, current));
+      setMessage(item.active ? "Elemento archivado." : "Elemento reactivado.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "No fue posible actualizar el catálogo.");
+    }
+  }
+
   function saveItem(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const draft: CatalogDraft = { name, kind, unit, sku, currency: draftCurrency, referenceCost };
     try {
       if (editingId) {
-        const updated = updateCatalogItem(editingId, draft, items);
-        setItems((current) => current.map((item) => item.id === editingId ? updated : item));
+        setItems((current) => service.update(editingId, draft, current));
         setMessage("Cambios guardados en el catálogo.");
       } else {
-        const item = createCatalogItem(draft, items);
-        setItems((current) => [item, ...current].slice(0, 500));
+        setItems((current) => service.create(draft, current));
         setMessage("Elemento añadido al catálogo.");
       }
       resetForm();
@@ -105,7 +100,7 @@ export function CatalogPage({ currency, formatMoney, onUseInCalculator }: {
                 <div className="catalog-main"><strong>{item.name}</strong><span>{item.sku ? `SKU ${item.sku} · ` : ""}Por {item.unit}</span></div>
                 <div className="catalog-cost"><span>COSTE REFERENCIA</span><strong>{formatMoney(item.referenceCost, item.currency)}</strong></div>
                 <button className="outline-button catalog-use-button" onClick={() => onUseInCalculator(item)} disabled={!item.active}>Costear</button>
-                <div className="catalog-row-actions"><button className="outline-button" onClick={() => startEditing(item)}>Editar</button><button className="text-button" onClick={() => setItems((current) => current.map((entry) => entry.id === item.id ? { ...entry, active: !entry.active } : entry))}>{item.active ? "Archivar" : "Reactivar"}</button></div>
+                <div className="catalog-row-actions"><button className="outline-button" onClick={() => startEditing(item)}>Editar</button><button className="text-button" onClick={() => toggleActive(item)}>{item.active ? "Archivar" : "Reactivar"}</button></div>
               </article>
             ))}
           </div>
