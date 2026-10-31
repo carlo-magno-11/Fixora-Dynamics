@@ -51,7 +51,7 @@ La decisión vigente es continuar con una base local limpia y un modelo propio d
 Documentos vigentes:
 - `docs/EXECUTION-AUDIT-AND-PLAN-20261031.md`: auditoría comprobada, riesgos, matriz de pruebas y plan de ejecución por fases.
 - `docs/FIXORA-FOUNDATION-SPEC.md`: arquitectura de identidad, negocios, membresías y roadmap de datos.
-- `docs/FIXORA-FOUNDATION-MIGRATION-SQL.md`: borrador SQL revisado para la primera migración local.
+- `docs/FIXORA-FOUNDATION-MIGRATION-SQL.md`: registro y referencia de la migración canónica versionada.
 - `docs/DATABASE-LOCAL-SETUP.md`: stack local y comandos de validación.
 - `supabase/README.md`: límites y reglas de Supabase.
 
@@ -62,14 +62,17 @@ Documentos vigentes:
 - [x] REST y Auth health local devolvieron HTTP 200.
 - [x] Base local inspeccionada: sin tablas de negocio Fixora ni migraciones propias.
 - [x] `api.auto_expose_new_tables = false` y seed deshabilitado en configuración local.
-- [ ] Crear la primera migración con `supabase migration new fixora_identity_and_businesses`.
-- [ ] Aplicar y verificar exclusivamente en la base local.
-- [ ] Probar RLS/grants con dos usuarios y dos negocios.
+- [x] Crear y versionar la primera migración con Supabase CLI.
+- [ ] Aplicar y verificar exclusivamente en la base local o runner temporal de CI.
+- [ ] Obtener pgTAP verde para RLS/grants con dos usuarios y dos negocios.
 - [ ] Conectar la UI a Auth y persistencia cloud después de aprobar la base local.
 - [ ] Migrar catálogo, gastos e historial local a tablas multi-tenant.
 - [ ] Completar licencias, activación, límite de dispositivos y auditoría.
 
-### Bloqueo remoto independiente
+### Validación de base local y bloqueo remoto independiente
+
+La migración canónica y dos suites pgTAP ya están versionadas. El workflow DB crea un stack temporal con PostgreSQL 17 y ejecuta las pruebas, incluida una mutación RLS; su primer job aún no ha terminado correctamente. No declarar fundación aprobada hasta tener evidencia de ejecución verde.
+
 
 El proyecto Supabase reservado para Fixora conserva objetos heredados EYESITE. El trigger Auth remoto antiguo puede escribir en la tabla heredada `public.profiles`. Por tanto:
 - no habilitar signup remoto todavía;
