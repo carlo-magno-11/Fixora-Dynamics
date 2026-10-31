@@ -18,10 +18,11 @@ function setup() {
         period: "month",
         currency: defaultCurrency,
         needsCurrencyReview: false,
+        needsDataRecovery: false,
       };
     },
     save(draft: ExpensesDraft) {
-      stored = { ...draft, needsCurrencyReview: false };
+      stored = { ...draft, needsCurrencyReview: false, needsDataRecovery: false };
     },
   };
   const service = createExpensesApplicationService(repository, () => `expense-${++nextId}`);
