@@ -2,12 +2,16 @@ BEGIN;
 
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 
-SELECT plan(17);
+SELECT plan(18);
 
 INSERT INTO auth.users (id, email)
 VALUES
   ('123e4567-e89b-12d3-a456-426614174001', 'fixora-rls-a-20261031@example.invalid'),
   ('987fcdeb-51a2-43d7-9012-345678901235', 'fixora-rls-b-20261031@example.invalid');
+
+UPDATE auth.users
+SET email = 'fixora-rls-a-updated-20261031@example.invalid'
+WHERE id = '123e4567-e89b-12d3-a456-426614174001';
 
 SET LOCAL ROLE authenticated;
 SET LOCAL request.jwt.claim.sub = '123e4567-e89b-12d3-a456-426614174001';
@@ -16,6 +20,12 @@ SELECT results_eq(
   'SELECT count(*) FROM public.fixora_profiles',
   ARRAY[1::bigint],
   'User A can read only their own profile'
+);
+
+SELECT is(
+  (SELECT email FROM public.fixora_profiles WHERE id = auth.uid()),
+  'fixora-rls-a-updated-20261031@example.invalid',
+  'Fixora profile email stays synchronized after Auth email change'
 );
 
 SELECT ok(
