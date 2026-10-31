@@ -19,6 +19,13 @@ export function isStoredCatalogItem(value: unknown): value is CatalogItem {
 }
 
 export function createCatalogRepository(storageSource: KeyValueStorageSource): CatalogRepositoryPort {
+  function write(items: readonly CatalogItem[]): void {
+    resolveKeyValueStorage(storageSource).setItem(
+      CATALOG_STORAGE_KEY,
+      JSON.stringify(items.slice(0, MAX_CATALOG_ITEMS)),
+    );
+  }
+
   return {
     load(): CatalogItem[] {
       try {
@@ -32,11 +39,22 @@ export function createCatalogRepository(storageSource: KeyValueStorageSource): C
         return [];
       }
     },
-    save(items: readonly CatalogItem[]): void {
-      resolveKeyValueStorage(storageSource).setItem(
-        CATALOG_STORAGE_KEY,
-        JSON.stringify(items.slice(0, MAX_CATALOG_ITEMS)),
-      );
+    create(item: CatalogItem): void {
+      const current = this.load();
+      if (current.length >= MAX_CATALOG_ITEMS) {
+        throw new Error("El catálogo alcanzó el límite de 500 elementos.");
+      }
+      if (current.some((entry) => entry.id === item.id)) {
+        throw new Error("El identificador del elemento ya existe.");
+      }
+      write([item, ...current]);
+    },
+    update(item: CatalogItem): void {
+      const current = this.load();
+      if (!current.some((entry) => entry.id === item.id)) {
+        throw new Error("No se encontró el elemento que quieres actualizar.");
+      }
+      write(current.map((entry) => entry.id === item.id ? item : entry));
     },
   };
 }
