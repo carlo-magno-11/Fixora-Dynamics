@@ -57,6 +57,14 @@ describe("Fixora annual license policy", () => {
     }, "2026-10-30T12:00:00.000Z")).toThrow(RangeError);
   });
 
+  it("rejects an expiry date that grants more or less than one calendar year", () => {
+    expect(() => getEffectiveLicenseState({
+      status: "active",
+      activatedAt: "2026-10-30T12:00:00.000Z",
+      expiresAt: "2028-10-30T12:00:00.000Z",
+    }, "2027-01-01T00:00:00.000Z")).toThrow("El vencimiento debe corresponder a un año calendario desde la activación.");
+  });
+
   it("preserves account, history and export capabilities after expiry", () => {
     const capabilities = getLicenseCapabilities("expired");
     expect(capabilities).toContain("account.read");
