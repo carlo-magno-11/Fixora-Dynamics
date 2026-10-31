@@ -1,7 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { calculatePrice } from "../modules/pricing/domain/pricing";
 import { ExpensesPage } from "../modules/expenses/ui/ExpensesPage";
+import { createExpensesApplicationService } from "../modules/expenses/application/expenses-service";
+import { createExpensesRepository } from "../modules/expenses/infrastructure/browser-expenses-repository";
 import { CatalogPage } from "../modules/catalog/ui/CatalogPage";
+import { createCatalogApplicationService } from "../modules/catalog/application/catalog-service";
+import { createCatalogRepository } from "../modules/catalog/infrastructure/browser-catalog-repository";
 import { createPricingSnapshot } from "../modules/snapshots/domain/calculation-snapshot";
 import type { CatalogItem } from "../modules/catalog/domain/catalog";
 import type { CatalogItemSnapshot } from "../modules/snapshots/domain/calculation-snapshot";
@@ -86,6 +90,20 @@ function percent(value: number) {
 export function App() {
   const historyRepository = useMemo(
     () => createCalculationHistoryRepository(() => window.localStorage),
+    [],
+  );
+  const catalogService = useMemo(
+    () => createCatalogApplicationService(
+      createCatalogRepository(() => window.localStorage),
+      () => crypto.randomUUID(),
+    ),
+    [],
+  );
+  const expensesService = useMemo(
+    () => createExpensesApplicationService(
+      createExpensesRepository(() => window.localStorage),
+      () => crypto.randomUUID(),
+    ),
     [],
   );
   const [input, setInput] = useState<PricingInput>(initial);
@@ -459,8 +477,8 @@ export function App() {
             </div>
           )}
 
-          {view === "expenses" && <ExpensesPage currency={currency} formatMoney={formatMoney} />}
-          {view === "catalog" && <CatalogPage currency={currency} formatMoney={formatMoney} onUseInCalculator={useCatalogItem} />}
+          {view === "expenses" && <ExpensesPage service={expensesService} currency={currency} formatMoney={formatMoney} />}
+          {view === "catalog" && <CatalogPage service={catalogService} currency={currency} formatMoney={formatMoney} onUseInCalculator={useCatalogItem} />}
 
           {view === "history" && (
             <div className="secondary-page">
