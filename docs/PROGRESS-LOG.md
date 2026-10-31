@@ -339,6 +339,13 @@ CI #524 pasó typecheck, pero el test de arquitectura detectó dos dependencias 
 - App construye los adaptadores concretos e inyecta servicios.
 - El dominio de catálogo ya no genera IDs con una API global.
 - El almacenamiento sigue siendo localStorage; todavía no es Supabase ni multiusuario.
-- Se agregaron nueve pruebas de aplicación; el total esperado de Vitest es 110, pendiente de corrida verde.
+- Se agregaron pruebas de aplicación; el total exacto de Vitest queda pendiente de confirmar en una corrida verde.
 - El test de arquitectura que detectó el problema aún debe pasar en una nueva ejecución CI. No declarar el refactor validado hasta comprobarlo.
 
+
+### Addendum — puertos por entidad y snapshots puros
+
+- El contrato de catálogo pasó de reemplazo de colección completa a comandos create/update por entidad; el adaptador local aplica esas operaciones sobre localStorage y la futura implementación Supabase podrá usar INSERT/UPDATE por fila.
+- Se añadió SnapshotApplicationService con reloj y generador de ID inyectados. El dominio de snapshots ahora requiere ID/fecha y dejó de invocar crypto.randomUUID() o new Date() por su cuenta.
+- Se añadieron pruebas del servicio de snapshots y se reforzó el test de arquitectura para prohibir globals de navegador/red y crypto en domain/application.
+- El repositorio de gastos continúa tratando sus listas como un agregado completo; antes de edición cloud multiusuario se añadirá revisión/versionado optimista para evitar lost updates.
