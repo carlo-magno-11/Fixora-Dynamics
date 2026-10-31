@@ -136,6 +136,29 @@ create trigger fixora_on_auth_user_created
 after insert on auth.users
 for each row execute function private.handle_new_auth_user();
 
+create or replace function private.sync_auth_user_email()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $
+begin
+  update public.fixora_profiles
+  set email = new.email,
+      updated_at = pg_catalog.now()
+  where id = new.id;
+  return new;
+end;
+$;
+
+revoke all on function private.sync_auth_user_email() from public, anon, authenticated;
+
+create trigger fixora_on_auth_user_email_updated
+after update of email on auth.users
+for each row
+when (old.email is distinct from new.email)
+execute function private.sync_auth_user_email();
+
 create or replace function private.create_business_for_authenticated_user(
   p_name text,
   p_business_type text default 'general',
