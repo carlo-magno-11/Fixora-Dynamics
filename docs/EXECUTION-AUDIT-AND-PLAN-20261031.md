@@ -193,7 +193,7 @@ Fixora no se declara lista para venta hasta que:
 - Inspeccionado el estado remoto de solo lectura, historial, trigger y advisors.
 - Añadido .github/workflows/db-tests.yml para reconstruir un proyecto Supabase temporal en CI y ejecutar pgTAP.
 - Endurecida la migración: el endpoint público de creación es SECURITY INVOKER; la función privilegiada queda en private y con permisos explícitos.
-- Ampliada la suite pgTAP con un escenario de aislamiento A/B y un control de mutación RLS en CI. La ejecución sigue pendiente de evidencia de workflow.
+- Ampliada la suite pgTAP con un escenario de aislamiento A/B y un control de mutación RLS en CI. Se añadió también una prueba Vitest que hace cumplir las primeras reglas de dependencias de arquitectura. Los workflows del nuevo HEAD están en ejecución; todavía no hay conclusión.
 - Ampliado docs/OPEN-SOURCE-RESEARCH.md con referencias de repositorios/estándares de alto uso y decisiones de adopción.
 - Ninguna migración se ha aplicado a Supabase remoto ni local en esta sesión. El nuevo workflow es la primera vía automatizada para ejecutar la migración en un stack local desechable de CI.
 
