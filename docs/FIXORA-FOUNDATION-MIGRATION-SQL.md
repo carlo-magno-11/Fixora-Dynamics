@@ -19,7 +19,7 @@ Este documento ya no duplica el SQL. Mantener una copia del DDL aquí creaba dos
 ## Pruebas versionadas
 
 - `supabase/tests/fixora_foundation.test.sql`: 25 aserciones estructurales y de privilegios.
-- `supabase/tests/fixora_business_rls.test.sql`: 18 aserciones con dos usuarios y dos negocios, aislamiento A/B y actualización permitida al owner.
+- `supabase/tests/fixora_business_rls.test.sql`: 20 aserciones con dos usuarios y dos negocios, aislamiento A/B y actualización permitida al owner.
 - `.github/workflows/db-tests.yml`: stack Supabase temporal, reconstrucción desde migraciones, ejecución pgTAP y prueba de mutación RLS.
 
 ## Estado de ejecución
