@@ -101,30 +101,30 @@ export function ExpensesPage({ service, currency, formatMoney }: {
           <div className="section-heading"><div className="section-number">01</div><div><h2>Gastos fijos del periodo</h2><p>Importes que no dependen directamente de cuántas unidades vendas. Usa el periodo seleccionado abajo para todos los importes.</p></div></div>
           {fixed.map((item) => (
             <div className="expense-entry" key={item.id}>
-              <label className="field"><span>Concepto</span><input value={item.name} maxLength={80} placeholder="Ej. renta del local" onChange={(event) => updateFixed(item.id, "name", event.target.value)} /></label>
-              <label className="field"><span>Importe ({expenseCurrency})</span><input type="number" min="0" step="0.01" value={item.amount} onChange={(event) => updateFixed(item.id, "amount", event.target.value)} /></label>
-              <button className="delete-button" aria-label={`Eliminar ${item.name || "gasto fijo"}`} onClick={() => setFixed((current) => current.filter((entry) => entry.id !== item.id))}>×</button>
+              <label className="field"><span>Concepto</span><input value={item.name} maxLength={80} placeholder="Ej. renta del local" disabled={needsDataRecovery} onChange={(event) => updateFixed(item.id, "name", event.target.value)} /></label>
+              <label className="field"><span>Importe ({expenseCurrency})</span><input type="number" min="0" step="0.01" value={item.amount} disabled={needsDataRecovery} onChange={(event) => updateFixed(item.id, "amount", event.target.value)} /></label>
+              <button className="delete-button" aria-label={`Eliminar ${item.name || "gasto fijo"}`} onClick={() => setFixed((current) => current.filter((entry) => entry.id !== item.id))} disabled={needsDataRecovery}>×</button>
             </div>
           ))}
-          <button className="outline-button" onClick={addFixedExpense}>+ Añadir gasto fijo</button>
+          <button className="outline-button" onClick={addFixedExpense} disabled={needsDataRecovery}>+ Añadir gasto fijo</button>
         </section>
         <section className="surface-card">
           <div className="section-heading"><div className="section-number">02</div><div><h2>Costes variables por unidad</h2><p>Importes que se generan con cada producto o servicio vendido.</p></div></div>
           {variable.map((item) => (
             <div className="expense-entry" key={item.id}>
-              <label className="field"><span>Concepto</span><input value={item.name} maxLength={80} placeholder="Ej. empaque por unidad" onChange={(event) => updateVariable(item.id, "name", event.target.value)} /></label>
-              <label className="field"><span>Coste ({expenseCurrency})</span><input type="number" min="0" step="0.01" value={item.costPerUnit} onChange={(event) => updateVariable(item.id, "costPerUnit", event.target.value)} /></label>
-              <button className="delete-button" aria-label={`Eliminar ${item.name || "coste variable"}`} onClick={() => setVariable((current) => current.filter((entry) => entry.id !== item.id))}>×</button>
+              <label className="field"><span>Concepto</span><input value={item.name} maxLength={80} placeholder="Ej. empaque por unidad" disabled={needsDataRecovery} onChange={(event) => updateVariable(item.id, "name", event.target.value)} /></label>
+              <label className="field"><span>Coste ({expenseCurrency})</span><input type="number" min="0" step="0.01" value={item.costPerUnit} disabled={needsDataRecovery} onChange={(event) => updateVariable(item.id, "costPerUnit", event.target.value)} /></label>
+              <button className="delete-button" aria-label={`Eliminar ${item.name || "coste variable"}`} onClick={() => setVariable((current) => current.filter((entry) => entry.id !== item.id))} disabled={needsDataRecovery}>×</button>
             </div>
           ))}
-          <button className="outline-button" onClick={addVariableExpense}>+ Añadir coste variable</button>
+          <button className="outline-button" onClick={addVariableExpense} disabled={needsDataRecovery}>+ Añadir coste variable</button>
         </section>
       </div>
       <section className="surface-card expense-allocation">
         <div className="section-heading"><div className="section-number">03</div><div><h2>Periodo y asignación analítica</h2><p>Define la moneda y el periodo de estos registros; distribuye los gastos fijos entre el volumen esperado.</p></div></div>
         <label className="field expected-units-field">
           <span>Moneda de estos gastos</span>
-          <select value={expenseCurrency} onChange={(event) => {
+          <select value={expenseCurrency} disabled={needsDataRecovery} onChange={(event) => {
             setExpenseCurrency(event.target.value as CurrencyCode);
             setNeedsCurrencyReview(false);
           }}>
@@ -147,9 +147,9 @@ export function ExpensesPage({ service, currency, formatMoney }: {
             <button className="outline-button" onClick={() => setNeedsCurrencyReview(false)}>Confirmar {expenseCurrency}</button>
           </div>
         )}
-        <label className="field expected-units-field"><span>Periodo de registro</span><select value={period} onChange={(event) => setPeriod(event.target.value as ExpensePeriod)}><option value="week">Semanal</option><option value="month">Mensual</option><option value="quarter">Trimestral</option><option value="year">Anual</option></select></label>
+        <label className="field expected-units-field"><span>Periodo de registro</span><select value={period} disabled={needsDataRecovery} onChange={(event) => setPeriod(event.target.value as ExpensePeriod)}><option value="week">Semanal</option><option value="month">Mensual</option><option value="quarter">Trimestral</option><option value="year">Anual</option></select></label>
         <p className="field-hint">Cambiar el periodo no convierte automáticamente los importes. Antes de analizar, ajusta cada gasto al periodo que hayas seleccionado.</p>
-        <label className="field expected-units-field"><span>Unidades estimadas en el periodo</span><input type="number" min="1" step="1" value={expectedUnits} onChange={(event) => setExpectedUnits(Math.max(1, Math.floor(Number(event.target.value) || 1)))} /></label>
+        <label className="field expected-units-field"><span>Unidades estimadas en el periodo</span><input type="number" min="1" step="1" value={expectedUnits} disabled={needsDataRecovery} onChange={(event) => setExpectedUnits(Math.max(1, Math.floor(Number(event.target.value) || 1)))} /></label>
         {summary.error ? <p className="error-state" role="alert">{summary.error}</p> : summary.result && (
           <div className="expense-summary">
             <div><span>Gastos fijos del periodo ({period === "week" ? "semanal" : period === "month" ? "mensual" : period === "quarter" ? "trimestral" : "anual"})</span><strong>{formatMoney(summary.result.fixedCostsForPeriod, expenseCurrency)}</strong></div>
