@@ -318,3 +318,42 @@ El workflow #265 terminó correctamente en el commit `aa72d18d23f4abe9cbfa20ffd1
 - No valida todavía los módulos de datos operativos, licencias, dispositivos, compras, webhooks, administración ni soporte.
 
 El estado de esta migración queda aprobado **solo como fundación local reproducible**. La siguiente migración debe ser la de datos operativos y snapshots, con RLS y pruebas A/B antes de avanzar a licencias.
+
+
+## 13. Limpieza del proyecto de pruebas y aplicación de la fundación — 31 de octubre de 2026
+
+### Identidad confirmada
+
+- Destino confirmado por el usuario: `eyesite-security-test`.
+- Supabase project ref: `dclaebknyalimmtgppeg`, PostgreSQL 17.11.0.003, región `us-east-2`.
+- Proyecto oficial EYESITE: `terrenos Yucatan`, ref `xhvpvpvtkdgnnxdwdrkn`. No se modificó.
+- El proyecto de pruebas estaba ACTIVE_HEALTHY, con 0 usuarios Auth y sin relaciones en `public`; conservaba cuatro funciones públicas EYESITE SECURITY DEFINER, trigger Auth, cuatro políticas de Storage EYESITE y bucket vacío `eyesite-media`.
+
+### Limpieza remota realizada
+
+- Migración remota `20261031230342_remove_eyesite_auth_and_storage_policies_for_fixora`.
+- Retiradas las cuatro políticas `eyesite_media_*`, el trigger `on_auth_user_created` y las cuatro funciones heredadas `handle_new_user()`, `current_profile_role(uuid)`, `current_profile_estado(uuid)`, `is_admin()`.
+- Verificación posterior: `public` sin tablas ni funciones; Auth sin usuarios ni triggers personalizados; Storage sin políticas EYESITE y sin objetos en el bucket.
+- Security Advisor: 0 hallazgos.
+- No se eliminaron los esquemas internos de Supabase ni el ledger de migraciones. Los tres registros históricos EYESITE permanecen para trazabilidad.
+- El bucket público `eyesite-media` permanece vacío. No se borró directamente su fila de `storage.buckets`; la eliminación pendiente debe hacerse por Storage API/Dashboard, no manipulando tablas internas.
+
+### Migración de fundación Fixora aplicada
+
+- Se aplicó el archivo versionado `supabase/migrations/20261030165305_fixora_identity_and_businesses.sql` desde la rama `foundation/bootstrap-20261029`.
+- Migración remota registrada: `20261031230444_fixora_identity_and_businesses`.
+- Tablas: `fixora_profiles`, `fixora_businesses`, `fixora_business_memberships`; las tres tienen RLS habilitado.
+- Se generaron tipos TypeScript desde el esquema remoto para inspección.
+- Smoke test dentro de una transacción: dos identidades temporales, trigger de perfil, creación de negocio por RPC con el usuario A y aislamiento del negocio frente al usuario B. La transacción hizo ROLLBACK; no quedaron registros de prueba.
+- Security Advisor posterior: 0 hallazgos.
+- Performance Advisor: índice faltante en `fixora_businesses.created_by`; se incorporará en la migración operativa. El índice de membresías reportado como no usado es esperable en un esquema recién creado y se reevaluará con tráfico.
+
+### CI
+
+- Database tests #283 / run `41250062503`: SUCCESS; stack aislado, reset, pgTAP y mutation test.
+- CI #749 / run `41250062523`: SUCCESS.
+- PR #1 permanece draft abierto; no merge.
+
+### Estado actualizado
+
+La base de pruebas ya no está vacía: contiene la fundación Fixora aplicada. No está lista para producción ni para usuarios reales. Catálogo, gastos, configuración, snapshots, licencias, activación, dispositivos, administración, auditoría, soporte y conexión cloud de la aplicación siguen pendientes. No se modificó el proyecto oficial EYESITE.
