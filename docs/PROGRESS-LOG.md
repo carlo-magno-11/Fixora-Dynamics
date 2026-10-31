@@ -449,3 +449,38 @@ La migración de identidad y negocios está probada en un Supabase local aislado
 - La migración operativa de catálogo, gastos, settings y snapshots todavía no está creada ni aplicada.
 - El proyecto oficial EYESITE `xhvpvpvtkdgnnxdwdrkn` no fue modificado.
 - PR #1 sigue abierto en borrador; no se fusionó.
+
+
+## 2026-10-31 — Entrega 10: datos operativos, RLS y snapshots
+
+### Migraciones registradas en Supabase
+
+- `20261031230837_fixora_operational_data`: catálogo, gastos, configuración por negocio, snapshots inmutables, índices y políticas RLS.
+- `20261031230903_fixora_operational_foreign_key_indexes`: índices independientes para las claves foráneas de usuario que detectó Performance Advisor.
+- `20261031231048_fixora_operational_insert_grants`: reemplaza INSERT a nivel de tabla por INSERT limitado a columnas permitidas; el cliente no puede establecer `created_by`, `id` ni timestamps.
+- Los tres IDs fueron generados por el registro de migraciones Supabase del proyecto de pruebas y se usaron como nombres de los archivos versionados en Git.
+
+### Modelo operativo entregado
+
+- `fixora_catalog_items`: producto/servicio, unidad, SKU único sin distinción de mayúsculas dentro del negocio, moneda y coste de referencia. Archivado lógico; sin DELETE directo.
+- `fixora_expenses`: gastos fijos/variables, importe y archivado lógico; sin DELETE directo.
+- `fixora_expense_settings`: una fila por negocio, unidades esperadas, periodo y versión optimista. Un trigger crea los valores iniciales al crear el negocio; el trigger de actualización exige incrementar la versión exactamente en uno.
+- `fixora_calculation_snapshots`: entradas/resultados JSON, moneda y versiones de esquema/fórmula. Append-only para clientes: SELECT/INSERT, sin UPDATE/DELETE.
+- Las cuatro tablas tienen RLS y políticas por membresía de negocio. Owner/admin/editor pueden mutar; viewer solo consulta. Ninguna identidad anónima tiene SELECT.
+- Se usan grants explícitos y de mínimo privilegio por el cambio de Data API de Supabase del 30-10-2026.
+
+### Verificación
+
+- Smoke test transaccional en `eyesite-security-test`: creación de dos negocios, configuración automática, inserción/actualización de catálogo y gastos, snapshot, actualización optimista, rechazo de versión obsoleta, separación A/B y lectura por viewer. La transacción terminó en ROLLBACK.
+- Suite `fixora_operational_data.test.sql`: plan de 71 aserciones; la ejecución SQL llegó a la aserción 71 (`ok 71`) sin error SQL. La salida MCP no expuso el resumen TAP completo, por lo que no se registra todavía como 71/71 aprobado por CI.
+- Estado después del rollback: 0 usuarios Auth y 0 filas en las siete tablas Fixora; 15 políticas RLS; ninguna tabla Fixora con RLS deshabilitado.
+- Security Advisor: 0 hallazgos.
+- Performance Advisor: 0 claves foráneas sin índice. Los avisos restantes son índices aún no usados y configuración de conexiones Auth; son informativos en un proyecto recién creado y sin datos.
+- La prueba local CI #283/CI #749 sigue siendo evidencia de la fundación anterior; falta una nueva corrida CI que reconstruya las cuatro migraciones Fixora desde cero y ejecute las 71 pruebas operativas.
+
+### Pendientes
+
+- No se ha conectado la aplicación a Supabase; el almacenamiento actual sigue siendo local.
+- Licencias, compras, códigos de activación, dispositivos y control transaccional de tres dispositivos todavía no existen en el esquema.
+- Administración, MFA AAL2, auditoría y soporte siguen pendientes.
+- El bucket público vacío `eyesite-media` permanece y requiere eliminación por Storage API/Dashboard.
