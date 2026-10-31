@@ -1,13 +1,10 @@
 name: Generate migration filename
 on:
-  push:
-    branches:
-      - "foundation/**"
+  pull_request:
 permissions:
   contents: read
 jobs:
   generate:
-    if: startsWith(github.event.head_commit.message, '[migration-name]')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
