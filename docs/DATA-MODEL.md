@@ -37,6 +37,8 @@ Estado: diseño para revisión; no es DDL aplicado. La única migración de fund
 - Soft delete/archivo para catálogo y gastos; historial inmutable.
 - `fixora_expense_settings` se trata como un agregado por negocio. El repositorio cloud debe implementar optimistic concurrency/versionado antes de habilitar edición simultánea.
 
+- Eliminación de cuenta: si la persona es el último owner de un negocio, primero debe transferir propiedad o cerrar el negocio mediante un flujo auditado. No eliminar en cascada un negocio con datos financieros o snapshots. La FK `created_by` restrictiva debe formar parte del flujo de eliminación.
+
 ## 3. Compras, licencias y dispositivos — schema fixora_private
 
 | Tabla objetivo | Responsabilidad | Invariantes |
