@@ -205,3 +205,23 @@ Fixora no se declara lista para venta hasta que:
 - El proyecto remoto reservado para Fixora mantiene residuos heredados y no es el destino para la primera ejecución de la migración.
 - La migración y la prueba actual no alcanzan todavía el nivel de aceptación descrito en este documento.
 
+
+
+## 8. Addendum de revisión — cambios posteriores y estado de validación
+
+- HEAD de referencia al actualizar este addendum: e88ce3f543684fc34611c0c13dab77c16eb0a939.
+- La prueba de arquitectura fue corregida para usar import.meta.glob de Vite, sin incorporar @types/node ni cambiar dependencias.
+- La migración ahora tiene un RPC público SECURITY INVOKER que delega en una función privada SECURITY DEFINER. Los grants de ambos límites se prueban explícitamente.
+- La suite de fundación se amplió a 25 aserciones; la suite A/B se amplió a 17 e incluye el caso positivo de actualización del negocio por su owner.
+- La política de licencias ahora trata una licencia con fecha de activación futura como pending y no concede premium antes de activatedAt.
+- Las pruebas de pricing ahora cubren al 100% los cuatro porcentajes que deben ser estrictamente menores a 1: merma, comisión, margen objetivo y descuento.
+- El workflow DB fija Supabase CLI 2.122.0 y configura PostgreSQL 17 para aproximar la versión mayor del proyecto reservado.
+
+### Estado CI más reciente comprobado
+
+- CI #491 en el commit b39980cfd9d7ca514582a5dce89c5a7680316414 falló en typecheck porque la primera prueba de arquitectura importaba node:fs, node:path y node:url sin @types/node.
+- Esa implementación se sustituyó por Vite glob imports en a7f94f9a35146dbab7da41aabb02e63353cba9de.
+- No se ha confirmado todavía una corrida nueva de CI para el HEAD actualizado.
+- Database tests #25 quedó pendiente sin jobs visibles en la última consulta; no se ha demostrado todavía que el stack local temporal se inicie ni que la migración pase.
+- Por tanto, las pruebas nuevas y la migración siguen pendientes de evidencia de ejecución. El único CI verde confirmado sigue siendo el #466 del commit anterior af696c20c5d2e6d1f28d4f3b9a1fb97b5a042792.
+
