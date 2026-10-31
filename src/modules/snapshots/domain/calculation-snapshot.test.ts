@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { createPricingSnapshot } from "./calculation-snapshot";
 import { PRICING_FORMULA_VERSION } from "../../pricing/domain/pricing";
 import type { PricingInput } from "../../pricing/domain/pricing";
+import type { CreatePricingSnapshotInput } from "./calculation-snapshot";
 
 const pricingInput: PricingInput = {
   materials: 100,
@@ -14,6 +15,17 @@ const pricingInput: PricingInput = {
   targetMarginRate: 0.3,
   discountRate: 0,
 };
+
+function createSnapshot(input: Omit<CreatePricingSnapshotInput, "id" | "createdAt"> & {
+  id?: string;
+  createdAt?: string;
+}) {
+  return createSnapshot({
+    id: input.id ?? "snapshot-test",
+    createdAt: input.createdAt ?? "2026-10-30T12:00:00.000Z",
+    ...input,
+  });
+}
 
 describe("createPricingSnapshot", () => {
   it("stores a versioned result calculated from the captured inputs", () => {
@@ -49,6 +61,11 @@ describe("createPricingSnapshot", () => {
     });
     expect(snapshot.catalogItem?.referenceCost).toBe(25);
     expect(snapshot.pricingResult).not.toHaveProperty("referenceCost");
+  });
+
+  it("rejects a missing snapshot identifier", () => {
+    expect(() => createSnapshot({ name: "Prueba", currency: "MXN", pricingInput, id: " " }))
+      .toThrow("El cálculo necesita un identificador.");
   });
 
   it("rejects an empty name and invalid currency", () => {
