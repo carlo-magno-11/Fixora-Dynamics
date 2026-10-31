@@ -57,11 +57,13 @@ jobs:
           set -euo pipefail
           database_url="postgresql://postgres:postgres@127.0.0.1:54322/postgres"
           psql "$database_url" -v ON_ERROR_STOP=1 -c 'CREATE POLICY "fixora_ci_mutation_allow_all" ON public.fixora_businesses FOR SELECT TO authenticated USING (true)'
+          psql "$database_url" -v ON_ERROR_STOP=1 -c 'CREATE POLICY "fixora_ci_mutation_catalog_allow_all" ON public.fixora_catalog_items FOR SELECT TO authenticated USING (true)'
           set +e
           supabase test db
           test_status=$?
           set -e
           psql "$database_url" -v ON_ERROR_STOP=1 -c 'DROP POLICY IF EXISTS "fixora_ci_mutation_allow_all" ON public.fixora_businesses'
+          psql "$database_url" -v ON_ERROR_STOP=1 -c 'DROP POLICY IF EXISTS "fixora_ci_mutation_catalog_allow_all" ON public.fixora_catalog_items'
           if [ "$test_status" -eq 0 ]; then
             echo "RLS tests did not detect the intentionally permissive policy."
             exit 1
