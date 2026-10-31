@@ -272,3 +272,12 @@ Rama: `foundation/bootstrap-20261029`. PR #1 permanece abierto en borrador.
 - La prueba verifica que los módulos respeten el sentido de las capas, que dominio/aplicación no dependan de React ni Supabase, que UI no importe infraestructura y que un módulo no consuma directamente UI/infraestructura privadas de otro módulo.
 - Es un guardrail inicial ejecutado por Vitest; no sustituye ESLint ni una revisión completa de dependencias.
 - La CI #491 y Database tests #25 se iniciaron para el HEAD que contiene esta prueba. Sus resultados deben consultarse antes de aceptar el cambio.
+
+
+### Corrección de CI — 31 de octubre de 2026
+
+- CI #491 (commit `b39980cfd9d7ca514582a5dce89c5a7680316414`) detectó que la primera versión de la prueba de arquitectura importaba módulos `node:` sin que el proyecto tuviera `@types/node`.
+- Se eliminó esa dependencia de tipos y se reescribió la prueba usando `import.meta.glob` y `?raw` de Vite, ya presente en el stack. No se agregó ninguna dependencia ni se modificó el lockfile.
+- Commit de corrección: `a7f94f9a35146dbab7da41aabb02e63353cba9de`.
+- La corrección todavía requiere typecheck/test/build verde en un nuevo run. El workflow de base de datos #25 continúa pendiente de que GitHub inicie el job; no se declara aprobado.
+
