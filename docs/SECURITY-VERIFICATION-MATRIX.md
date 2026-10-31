@@ -89,3 +89,10 @@ Proyecto verificado: `eyesite-security-test` (`dclaebknyalimmtgppeg`), PostgreSQ
 6. Configurar Storage privado para adjuntos, borrar el bucket EYESITE vacío mediante Storage API y probar acceso/retención.
 7. Probar backup/restore, rollback, monitorización, rate limits, DAST/SCA y E2E en staging.
 8. Mantener el proyecto oficial EYESITE fuera de cualquier despliegue Fixora.
+
+
+### Evidencia adicional — 31 de octubre de 2026
+
+- **Límite concurrente de dispositivos:** verificado con dos sesiones reales en el proyecto de pruebas. Un alta ganó el último cupo y la otra fue rechazada; quedaron exactamente 3 dispositivos activos. El fixture se limpió.
+- **Mutation test de soporte:** una policy temporal `USING (true)` hizo que la suite detectara acceso cruzado entre dos clientes. La transacción revirtió la policy y se comprobó que no quedó instalada.
+- El workflow incluye ahora el script de concurrencia, pero su ejecución en GitHub Actions sigue pendiente.
