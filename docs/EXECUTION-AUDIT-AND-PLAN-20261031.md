@@ -357,3 +357,35 @@ El estado de esta migración queda aprobado **solo como fundación local reprodu
 ### Estado actualizado
 
 La base de pruebas ya no está vacía: contiene la fundación Fixora aplicada. No está lista para producción ni para usuarios reales. Catálogo, gastos, configuración, snapshots, licencias, activación, dispositivos, administración, auditoría, soporte y conexión cloud de la aplicación siguen pendientes. No se modificó el proyecto oficial EYESITE.
+
+
+## 14. Esquema operativo Fixora — 31 de octubre de 2026
+
+### Migraciones
+
+- `20261031230837_fixora_operational_data`: tablas de catálogo, gastos, configuración y snapshots; triggers, índices, RLS y grants iniciales.
+- `20261031230903_fixora_operational_foreign_key_indexes`: índices para FKs de usuario señaladas por Performance Advisor.
+- `20261031231048_fixora_operational_insert_grants`: INSERT por columna para impedir que clientes asignen `created_by`, ID o timestamps.
+- Los IDs se tomaron del registro de migraciones generado por Supabase en el proyecto de pruebas y los archivos se versionaron en `supabase/migrations`.
+
+### Seguridad y comportamiento
+
+- Siete tablas Fixora en `public`, todas con RLS habilitado.
+- 15 políticas RLS en tablas Fixora.
+- `fixora_catalog_items` y `fixora_expenses`: edición para owner/admin/editor; viewer consulta; archivado lógico y sin DELETE directo.
+- `fixora_expense_settings`: fila inicial automática por negocio; actualizaciones con control de versión optimista y rechazo de saltos de versión.
+- `fixora_calculation_snapshots`: append-only desde cliente, sin permisos UPDATE/DELETE; conserva entrada/salida JSON y versiones de fórmula/esquema.
+- Grants explícitos y limitados por columna para respetar el cambio Data API de Supabase del 30-10-2026.
+- Se probó en una transacción con dos usuarios y un viewer: creación de dos negocios, datos independientes, aislamiento cruzado, permisos de edición y lectura, y rechazo de versiones obsoletas. Se revirtió todo al final.
+
+### Resultado de validación
+
+- Suite de 71 aserciones pgTAP añadida en `supabase/tests/fixora_operational_data.test.sql`. La ejecución remota alcanzó la aserción 71 (`ok 71`) sin error SQL; el resultado completo del resumen TAP no quedó expuesto por el conector. No declarar 71/71 aprobado hasta CI.
+- Después del rollback: 0 usuarios Auth y 0 filas en las siete tablas Fixora.
+- Security Advisor: 0 hallazgos.
+- Performance Advisor: 0 claves foráneas sin índice. Los únicos avisos restantes son índices sin uso en una base vacía y estrategia de conexiones Auth; revisar tras tener tráfico.
+- La suite local CI #283/CI #749 validó la fundación inicial, pero aún falta ejecutar el workflow DB en el HEAD que incluye las migraciones operativas.
+
+### Estado real
+
+El proyecto de pruebas ya tiene siete tablas Fixora, 15 políticas RLS y cero datos de prueba persistidos. La base todavía no está completa para el producto comercial: licencias, compras, activación, dispositivos, entitlements, roles de plataforma, MFA, auditoría y soporte requieren migraciones y pruebas posteriores. La aplicación todavía no usa Supabase; conserva persistencia local. El bucket `eyesite-media` sigue vacío y pendiente de eliminar por Storage API.
