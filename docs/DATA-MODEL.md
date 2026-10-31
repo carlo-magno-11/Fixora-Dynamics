@@ -7,7 +7,7 @@ Estado: diseño para revisión; no es DDL aplicado. La única migración de fund
 1. Todo dato operativo pertenece a un `business_id`; no se confía en el ID enviado por el cliente sin comprobar membresía activa en servidor/RLS.
 2. Los roles de negocio (`owner`, `admin`, `editor`, `viewer`) no conceden roles administrativos de plataforma.
 3. Las tablas expuestas por PostgREST tienen RLS habilitado, grants mínimos y pruebas positivas/negativas.
-4. El schema `private` no se expone por PostgREST. Códigos, órdenes, dispositivos, roles admin, eventos de proveedor y auditoría no se leen directamente desde el cliente.
+4. El schema `fixora_private` no se expone por PostgREST. Códigos, órdenes, dispositivos, roles admin, eventos de proveedor y auditoría no se leen directamente desde el cliente.
 5. Las operaciones privilegiadas usan funciones internas SECURITY DEFINER con `search_path = ''`, nombres totalmente calificados y permisos EXECUTE mínimos. El endpoint público, si se necesita, es un wrapper SECURITY INVOKER.
 6. El cliente no decide vencimiento, estado de compra, activación, cantidad de dispositivos, privilegios ni auditoría.
 7. Los cálculos guardados son snapshots inmutables: conservar inputs, outputs, versión de fórmula y versión de esquema.
@@ -37,16 +37,16 @@ Estado: diseño para revisión; no es DDL aplicado. La única migración de fund
 - Soft delete/archivo para catálogo y gastos; historial inmutable.
 - `fixora_expense_settings` se trata como un agregado por negocio. El repositorio cloud debe implementar optimistic concurrency/versionado antes de habilitar edición simultánea.
 
-## 3. Compras, licencias y dispositivos — schema private
+## 3. Compras, licencias y dispositivos — schema fixora_private
 
 | Tabla objetivo | Responsabilidad | Invariantes |
 |---|---|---|
-| `private.fixora_purchase_orders` | Evidencia mínima de compra por proveedor | UNIQUE(provider, external_order_id); SKU esperado; estado de pago/reembolso validado; no almacenar credenciales. |
-| `private.fixora_licenses` | Licencia emitida a una identidad | Un año calendario desde primera activación; estado calculado/validado en servidor; vínculo a orden y producto. |
-| `private.fixora_license_entitlements` | Capacidades concedidas por producto/licencia | Capacidades y vigencias definidas por servidor; el cliente solo consulta el resultado mínimo. |
-| `private.fixora_license_devices` | Instalaciones activas | Máximo tres activas por licencia; operación de alta bloquea la fila de licencia con `FOR UPDATE` y cuenta/inserta en una sola transacción. |
-| `private.fixora_activation_code_hashes` | Códigos de activación de un solo uso | Guardar hash HMAC/derivado, nunca el código recuperable; UNIQUE(hash); canje transaccional e idempotente. |
-| `private.fixora_provider_events` | Idempotencia de webhooks | UNIQUE(provider, event_id); verificar firma/secret en servidor; almacenar hash y metadatos minimizados. |
+| `fixora_private.fixora_purchase_orders` | Evidencia mínima de compra por proveedor | UNIQUE(provider, external_order_id); SKU esperado; estado de pago/reembolso validado; no almacenar credenciales. |
+| `fixora_private.fixora_licenses` | Licencia emitida a una identidad | Un año calendario desde primera activación; estado calculado/validado en servidor; vínculo a orden y producto. |
+| `fixora_private.fixora_license_entitlements` | Capacidades concedidas por producto/licencia | Capacidades y vigencias definidas por servidor; el cliente solo consulta el resultado mínimo. |
+| `fixora_private.fixora_license_devices` | Instalaciones activas | Máximo tres activas por licencia; operación de alta bloquea la fila de licencia con `FOR UPDATE` y cuenta/inserta en una sola transacción. |
+| `fixora_private.fixora_activation_code_hashes` | Códigos de activación de un solo uso | Guardar hash HMAC/derivado, nunca el código recuperable; UNIQUE(hash); canje transaccional e idempotente. |
+| `fixora_private.fixora_provider_events` | Idempotencia de webhooks | UNIQUE(provider, event_id); verificar firma/secret en servidor; almacenar hash y metadatos minimizados. |
 
 ### Flujo de activación
 
@@ -59,13 +59,13 @@ Estado: diseño para revisión; no es DDL aplicado. La única migración de fund
 
 Etsy comienza con revisión manual de pedidos de la tienda propia. No scrapear ni asumir acceso a APIs no autorizadas. Gumroad/Hotmart solo se conectan tras configurar credenciales y validar su autenticación de servidor.
 
-## 4. Administración y soporte — schema private
+## 4. Administración y soporte — schema fixora_private
 
 | Tabla objetivo | Responsabilidad |
 |---|---|
-| `private.fixora_admin_memberships` | Roles de plataforma: platform_owner, license_manager, purchase_reviewer, support_agent, auditor. |
-| `private.fixora_audit_events` | Eventos append-only con actor, acción, objetivo, motivo, request_id y metadatos minimizados. |
-| `private.fixora_support_tickets` | Tickets y mensajes; acceso por funciones que aplican permisos y minimización de datos. |
+| `fixora_private.fixora_admin_memberships` | Roles de plataforma: platform_owner, license_manager, purchase_reviewer, support_agent, auditor. |
+| `fixora_private.fixora_audit_events` | Eventos append-only con actor, acción, objetivo, motivo, request_id y metadatos minimizados. |
+| `fixora_private.fixora_support_tickets` | Tickets y mensajes; acceso por funciones que aplican permisos y minimización de datos. |
 
 - Primer `platform_owner` se provisiona fuera del registro público.
 - Cada operación administrativa exige sesión autenticada, AAL2, membresía activa y permiso específico.
