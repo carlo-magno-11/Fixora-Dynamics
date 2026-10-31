@@ -370,3 +370,22 @@ CI #524 pasó typecheck, pero el test de arquitectura detectó dos dependencias 
 - No se ha aplicado la migración en local o remoto. No se ha escrito en Supabase Cloud.
 - PR #1 permanece abierto en borrador.
 
+
+
+## 2026-10-31 — Entrega 8: CI verde después del refactor de arquitectura
+
+<badge>CI #680 — SUCCESS</badge>
+
+- Commit del PR: `8534eb1c3027ba416a0804249a9dc7b934988e38`.
+- Merge commit temporal de GitHub para la validación: `aea810988507d4495ede05e3f6f813fa5aaf1e86`.
+- `pnpm install --frozen-lockfile`: PASS.
+- `pnpm typecheck`: PASS.
+- `pnpm test`: 18 archivos, 127 pruebas aprobadas.
+- `pnpm build`: PASS.
+- El test de arquitectura pasó; ya no hay imports UI → infraestructura en las pantallas revisadas.
+- La suite incluye límites de licencia, métodos de verificación por proveedor, integridad de historial, recuperación explícita, puertos de aplicación y límites de porcentajes de precio.
+
+### Pendiente
+
+El workflow Database tests #214 sigue en estado `pending` y no presenta jobs visibles. No se declara que PostgreSQL haya iniciado, que la migración se haya aplicado o que pgTAP haya pasado. La migración sigue sin aplicar en Supabase Cloud.
+
