@@ -44,3 +44,13 @@ El trigger remoto de Auth heredado es un bloqueo para habilitar registros remoto
 - Migración Fixora: creada y versionada en Git; pendiente de aplicación y validación en Supabase local.
 - Auth remoto: aún no habilitado; trigger heredado requiere transición.
 - Cambios remotos: ninguno confirmado en esta etapa.
+
+
+## Estado de entornos — 31 de octubre de 2026
+
+- Entorno remoto de pruebas: `eyesite-security-test`, ref `dclaebknyalimmtgppeg`, PostgreSQL 17.11.
+- Proyecto oficial EYESITE: `xhvpvpvtkdgnnxdwdrkn`; no tocar.
+- El esquema Fixora de prueba incluye identidad, operación, licencias, dispositivos, compras, administración, auditoría y soporte.
+- No hay usuarios ni datos de prueba persistidos. Security Advisor sin hallazgos.
+- El bucket heredado vacío `eyesite-media` requiere eliminación por Storage API/Dashboard.
+- No aplicar a producción hasta completar CI de reconstrucción, backup/restore, Edge Functions, Auth/AAL2, Storage privado, staging y pruebas de concurrencia.
