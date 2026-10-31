@@ -389,3 +389,22 @@ CI #524 pasó typecheck, pero el test de arquitectura detectó dos dependencias 
 
 El workflow Database tests #214 sigue en estado `pending` y no presenta jobs visibles. No se declara que PostgreSQL haya iniciado, que la migración se haya aplicado o que pgTAP haya pasado. La migración sigue sin aplicar en Supabase Cloud.
 
+
+
+## 2026-10-31 — Entrega 9: primera migración Supabase y pruebas RLS aprobadas
+
+<badge color="success">Database tests #265 — SUCCESS</badge>
+
+- Commit validado: `aa72d18d23f4abe9cbfa20ffd12b9d012c1afdf7`.
+- `supabase start`: PASS en stack aislado de CI.
+- `supabase db reset`: PASS; PostgreSQL 17 reconstruyó el esquema desde la migración versionada.
+- `supabase test db`: PASS; 2 archivos pgTAP, **45 aserciones aprobadas**.
+- Prueba de mutación RLS: se agregó temporalmente una policy SELECT permisiva. La suite falló exactamente en las comprobaciones de aislamiento de User B (2 fallos esperados); se retiró la policy y la suite volvió a pasar con 45/45.
+- Se corrigieron dos defectos reales detectados en revisión estática antes de esta corrida: creación del schema `fixora_private` (en lugar de `private`) y delimitadores PL/pgSQL de la función que sincroniza el correo Auth.
+- Se repararon los delimitadores SQL del test de aislamiento y se dejó su plan en 20 aserciones.
+- CI #731 — SUCCESS: instalación congelada, TypeScript, 18 archivos/127 pruebas Vitest y build.
+- Se añadió `docs/SECURITY-VERIFICATION-MATRIX.md`, matriz de controles y evidencia basada en OWASP ASVS 5.0.0.
+
+### Alcance exacto de esta aprobación
+
+La migración de identidad y negocios está probada en un Supabase local aislado de CI; **no está desplegada en Supabase Cloud**. La prueba no cubre aún las migraciones de catálogo/gastos/snapshots, licencias/dispositivos, compras/webhooks, roles administrativos ni soporte. PR #1 continúa abierto en borrador y sin merge.
