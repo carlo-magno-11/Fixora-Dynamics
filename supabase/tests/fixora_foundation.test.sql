@@ -89,7 +89,7 @@ SELECT ok(
   (
     SELECT procedure.prosecdef
     FROM pg_catalog.pg_proc AS procedure
-    WHERE procedure.oid = 'private.create_business_for_authenticated_user(text,text,text,text)'::regprocedure
+    WHERE procedure.oid = 'fixora_private.create_business_for_authenticated_user(text,text,text,text)'::regprocedure
   ),
   'privileged business creation implementation is private SECURITY DEFINER'
 );
@@ -97,7 +97,7 @@ SELECT ok(
 SELECT ok(
   NOT has_function_privilege(
     'anon',
-    'private.create_business_for_authenticated_user(text,text,text,text)',
+    'fixora_private.create_business_for_authenticated_user(text,text,text,text)',
     'EXECUTE'
   ),
   'anon cannot execute the private business creation function'
@@ -106,34 +106,34 @@ SELECT ok(
 SELECT ok(
   has_function_privilege(
     'authenticated',
-    'private.create_business_for_authenticated_user(text,text,text,text)',
+    'fixora_private.create_business_for_authenticated_user(text,text,text,text)',
     'EXECUTE'
   ),
   'authenticated can call the private function through the public wrapper'
 );
 
 SELECT ok(
-  NOT has_function_privilege('anon', 'private.handle_new_auth_user()', 'EXECUTE'),
+  NOT has_function_privilege('anon', 'fixora_private.handle_new_auth_user()', 'EXECUTE'),
   'anon cannot execute the Auth trigger function directly'
 );
 
 SELECT ok(
-  NOT has_function_privilege('authenticated', 'private.handle_new_auth_user()', 'EXECUTE'),
+  NOT has_function_privilege('authenticated', 'fixora_private.handle_new_auth_user()', 'EXECUTE'),
   'authenticated cannot execute the Auth trigger function directly'
 );
 
 SELECT ok(
-  NOT has_function_privilege('anon', 'private.has_active_business_role(uuid,text[])', 'EXECUTE'),
+  NOT has_function_privilege('anon', 'fixora_private.has_active_business_role(uuid,text[])', 'EXECUTE'),
   'anon cannot execute the membership policy helper'
 );
 
 SELECT ok(
-  has_function_privilege('authenticated', 'private.has_active_business_role(uuid,text[])', 'EXECUTE'),
+  has_function_privilege('authenticated', 'fixora_private.has_active_business_role(uuid,text[])', 'EXECUTE'),
   'authenticated can execute the membership helper used by RLS'
 );
 
 SELECT ok(
-  NOT has_schema_privilege('anon', 'private', 'USAGE'),
+  NOT has_schema_privilege('anon', 'fixora_private', 'USAGE'),
   'private schema is not accessible to anon'
 );
 
