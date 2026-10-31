@@ -39,6 +39,7 @@ describe("expenses application service", () => {
       period: "month",
       currency: "MXN",
       needsCurrencyReview: false,
+      needsDataRecovery: false,
     });
   });
 
