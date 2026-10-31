@@ -79,9 +79,12 @@ describe("calculatePrice", () => {
     expect(() => calculatePrice({ ...base, hourlyRate: Number.NaN })).toThrow(RangeError);
   });
 
-  it("rejects rates at or above 100 percent", () => {
-    expect(() => calculatePrice({ ...base, variableFeeRate: 1 })).toThrow(RangeError);
-  });
+  it.each(["wasteRate", "variableFeeRate", "targetMarginRate", "discountRate"] as const)(
+    "rejects a 100 percent %s rate",
+    (rate) => {
+      expect(() => calculatePrice({ ...base, [rate]: 1 })).toThrow(RangeError);
+    },
+  );
 
   it("handles decimal inputs without binary floating point drift", () => {
     const result = calculatePrice({ ...base, materials: 0.1, directExpenses: 0.2 });
