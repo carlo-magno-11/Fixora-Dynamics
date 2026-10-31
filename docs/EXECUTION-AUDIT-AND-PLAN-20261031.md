@@ -237,7 +237,13 @@ La prueba de arquitectura encontró dos violaciones reales: las pantallas Catalo
 - App.tsx actúa como composition root: instancia adaptadores, inyecta generadores de ID y pasa servicios a las páginas.
 - El dominio de catálogo recibe ahora el ID desde fuera; no depende de crypto global.
 - Se evitaron efectos secundarios de persistencia dentro de React state updater callbacks.
-- Se añadieron nueve pruebas de los servicios de aplicación.
+- Se añadieron pruebas de los servicios de aplicación de catálogo, gastos y snapshots.
 
-Este cambio deja preparado el límite para sustituir browser localStorage por repositorios Supabase sin acoplar la UI al proveedor. No significa que la persistencia cloud esté conectada. CI #524 detectó las dos violaciones antes del refactor; el nuevo HEAD aún necesita una corrida verde. El total Vitest esperado tras estas nueve pruebas es 110, pendiente de ejecución comprobada.
+Este cambio deja preparado el límite para sustituir browser localStorage por repositorios Supabase sin acoplar la UI al proveedor. No significa que la persistencia cloud esté conectada. CI #524 detectó las dos violaciones antes del refactor; el nuevo HEAD aún necesita una corrida verde. El número total exacto de pruebas debe confirmarse en la siguiente corrida CI; se añadieron pruebas de aplicación y de repositorio desde la última corrida disponible.
 
+
+### Refinamiento adicional de puertos
+
+- El catálogo usa ahora operaciones de repositorio por entidad (create/update) en lugar de reemplazar la colección completa; esto reduce el riesgo de sobrescribir cambios ajenos al implementar un repositorio cloud.
+- El dominio de snapshots recibe ID y timestamp desde fuera. Se añadió SnapshotApplicationService para inyectar generador de ID y reloj; el dominio ya no llama a crypto ni toma la hora actual.
+- Gastos sigue modelado como un agregado local completo; el adaptador Supabase deberá añadir control de versión/actualización condicional antes de permitir edición concurrente entre miembros del mismo negocio.
