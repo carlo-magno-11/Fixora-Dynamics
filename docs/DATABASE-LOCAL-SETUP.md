@@ -1,6 +1,6 @@
 # Preparación local de Supabase — Fixora Dynamics
 
-Estado: stack nativo local iniciado y validado en Codespaces. No hay migraciones Fixora aplicadas ni cambios remotos.
+Estado: stack nativo local fue iniciado y validado previamente en Codespaces. En esta sesión no se tuvo acceso al terminal local para revalidarlo. La migración Fixora está versionada en Git, pero aún no hay evidencia de que se haya aplicado en el stack local. No hay cambios remotos.
 
 ## Reglas de seguridad
 
@@ -47,7 +47,9 @@ La especificación vigente está en `docs/FIXORA-FOUNDATION-SPEC.md`. La migraci
 
 `supabase/migrations/20261030165305_fixora_identity_and_businesses.sql`
 
-También existe una primera prueba pgTAP de estructura, RLS y grants en `supabase/tests/fixora_foundation.test.sql`. Ambas siguen pendientes de ejecución local; no se declara validación SQL todavía.
+Existen dos suites pgTAP: `supabase/tests/fixora_foundation.test.sql` (25 aserciones de estructura y privilegios) y `supabase/tests/fixora_business_rls.test.sql` (17 aserciones con dos usuarios y dos negocios). Ambas siguen pendientes de ejecución comprobada.
+
+El workflow `.github/workflows/db-tests.yml` crea un proyecto Supabase temporal, fija PostgreSQL 17, aplica las migraciones y ejecuta las pruebas. Su primera corrida todavía no tiene un job completado visible.
 
 Si Codespaces contiene los dos archivos vacíos generados anteriormente con los nombres `20261030165305_fixora_identity_and_businesses.sql` y `20261030170034_fixora_identity_and_businesses.sql`, respáldalos/muévelos antes de hacer pull para evitar conflicto con el archivo ya versionado. Conserva `supabase/.gitignore`, `supabase/config.toml` y `supabase/supabase.lock`.
 
@@ -55,7 +57,7 @@ Después de sincronizar:
 1. Inspeccionar el SQL completo y el estado del stack nativo.
 2. Ejecutar una reconstrucción exclusivamente local con el comando confirmado por `pnpm dlx supabase db reset --help`.
 3. Ejecutar `supabase test db` local y revisar el resultado pgTAP.
-4. Completar pruebas de aislamiento A/B con dos usuarios y dos negocios; la prueba inicial solo cubre estructura, RLS y grants.
+4. Revisar el resultado de las suites A/B y ampliar los casos de roles y permisos conforme se implementen las tablas operativas.
 5. Ejecutar typecheck, tests y build.
 6. Revisar grants efectivos, políticas RLS, funciones, triggers y advisors.
 
