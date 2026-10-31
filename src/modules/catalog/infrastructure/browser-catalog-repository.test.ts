@@ -38,19 +38,31 @@ describe("browser catalog repository", () => {
     }).load()).toEqual([]);
   });
 
-  it("limits the catalog to five hundred records on load and save", () => {
+  it("limits the catalog to five hundred records and rejects another insert", () => {
     const items = Array.from({ length: 510 }, (_, index) => ({ ...item, id: `item-${index}` }));
-    const storage = memoryStorage({ [CATALOG_STORAGE_KEY]: JSON.stringify(items) });
-    const repository = createCatalogRepository(storage);
+    const repository = createCatalogRepository(memoryStorage({ [CATALOG_STORAGE_KEY]: JSON.stringify(items) }));
     expect(repository.load()).toHaveLength(500);
-    repository.save(items);
-    expect(JSON.parse(storage.getItem(CATALOG_STORAGE_KEY) ?? "[]")).toHaveLength(500);
+    expect(() => repository.create({ ...item, id: "item-over-limit" })).toThrow("El catálogo alcanzó el límite de 500 elementos.");
   });
 
-  it("propagates write errors so the UI can show a save warning", () => {
+  it("creates and updates one entity without replacing the repository contract", () => {
+    const storage = memoryStorage();
+    const repository = createCatalogRepository(storage);
+    repository.create(item);
+    repository.update({ ...item, name: "Jabón de avena", active: false });
+    expect(repository.load()).toEqual([{ ...item, name: "Jabón de avena", active: false }]);
+  });
+
+  it("rejects duplicate identifiers", () => {
+    const repository = createCatalogRepository(memoryStorage({ [CATALOG_STORAGE_KEY]: JSON.stringify([item]) }));
+    expect(() => repository.create(item)).toThrow("El identificador del elemento ya existe.");
+  });
+
+  it("propagates write errors so the application can report a save warning", () => {
     const repository = createCatalogRepository(() => {
       throw new Error("blocked");
     });
-    expect(() => repository.save([item])).toThrow("blocked");
+    expect(() => repository.create(item)).toThrow("blocked");
+    expect(() => repository.update(item)).toThrow("blocked");
   });
 });
