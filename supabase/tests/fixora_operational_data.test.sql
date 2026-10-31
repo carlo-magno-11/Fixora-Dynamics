@@ -2,7 +2,7 @@ BEGIN;
 
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 
-SELECT plan(70);
+SELECT plan(71);
 
 SELECT has_table('public', 'fixora_catalog_items', 'Catalog table exists');
 SELECT has_table('public', 'fixora_expenses', 'Expenses table exists');
