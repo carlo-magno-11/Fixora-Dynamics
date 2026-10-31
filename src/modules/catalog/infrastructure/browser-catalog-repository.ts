@@ -26,17 +26,24 @@ export function createCatalogRepository(storageSource: KeyValueStorageSource): C
     );
   }
 
-  function load(): CatalogItem[] {
+  function loadState() {
     try {
       const raw = resolveKeyValueStorage(storageSource).getItem(CATALOG_STORAGE_KEY);
-      if (!raw) return [];
+      if (!raw) return { items: [], needsRecovery: false };
       const parsed: unknown = JSON.parse(raw);
-      return Array.isArray(parsed)
-        ? parsed.filter(isStoredCatalogItem).slice(0, MAX_CATALOG_ITEMS)
-        : [];
+      if (!Array.isArray(parsed)) return { items: [], needsRecovery: true };
+      const validItems = parsed.filter(isStoredCatalogItem);
+      return {
+        items: validItems.slice(0, MAX_CATALOG_ITEMS),
+        needsRecovery: validItems.length !== parsed.length || parsed.length > MAX_CATALOG_ITEMS,
+      };
     } catch {
-      return [];
+      return { items: [], needsRecovery: true };
     }
+  }
+
+  function load(): CatalogItem[] {
+    return loadState().items;
   }
 
   function readForMutation(): CatalogItem[] {
@@ -59,6 +66,10 @@ export function createCatalogRepository(storageSource: KeyValueStorageSource): C
 
   return {
     load,
+    loadState,
+    reset(): void {
+      write([]);
+    },
     create(item: CatalogItem): void {
       const current = readForMutation();
       if (current.length >= MAX_CATALOG_ITEMS) {
