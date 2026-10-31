@@ -59,10 +59,12 @@ describe("browser catalog repository", () => {
   });
 
   it("propagates write errors so the application can report a save warning", () => {
-    const repository = createCatalogRepository(() => {
-      throw new Error("blocked");
-    });
-    expect(() => repository.create(item)).toThrow("blocked");
+    const storage: KeyValueStorage = {
+      getItem: () => JSON.stringify([item]),
+      setItem: () => { throw new Error("blocked"); },
+    };
+    const repository = createCatalogRepository(storage);
+    expect(() => repository.create({ ...item, id: "item-2" })).toThrow("blocked");
     expect(() => repository.update(item)).toThrow("blocked");
   });
 });
