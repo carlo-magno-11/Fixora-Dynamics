@@ -502,7 +502,7 @@ Proyecto de destino verificado antes de las operaciones: `eyesite-security-test`
 
 ### Pruebas ejecutadas
 
-- `supabase/tests/fixora_licenses.test.sql`: 26 aserciones pgTAP más bloque funcional transaccional.
+- `supabase/tests/fixora_licenses.test.sql`: 27 aserciones pgTAP más bloque funcional transaccional.
 - Se probaron emisión idempotente, activación, cálculo de 12 meses desde primera activación, hash del código, reintento mismo dispositivo, rechazo de replay en otro dispositivo, 3 dispositivos, rechazo del cuarto, revocación que libera cupo, rechazo de otro usuario, rechazo de compra pendiente, idempotencia de evento de proveedor, estado de reembolso y RPC de acceso por usuario.
 - Dos defectos de resolución SQL en `redeem_activation_code` (columnas ambiguas y objetivo ON CONFLICT) fueron detectados por la ejecución y corregidos en migraciones posteriores antes de registrar el resultado funcional.
 - El RPC de acceso se cambió a SECURITY INVOKER y reloj `clock_timestamp()` para evitar una ventana donde una activación recién creada pareciera futura dentro de la misma transacción.
