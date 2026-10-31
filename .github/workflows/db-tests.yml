@@ -74,3 +74,6 @@ jobs:
           fi
           echo "RLS mutation detected: tenant isolation tests failed as expected."
           supabase test db
+
+      - name: Test concurrent license device activation limit
+        run: bash scripts/test-license-concurrency.sh "postgresql://postgres:postgres@127.0.0.1:54322/postgres"
