@@ -1,4 +1,4 @@
-create schema if not exists private;
+create schema if not exists fixora_private;
 revoke all on schema fixora_private from public;
 revoke all on schema fixora_private from anon;
 revoke all on schema fixora_private from authenticated;
