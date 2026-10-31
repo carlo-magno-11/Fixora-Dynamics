@@ -220,3 +220,47 @@ No conectar ni habilitar signup. Primero completar backup verificable, inspecci�
 
 
 - `77b20c7`: elimina BEGIN/COMMIT explícitos de la migración para dejar que el runner de Supabase gestione la transacción de cada archivo.
+
+
+## 2026-10-31 — Entrega 4: auditoría de arquitectura, RLS y pipeline de base de datos
+
+Rama: `foundation/bootstrap-20261029`. PR #1 permanece abierto en borrador.
+
+### Commits de esta entrega
+
+| Commit | Cambio |
+|---|---|
+| `15675fd15db7c17eb2dcfd6ef1eb5a018c7772f7` | Workflow aislado de Supabase local para aplicar migraciones y ejecutar pgTAP en CI. |
+| `fb301b84a764ceedfa205c0bcf6f563cab3535ce` | Investigación adicional de Supabase, Bulletproof React, TanStack Query, Expo y OWASP ASVS/Cheat Sheets. |
+| `31bf22fa25ac820099882668d2ff403a67dfbd9f` | Auditoría de estado, riesgos, arquitectura objetivo, matriz de pruebas y criterios de salida. |
+| `27551859c5ca95837a43b57491b9fbe219035f63` | Enlace de la auditoría desde README. |
+| `4639d4174f37472a677a19decfb58095ac146504` | Enlace de la auditoría desde el roadmap. |
+| `3dad9523f63500ec81928b7c5fa8e87378b2f735` | Prueba pgTAP de dos usuarios/dos negocios y aislamiento A/B. |
+| `51d1c3829283fa1184e0a4281cb05f278a9a2802` | RPC público SECURITY INVOKER y función privilegiada interna SECURITY DEFINER en schema private. |
+| `d3fc2f10a5ef6dc3cd867b982df6a8ba0b828ea1` | Aserciones pgTAP sobre frontera de privilegios del RPC. |
+| `dc49e6e4a1de3b691acf817ca2cee952b5152ba9` | Actualización del informe con los cambios de seguridad y las pruebas A/B. |
+| `face760a14521ea49a17d4e2f0c76e0bac7f3c29` | Paso de mutación RLS en CI para comprobar que una policy permisiva hace fallar la suite. |
+| `7f5220abfe4c536e8011f989ca23ecbfab3d5f6c` | Actualización del informe con el gate de mutación. |
+
+### Evidencia y límites
+
+- CI #466 en el commit `af696c20c5d2e6d1f28d4f3b9a1fb97b5a042792` fue aprobada antes de esta entrega.
+- La nueva ejecución de base de datos todavía no tiene un resultado de Actions confirmado en el estado consultado.
+- El workflow crea su propio proyecto Supabase temporal y no necesita enlazar ni escribir en Supabase Cloud.
+- La prueba de aislamiento utiliza usuarios de prueba y transacción con rollback.
+- La mutación RLS solo se introduce en el proyecto local desechable del runner y se elimina después.
+- No se ejecutaron migraciones en el proyecto remoto reservado.
+- El trigger Auth heredado y las cuatro funciones SECURITY DEFINER señaladas por los advisors siguen siendo un bloqueo remoto que requiere una transición independiente.
+- La estructura por capas está documentada, pero todavía no está impuesta por ESLint: el repositorio consultado no contiene configuración ESLint ni dependencias de lint. Tampoco incluye todavía el cliente Supabase, por lo que Auth y persistencia cloud siguen sin conectar.
+- `App.tsx` mantiene navegación y orquestación centralizadas; su extracción debe hacerse en etapas con pruebas de regresión.
+
+### Siguiente trabajo
+
+1. Obtener y corregir el resultado real del workflow de base de datos.
+2. Revisar la migración con el stack local; añadir pruebas de triggers, grants y mutación para membresías.
+3. Diseñar backfill para perfiles Auth preexistentes y transición remota sin tocar los objetos heredados.
+4. Establecer reglas automáticas de dependencias entre módulos.
+5. Extraer navegación y casos de uso de `App.tsx` sin reescribir el motor financiero.
+6. Conectar Auth y repositorios Supabase solo después de aprobar migración y RLS.
+7. Implementar licencias, activaciones, tres dispositivos, panel admin AAL2 y auditoría en servidor.
+
