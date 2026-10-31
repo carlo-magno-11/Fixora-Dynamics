@@ -36,7 +36,7 @@ pricing, materials, labor, expenses, scenarios, calculations, licenses, account,
 
 ## Multiusuario
 
-`business_id` y `business_memberships` definen el tenant y sus roles. Un usuario puede pertenecer a varios negocios. Toda autorización se valida en PostgreSQL/RLS, nunca solo en frontend. Las operaciones sensibles deben ser transaccionales e idempotentes. Los cálculos guardados conservan un snapshot de entradas, versión de fórmula, moneda y resultado.
+`business_id` y `fixora_business_memberships` definen el tenant y sus roles. Un usuario puede pertenecer a varios negocios. Toda autorización se valida en PostgreSQL/RLS, nunca solo en frontend. Las operaciones sensibles deben ser transaccionales e idempotentes. Los cálculos guardados conservan un snapshot de entradas, versión de fórmula, moneda y resultado.
 
 ## Supabase de Fixora
 
@@ -44,7 +44,7 @@ El proyecto dedicado es `eyesite-security-test`, ref `dclaebknyalimmtgppeg`, URL
 
 El ref de EYESITE `xhvpvpvtkdgnnxdwdrkn` está prohibido en esta aplicación. No copiar credenciales, tablas, buckets ni funciones desde EYESITE.
 
-El proyecto seleccionado aún contiene objetos heredados vacíos de EYESITE. En particular, su trigger de Auth llama a `public.handle_new_user()` y escribe en `public.profiles`. Debe reemplazarse con una migración revisada antes de habilitar registro. El diseño debe separar los objetos Fixora y no reutilizar la tabla heredada.
+El proyecto seleccionado aún contiene objetos heredados de EYESITE. En particular, su trigger de Auth llama a `public.handle_new_user()` y escribe en `public.profiles`; los advisors también señalaron cuatro funciones heredadas SECURITY DEFINER accesibles a roles de cliente. Debe realizarse una transición revisada antes de habilitar registro. El diseño separa los objetos Fixora con prefijo y no reutiliza tablas ni funciones heredadas.
 
 ## Seguridad y entornos
 
@@ -110,3 +110,7 @@ La identidad remota no se habilitará hasta revisar y sustituir de forma segura 
 ## Repositorios locales y adaptadores
 
 El contrato compartido `src/shared/infrastructure/key-value-storage.ts` permite inyectar almacenamiento temporal sin acoplar dominio/UI a localStorage. Historial, catálogo y gastos usan repositorios separados con validación de lectura, límites y manejo de storage bloqueado. Estos adaptadores siguen siendo locales; la futura implementación Supabase debe cumplir los mismos contratos de aplicación y tenant, sin confiar en businessId enviado por el navegador.
+
+La separación UI → application → domain ya está implementada en catálogo y gastos: `CatalogApplicationService` y `ExpensesApplicationService` definen los casos de uso/puertos; los repositorios browser los implementan; `src/app/App.tsx` inyecta los adaptadores concretos. Las pantallas no importan infraestructura directamente. La generación de IDs también se inyecta desde el composition root para que el dominio no dependa de APIs globales del navegador.
+
+`src/architecture/architecture-boundaries.test.ts` hace cumplir las primeras reglas de dependencias en Vitest. Se amplía conforme se extraigan los módulos restantes; no sustituye un lint completo.
