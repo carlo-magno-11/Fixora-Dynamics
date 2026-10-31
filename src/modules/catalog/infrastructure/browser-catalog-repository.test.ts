@@ -53,6 +53,14 @@ describe("browser catalog repository", () => {
     expect(repository.load()).toEqual([{ ...item, name: "Jabón de avena", active: false }]);
   });
 
+  it("refuses to overwrite malformed local data during a mutation", () => {
+    const repository = createCatalogRepository(memoryStorage({
+      [CATALOG_STORAGE_KEY]: "{",
+    }));
+    expect(repository.load()).toEqual([]);
+    expect(() => repository.create(item)).toThrow("No se puede modificar el catálogo porque los datos guardados están dañados.");
+  });
+
   it("rejects duplicate identifiers", () => {
     const repository = createCatalogRepository(memoryStorage({ [CATALOG_STORAGE_KEY]: JSON.stringify([item]) }));
     expect(() => repository.create(item)).toThrow("El identificador del elemento ya existe.");
