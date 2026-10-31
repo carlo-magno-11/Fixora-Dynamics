@@ -192,6 +192,7 @@ export function App() {
     if (!calculation.result) return;
     try {
       const snapshot = createPricingSnapshot({
+        id: crypto.randomUUID(),
         name: name.trim() || "Cálculo sin nombre",
         createdAt: new Date().toISOString(),
         currency,
