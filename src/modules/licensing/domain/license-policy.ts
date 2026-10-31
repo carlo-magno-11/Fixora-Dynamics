@@ -55,6 +55,9 @@ export function getEffectiveLicenseState(
   if (expiry.getTime() <= activated.getTime()) {
     throw new RangeError("El vencimiento debe ser posterior a la activación.");
   }
+  if (current.getTime() < activated.getTime()) {
+    return "pending";
+  }
   return current.getTime() < expiry.getTime() ? "active" : "expired";
 }
 
