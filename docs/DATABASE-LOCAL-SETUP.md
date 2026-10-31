@@ -83,3 +83,12 @@ curl -sS -o /dev/null -w '%{http_code}\n' http://127.0.0.1:54321/auth/v1/health
 ```
 
 Los comandos de estado y health son de lectura. No ejecutar comandos remotos como sustituto de estas comprobaciones.
+
+
+## Actualización de estado — 31 de octubre de 2026
+
+El proyecto remoto `eyesite-security-test` (`dclaebknyalimmtgppeg`) sí recibió las migraciones Fixora versionadas y fue verificado como entorno de pruebas. Esto no autoriza aplicar migraciones a producción ni al proyecto oficial EYESITE `xhvpvpvtkdgnnxdwdrkn`.
+
+El flujo local/CI debe seguir siendo reproducible desde cero con los archivos de `supabase/migrations`. La reconstrucción completa CI de todas las migraciones nuevas todavía está pendiente; no inferir que una ejecución SQL remota equivale a `supabase db reset` o `supabase test db` completo.
+
+El proyecto de pruebas conserva un bucket vacío heredado `eyesite-media`; borrarlo requiere Storage API/Dashboard, no SQL directo contra tablas internas de Storage.
