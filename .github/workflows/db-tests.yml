@@ -46,3 +46,21 @@ jobs:
       - name: Run pgTAP database tests
         working-directory: /tmp/fixora-db-ci
         run: supabase test db
+
+      - name: Prove tenant tests detect a permissive RLS policy
+        working-directory: /tmp/fixora-db-ci
+        shell: bash
+        run: |
+          set -euo pipefail
+          database_url="postgresql://postgres:postgres@127.0.0.1:54322/postgres"
+          psql "$database_url" -v ON_ERROR_STOP=1 -c 'CREATE POLICY "fixora_ci_mutation_allow_all" ON public.fixora_businesses FOR SELECT TO authenticated USING (true)'
+          set +e
+          supabase test db
+          test_status=$?
+          set -e
+          psql "$database_url" -v ON_ERROR_STOP=1 -c 'DROP POLICY IF EXISTS "fixora_ci_mutation_allow_all" ON public.fixora_businesses'
+          if [ "$test_status" -eq 0 ]; then
+            echo "RLS tests did not detect the intentionally permissive policy."
+            exit 1
+          fi
+          echo "RLS mutation detected: tenant isolation tests failed as expected."
