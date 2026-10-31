@@ -29,7 +29,7 @@ function isVariableExpense(value: unknown): value is VariableExpense {
     item.costPerUnit >= 0;
 }
 
-function emptyExpenses(defaultCurrency: ExpenseCurrency): StoredExpenses {
+function emptyExpenses(defaultCurrency: ExpenseCurrency, needsDataRecovery = false): StoredExpenses {
   return {
     fixed: [],
     variable: [],
@@ -37,6 +37,7 @@ function emptyExpenses(defaultCurrency: ExpenseCurrency): StoredExpenses {
     period: "month",
     currency: defaultCurrency,
     needsCurrencyReview: false,
+    needsDataRecovery,
   };
 }
 
@@ -47,8 +48,13 @@ export function createExpensesRepository(storageSource: KeyValueStorageSource): 
       try {
         const raw = resolveKeyValueStorage(storageSource).getItem(EXPENSES_STORAGE_KEY);
         if (!raw) return empty;
-        const parsed: unknown = JSON.parse(raw);
-        if (!parsed || typeof parsed !== "object") return empty;
+        let parsed: unknown;
+        try {
+          parsed = JSON.parse(raw);
+        } catch {
+          return emptyExpenses(defaultCurrency, true);
+        }
+        if (!parsed || typeof parsed !== "object") return emptyExpenses(defaultCurrency, true);
         const value = parsed as Record<string, unknown>;
         const fixed = Array.isArray(value.fixed) ? value.fixed.filter(isFixedExpense) : null;
         const variable = Array.isArray(value.variable) ? value.variable.filter(isVariableExpense) : null;
@@ -57,12 +63,13 @@ export function createExpensesRepository(storageSource: KeyValueStorageSource): 
           variable.length !== (value.variable as unknown[]).length ||
           typeof value.expectedUnits !== "number" ||
           !Number.isFinite(value.expectedUnits) || value.expectedUnits <= 0) {
-          return empty;
+          return emptyExpenses(defaultCurrency, true);
         }
 
-        const period: ExpensePeriod = ["week", "month", "quarter", "year"].includes(value.period as string)
-          ? value.period as ExpensePeriod
-          : "month";
+        if (!["week", "month", "quarter", "year"].includes(value.period as string)) {
+          return emptyExpenses(defaultCurrency, true);
+        }
+        const period = value.period as ExpensePeriod;
         const currency: ExpenseCurrency =
           value.currency === "MXN" || value.currency === "USD"
             ? value.currency
@@ -75,9 +82,10 @@ export function createExpensesRepository(storageSource: KeyValueStorageSource): 
           period,
           currency,
           needsCurrencyReview,
+          needsDataRecovery: false,
         };
       } catch {
-        return empty;
+        return emptyExpenses(defaultCurrency, true);
       }
     },
     save(draft: ExpensesDraft): void {
