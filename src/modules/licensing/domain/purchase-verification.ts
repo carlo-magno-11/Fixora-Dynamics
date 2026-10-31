@@ -23,19 +23,45 @@ export type PurchaseEligibility =
         | "purchase_not_verified"
         | "purchase_refunded"
         | "purchase_disputed"
-        | "purchase_chargeback";
+        | "purchase_chargeback"
+        | "unsupported_provider"
+        | "verification_method_mismatch"
+        | "purchase_data_invalid";
     };
+
+const PROVIDER_METHODS: Record<PurchaseProvider, readonly NonNullable<PurchaseVerification["verificationMethod"]>[]> = {
+  etsy: ["provider_api", "manual_seller_review"],
+  gumroad: ["provider_api"],
+  hotmart: ["authenticated_webhook"],
+  manual: ["manual_seller_review"],
+};
 
 export function evaluatePurchaseEligibility(
   purchase: PurchaseVerification,
   expectedProductSku: string,
 ): PurchaseEligibility {
-  if (!purchase.externalOrderId.trim()) {
+  if (typeof purchase.externalOrderId !== "string" || !purchase.externalOrderId.trim()) {
     return { eligible: false, reason: "order_reference_missing" };
   }
-  if (!expectedProductSku || purchase.productSku !== expectedProductSku) {
+
+  if (
+    typeof expectedProductSku !== "string" ||
+    !expectedProductSku.trim() ||
+    typeof purchase.productSku !== "string" ||
+    purchase.productSku.trim() !== expectedProductSku.trim()
+  ) {
     return { eligible: false, reason: "product_mismatch" };
   }
+
+  if (!["etsy", "gumroad", "hotmart", "manual"].includes(purchase.provider)) {
+    return { eligible: false, reason: "unsupported_provider" };
+  }
+
+  if (!["pending", "approved", "rejected"].includes(purchase.paymentStatus) ||
+      !["none", "refunded", "disputed", "chargeback"].includes(purchase.refundStatus)) {
+    return { eligible: false, reason: "purchase_data_invalid" };
+  }
+
   if (purchase.refundStatus === "refunded") {
     return { eligible: false, reason: "purchase_refunded" };
   }
@@ -48,6 +74,7 @@ export function evaluatePurchaseEligibility(
   if (purchase.paymentStatus !== "approved") {
     return { eligible: false, reason: "payment_not_approved" };
   }
+
   if (
     !purchase.verifiedAt ||
     !Number.isFinite(Date.parse(purchase.verifiedAt)) ||
@@ -55,5 +82,10 @@ export function evaluatePurchaseEligibility(
   ) {
     return { eligible: false, reason: "purchase_not_verified" };
   }
+
+  if (!PROVIDER_METHODS[purchase.provider].includes(purchase.verificationMethod)) {
+    return { eligible: false, reason: "verification_method_mismatch" };
+  }
+
   return { eligible: true };
 }
