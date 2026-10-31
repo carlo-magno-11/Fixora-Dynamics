@@ -17,8 +17,11 @@ function setup() {
   let nextId = 0;
   const repository: CatalogRepositoryPort = {
     load: () => [...stored],
-    save: (items) => {
-      stored = [...items];
+    create: (item) => {
+      stored = [item, ...stored];
+    },
+    update: (item) => {
+      stored = stored.map((entry) => entry.id === item.id ? item : entry);
     },
   };
   const service = createCatalogApplicationService(repository, () => `catalog-${++nextId}`);
