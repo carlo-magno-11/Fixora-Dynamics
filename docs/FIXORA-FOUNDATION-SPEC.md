@@ -185,3 +185,8 @@ Before calling Milestone A complete:
 8. No remote project has been modified.
 
 Remote deployment is a separate milestone requiring fresh target inspection, backup, review of the legacy Auth trigger dependency, an explicit deployment plan, and user approval at that step.
+
+
+## Estado de implementación — 31 de octubre de 2026
+
+La fundación de identidad/negocios ya está aplicada en el proyecto de pruebas `eyesite-security-test` (`dclaebknyalimmtgppeg`) y reconstruida en CI anterior con PostgreSQL 17. El esquema se amplió con catálogo, gastos, snapshots, licencias, dispositivos, compras, administración, auditoría y soporte. El proyecto oficial EYESITE `xhvpvpvtkdgnnxdwdrkn` no fue modificado. Consultar `docs/DATA-MODEL.md` y `docs/PROGRESS-LOG.md` para el estado real y las puertas pendientes.
