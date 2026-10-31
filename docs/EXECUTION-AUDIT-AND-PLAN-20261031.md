@@ -434,3 +434,12 @@ El proyecto de pruebas ya tiene siete tablas Fixora, 15 políticas RLS y cero da
 ## 17. Estado de salida
 
 La base de pruebas ya contiene el esquema Fixora de identidad, operación, licencias, administración y soporte; no equivale a producto listo para producción. Bloqueos restantes: reconstrucción CI de todas las migraciones, backup/restore probado, configuración API para mantener `fixora_private` no expuesto, Edge Functions y verificación real AAL2, integración Auth/repositorios cloud de la app, almacenamiento privado de adjuntos, borrado del bucket vacío EYESITE, staging y pruebas de concurrencia/carga. Ningún cambio se ha aplicado al proyecto oficial EYESITE.
+
+
+## 18. Concurrencia e integridad RLS — 31 de octubre de 2026
+
+- Se reejecutaron las cinco suites en el proyecto de pruebas: 25 + 20 + 71 + 27 + 23 = 166 aserciones pgTAP, sin fallos en la última ejecución.
+- Prueba de carrera real con dos sesiones: partiendo de dos dispositivos activos, dos registros concurrentes compitieron por el último cupo. Exactamente uno fue aceptado; el otro recibió `P0001: Active device limit reached`; el recuento final fue 3.
+- Se limpiaron las filas temporales de usuario, pedido, licencia y dispositivos; todos los recuentos quedaron en cero.
+- Mutation test manual de soporte: policy SELECT permisiva temporal permitió que la prueba detectara el acceso cruzado de Customer B al ticket de Customer A; el test falló como se esperaba y la transacción revirtió la policy. Recuento de la policy temporal después: cero.
+- `scripts/test-license-concurrency.sh` se incorporó al workflow DB CI, con guard que impide ejecutarlo fuera del puerto local de Supabase.
