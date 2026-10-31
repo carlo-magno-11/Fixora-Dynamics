@@ -27,6 +27,16 @@ jobs:
         with:
           version: 2.122.0
 
+      - name: Generate operational migration filename with Supabase CLI
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/fixora-migration-name
+          cd /tmp/fixora-migration-name
+          supabase init
+          supabase migration new fixora_operational_data
+          find supabase/migrations -maxdepth 1 -type f -name '*_fixora_operational_data.sql' -print
+
       - name: Prepare isolated local Supabase project
         shell: bash
         run: |
