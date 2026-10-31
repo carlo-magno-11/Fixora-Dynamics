@@ -14,10 +14,10 @@ Cada control debe tener evidencia reproducible: prueba automatizada, revisión d
 |---|---|---|---|
 | Identidad | Registro, login, recuperación y cierre de sesión con flujos consistentes | Pruebas E2E y revisión de configuración Auth | Pendiente |
 | Administración | MFA obligatorio y AAL2 para cada acción administrativa | Pruebas de sesión, función SQL/Edge Function y matriz de roles | Diseñado; no conectado |
-| Autorización | Acceso por recurso y por campo; sin IDOR/BOLA entre negocios | pgTAP A/B, pruebas API con usuarios reales y tests negativos | Parcial; primera suite pgTAP en CI |
-| Privilegios SQL | SECURITY DEFINER con search_path vacío, objetos calificados y EXECUTE mínimo | Inspección de catálogo PostgreSQL y pgTAP | Parcial; migración fundacional |
-| RLS | Cada tabla tenant habilita RLS, grants mínimos y policies explícitas | pgTAP positivo/negativo y prueba de mutación | En validación local/CI |
-| Integridad financiera | numeric, moneda explícita, snapshots versionados e inmutables | Unit tests de dominio, constraints y pgTAP | Parcial |
+| Autorización | Acceso por recurso y por campo; sin IDOR/BOLA entre negocios | pgTAP A/B, pruebas API con usuarios reales y tests negativos | Parcial; fundación CI verde y smoke A/B operativo remoto; CI operativa pendiente |
+| Privilegios SQL | SECURITY DEFINER con search_path vacío, objetos calificados y EXECUTE mínimo | Inspección de catálogo PostgreSQL y pgTAP | Parcial; funciones privadas fundacionales y triggers internos; grants operativos por columna |
+| RLS | Cada tabla tenant habilita RLS, grants mínimos y policies explícitas | pgTAP positivo/negativo y prueba de mutación | Parcial; 7 tablas con RLS, 15 policies; 45/45 fundación en CI; 71 assertions operativas ejecutadas remoto, falta CI nuevo |
+| Integridad financiera | numeric, moneda explícita, snapshots versionados e inmutables | Unit tests de dominio, constraints y pgTAP | Parcial; numeric, monedas MXN/USD, snapshot JSON versionado y append-only; conexión de app pendiente |
 | Licencias | El servidor determina activación, vencimiento y entitlements | Tests de dominio, integración concurrente y RLS | Política de dominio; backend pendiente |
 | Dispositivos | Máximo tres instalaciones activas; transacción con bloqueo de licencia | Tests concurrentes y de idempotencia | Diseñado; backend pendiente |
 | Compras | Evidencia de proveedor; no confiar en QR ni datos del cliente | Pruebas de revisión Etsy, firma webhook e idempotencia | Política de dominio; integración pendiente |
@@ -45,13 +45,13 @@ Cada control debe tener evidencia reproducible: prueba automatizada, revisión d
 3. Para cada policy sensible, demostrar al menos un acceso permitido y uno denegado.
 4. Mantener pruebas de mutación que agreguen temporalmente una policy permisiva y confirmen que la suite falla.
 5. Las operaciones de licencias/dispositivos deben probar concurrencia real; una prueba secuencial no prueba el límite de tres.
-6. No desplegar migraciones en el proyecto remoto reservado hasta resolver la coexistencia de triggers y funciones heredadas, probar backfill, respaldo y rollback.
+6. El proyecto de pruebas `eyesite-security-test` ya fue aislado y tiene fundación/datos operativos Fixora aplicados. No desplegar a producción hasta probar backup/restore, rollback, Auth, concurrencia y staging; el proyecto oficial EYESITE permanece fuera de alcance.
 7. No presentar Fixora como ASVS compliant ni como auditada externamente hasta completar una evaluación independiente.
 
 ## Próximos controles de mayor riesgo
 
-1. Cerrar la migración de identidad y el aislamiento A/B en PostgreSQL 17.
-2. Crear migración de datos operativos con constraints, RLS y snapshots inmutables.
-3. Implementar licencias/dispositivos con bloqueo transaccional, idempotencia y pruebas de carreras.
+1. Ejecutar en CI una reconstrucción PostgreSQL 17 con las cuatro migraciones Fixora y las 71 pruebas operativas.
+2. Implementar licencias/dispositivos con bloqueo transaccional, idempotencia y pruebas de carreras.
+3. Implementar compras/proveedor, códigos de activación hasheados y webhooks idempotentes.
 4. Conectar Auth y repositorios cloud; retirar persistencia local como fuente de verdad para cuentas con licencia.
 5. Integrar la consola administrativa solo después de tener funciones backend, MFA/AAL2, RBAC y auditoría verificables.
