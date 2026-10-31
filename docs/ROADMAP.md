@@ -1,6 +1,6 @@
 # Roadmap de Fixora Dynamics
 
-Última revisión: 30 de octubre de 2026. Este roadmap separa diseño, código, infraestructura y validación. La presencia de una pantalla no significa que el flujo esté conectado.
+Última revisión: 31 de octubre de 2026. Este roadmap separa diseño, código, infraestructura y validación. La presencia de una pantalla no significa que el flujo esté conectado.
 
 ## Producto y decisiones confirmadas
 
