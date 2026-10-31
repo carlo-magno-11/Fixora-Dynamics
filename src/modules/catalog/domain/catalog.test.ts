@@ -13,7 +13,7 @@ const draft: CatalogDraft = {
 
 describe("catalog domain", () => {
   it("creates a normalized product or service record", () => {
-    const item = createCatalogItem(draft);
+    const item = createCatalogItem(draft, [], "item-1");
     expect(item.name).toBe("Jabón artesanal");
     expect(item.unit).toBe("pieza");
     expect(item.sku).toBe("JAB-01");
@@ -31,7 +31,7 @@ describe("catalog domain", () => {
       sku: "",
       referenceCost: 0,
       currency: "USD",
-    });
+    }, [], "item-2");
     expect(item.kind).toBe("service");
     expect(item.unit).toBe("sesión de 60 minutos");
     expect(item.currency).toBe("USD");
@@ -51,6 +51,10 @@ describe("catalog domain", () => {
   it("prevents duplicate SKU values regardless of letter case", () => {
     const existing = [{ ...createCatalogItem(draft), id: "existing" }] as CatalogItem[];
     expect(validateCatalogDraft({ ...draft, sku: "jab-01" }, existing)).toContain("Ese código SKU ya existe en tu catálogo.");
+  });
+
+  it("requires the caller to provide a stable identifier", () => {
+    expect(() => createCatalogItem(draft, [], " ")).toThrow("No se pudo generar un identificador para el elemento.");
   });
 
   it("rejects non-finite costs", () => {
