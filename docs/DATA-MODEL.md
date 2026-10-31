@@ -120,7 +120,7 @@ El historial remoto también conserva las tres migraciones históricas EYESITE q
 
 - Fundación identidad/negocios: 45/45 pruebas pgTAP en CI sobre PostgreSQL 17.
 - Datos operativos: suite de 71 aserciones ejecutada contra el proyecto de pruebas; llegó a la aserción 71 sin error SQL. El conector no mostró el resumen TAP completo.
-- Licencias: 26 aserciones estructurales y bloque funcional ejecutados; se verificaron emisión idempotente, activación, expiración anual, hashes, límite de 3 dispositivos, revocación, reintentos y rechazo de compras no elegibles.
+- Licencias: 27 aserciones estructurales y bloque funcional ejecutados; se verificaron emisión idempotente, activación, expiración anual, hashes, límite de 3 dispositivos, revocación, reintentos y rechazo de compras no elegibles.
 - Administración/soporte: 23 aserciones estructurales y bloque funcional ejecutados; se verificaron AAL2, invitación por correo coincidente, permisos, auditoría, creación/respuesta/cierre de tickets y aislamiento entre clientes.
 - Security Advisor: 0 hallazgos. Performance Advisor: 0 FKs sin índice.
 - El workflow CI fue actualizado para reconstruir el esquema y ejecutar pruebas de mutación en aislamiento de negocio, catálogo y soporte. Falta una nueva corrida CI sobre el HEAD que contiene todas las migraciones.
