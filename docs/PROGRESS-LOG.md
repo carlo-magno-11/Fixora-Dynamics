@@ -408,3 +408,44 @@ El workflow Database tests #214 sigue en estado `pending` y no presenta jobs vis
 ### Alcance exacto de esta aprobación
 
 La migración de identidad y negocios está probada en un Supabase local aislado de CI; **no está desplegada en Supabase Cloud**. La prueba no cubre aún las migraciones de catálogo/gastos/snapshots, licencias/dispositivos, compras/webhooks, roles administrativos ni soporte. PR #1 continúa abierto en borrador y sin merge.
+
+
+## 2026-10-31 — Limpieza controlada del proyecto de pruebas y fundación Fixora remota
+
+### Identidad del proyecto y límites
+
+- El usuario identificó explícitamente como destino el proyecto Supabase `eyesite-security-test`.
+- Se verificó por listado de proyectos que su referencia exacta es `dclaebknyalimmtgppeg`, región `us-east-2`, PostgreSQL 17.11.0.003.
+- Se verificó que el proyecto oficial EYESITE `terrenos Yucatan` es otro proyecto, referencia `xhvpvpvtkdgnnxdwdrkn`; no se modificó.
+- El proyecto de pruebas tenía cero usuarios Auth y no tenía tablas/relaciones en `public`, pero conservaba funciones públicas de EYESITE, un trigger en `auth.users`, políticas de Storage asociadas y un bucket público vacío `eyesite-media`.
+- El historial remoto contenía tres registros de migraciones históricas EYESITE. Se conservaron como trazabilidad; no se borró el ledger administrado por Supabase.
+
+### Limpieza ejecutada y verificada
+
+- Se retiraron las cuatro políticas `eyesite_media_*` de `storage.objects`, que dependían de `public.is_admin()`.
+- Se retiró el trigger heredado `on_auth_user_created` de `auth.users`.
+- Se eliminaron `public.handle_new_user()`, `public.current_profile_role(uuid)`, `public.current_profile_estado(uuid)` y `public.is_admin()`.
+- La limpieza se registró como migración remota `20261031230342_remove_eyesite_auth_and_storage_policies_for_fixora`.
+- Verificación posterior: cero tablas/funciones públicas, cero usuarios Auth, cero triggers personalizados en `auth.users`, cero políticas Storage con prefijo EYESITE y cero objetos en `eyesite-media`.
+- El bucket `eyesite-media` continúa existiendo y sigue marcado público, pero está vacío. No se eliminó directamente de las tablas internas de Storage porque la eliminación debe realizarse mediante la API de Storage; las herramientas disponibles en esta sesión no expusieron una operación segura de eliminación de bucket.
+- Security Advisor posterior a la limpieza: cero hallazgos. No se borraron esquemas internos `auth`, `storage`, `realtime`, `vault` ni extensiones.
+
+### Fundación de Fixora aplicada al proyecto de pruebas
+
+- Se aplicó el contenido exacto de `supabase/migrations/20261030165305_fixora_identity_and_businesses.sql` desde la rama `foundation/bootstrap-20261029`.
+- La migración remota quedó registrada como `20261031230444_fixora_identity_and_businesses`.
+- Tablas resultantes: `public.fixora_profiles`, `public.fixora_businesses` y `public.fixora_business_memberships`; las tres tienen RLS habilitado.
+- Se generaron tipos TypeScript desde el esquema remoto para inspección. Aún no se han incorporado automáticamente al repositorio.
+- Smoke test SQL dentro de una transacción: se crearon dos identidades temporales, el trigger creó perfiles, el usuario A creó un negocio por RPC y el usuario B no pudo ver ese negocio. La transacción terminó con `ROLLBACK`; no se conservaron usuarios ni negocios de prueba.
+- Security Advisor después de aplicar la fundación: cero hallazgos.
+- Performance Advisor informó un índice faltante para `fixora_businesses.created_by` y un índice todavía no usado en una base nueva. El índice de `created_by` se añadirá en la siguiente migración operativa; el índice no usado se reevaluará con carga real.
+- Database tests #283 (run `41250062503`) terminó SUCCESS: stack local Supabase, reconstrucción desde migraciones versionadas, pgTAP y prueba de mutación RLS; CI #749 (run `41250062523`) también terminó SUCCESS.
+
+### Límites pendientes
+
+- No se eliminó el historial de migraciones EYESITE del ledger remoto.
+- No se eliminó el bucket vacío `eyesite-media`; falta hacerlo mediante Storage API o Dashboard y volver a verificarlo.
+- No se ha conectado `@supabase/supabase-js` a la aplicación ni se ha sustituido localStorage.
+- La migración operativa de catálogo, gastos, settings y snapshots todavía no está creada ni aplicada.
+- El proyecto oficial EYESITE `xhvpvpvtkdgnnxdwdrkn` no fue modificado.
+- PR #1 sigue abierto en borrador; no se fusionó.
