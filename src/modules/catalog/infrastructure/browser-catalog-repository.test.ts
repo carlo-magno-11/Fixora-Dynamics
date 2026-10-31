@@ -58,7 +58,16 @@ describe("browser catalog repository", () => {
       [CATALOG_STORAGE_KEY]: "{",
     }));
     expect(repository.load()).toEqual([]);
+    expect(repository.loadState()).toMatchObject({ items: [], needsRecovery: true });
     expect(() => repository.create(item)).toThrow("No se puede modificar el catálogo porque los datos guardados están dañados.");
+  });
+
+  it("allows an explicit reset after the user chooses to replace unreadable catalog data", () => {
+    const storage = memoryStorage({ [CATALOG_STORAGE_KEY]: "{" });
+    const repository = createCatalogRepository(storage);
+    repository.reset();
+    expect(storage.getItem(CATALOG_STORAGE_KEY)).toBe("[]");
+    expect(repository.loadState()).toEqual({ items: [], needsRecovery: false });
   });
 
   it("rejects duplicate identifiers", () => {
