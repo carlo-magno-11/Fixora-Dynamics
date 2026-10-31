@@ -1,6 +1,6 @@
 # Modelo de datos objetivo — Fixora Essentials
 
-Estado: especificación objetivo; este documento no es DDL. La migración de identidad y negocios está versionada y reconstruida en CI sobre PostgreSQL 17; también fue aplicada al proyecto de pruebas `eyesite-security-test` (`dclaebknyalimmtgppeg`) después de inventariar y retirar los objetos Auth/RLS heredados de EYESITE. La transacción de smoke test fue revertida y los asesores de seguridad quedaron sin hallazgos. Catálogo, gastos, configuración y snapshots siguen pendientes de migración y pruebas.
+Estado: especificación objetivo; este documento no es DDL. Identidad/negocios y datos operativos están versionados y aplicados al proyecto de pruebas `eyesite-security-test` (`dclaebknyalimmtgppeg`). El esquema operativo cubre catálogo, gastos fijos/variables, configuración con control optimista de versión y snapshots JSON inmutables. La suite pgTAP de 71 aserciones se ejecutó contra el proyecto de pruebas; falta una corrida CI nueva que reconstruya el esquema completo desde cero con estos archivos. Security Advisor: cero hallazgos.
 
 ## 1. Reglas no negociables
 
@@ -77,13 +77,13 @@ Etsy comienza con revisión manual de pedidos de la tienda propia. No scrapear n
 
 ## 5. Secuencia de migraciones propuesta
 
-1. **Identidad y negocios** — versionada; reconstruida con PostgreSQL 17 y 45/45 aserciones pgTAP en CI; aplicada al proyecto de pruebas `eyesite-security-test` y verificada con smoke test transaccional.
+1. **Identidad y negocios** — `20261030165305_fixora_identity_and_businesses.sql`; reconstruida con PostgreSQL 17 y 45 aserciones pgTAP en CI; aplicada al proyecto de pruebas y verificada con smoke test transaccional.
 2. **Datos operativos** — catálogo, gastos, configuración y snapshots inmutables; RLS y tests A/B.
 3. **Licencias y activación** — órdenes, licencias, entitlements, códigos, dispositivos y funciones transaccionales; pruebas de carreras/idempotencia.
 4. **Administración y auditoría** — roles privados, AAL2, permisos por acción, auditoría append-only y tests negativos.
 5. **Proveedores y soporte** — eventos idempotentes, webhooks firmados, tickets y límites de tasa.
 
-No generar las migraciones 2–5 hasta cerrar sus contratos, invariantes y pruebas. Antes de cada aplicación remota, validar que el destino siga siendo `dclaebknyalimmtgppeg`, revisar diff, backup/rollback y ejecutar primero en CI/local. El proyecto oficial EYESITE `xhvpvpvtkdgnnxdwdrkn` nunca es destino.
+Las migraciones de licencias y administración no se aplicarán hasta cerrar sus contratos, invariantes, pruebas de concurrencia y permisos server-side. Antes de cada aplicación remota, validar que el destino siga siendo `dclaebknyalimmtgppeg`, revisar diff, backup/rollback y ejecutar primero en CI/local. El proyecto oficial EYESITE `xhvpvpvtkdgnnxdwdrkn` nunca es destino.
 
 ## 6. Puertas de aceptación
 
