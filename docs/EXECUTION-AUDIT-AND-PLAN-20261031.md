@@ -266,3 +266,21 @@ Este cambio deja preparado el límite para sustituir browser localStorage por re
 - Los cambios recientes de dominio, repositorios, UI, migraciones y pruebas no se declaran aprobados hasta contar con CI verde y pgTAP ejecutado.
 - El proyecto remoto permanece sin cambios.
 
+
+
+## 11. Validación de aplicación actualizada — CI #680
+
+<badge>SUCCESS</badge>
+
+La ejecución CI #680, asociada al commit del PR `8534eb1c3027ba416a0804249a9dc7b934988e38`, terminó correctamente:
+
+- instalación reproducible con `pnpm install --frozen-lockfile`;
+- TypeScript `pnpm typecheck`;
+- Vitest: **127 pruebas aprobadas en 18 archivos**;
+- build de producción `pnpm build`;
+- la prueba de límites arquitectónicos pasó.
+
+Esta corrida confirma el código frontend y sus pruebas unitarias actuales. No valida SQL, Auth, RLS real, Edge Functions, licencias en servidor, multiusuario, Etsy ni dispositivos físicos.
+
+El workflow Database tests #214 permanece `pending` sin jobs visibles. La migración de fundación y las dos suites pgTAP siguen sin evidencia de ejecución. No hay despliegue remoto.
+
