@@ -67,14 +67,14 @@ SELECT lives_ok(
 );
 
 SELECT lives_ok(
-  $INSERT INTO public.fixora_expenses (business_id, expense_type, name, amount)
-    SELECT id, 'fixed', 'Rent', 1000 FROM public.fixora_businesses WHERE name = 'Fixora Operational A'$,
+  $$INSERT INTO public.fixora_expenses (business_id, expense_type, name, amount)
+    SELECT id, 'fixed', 'Rent', 1000 FROM public.fixora_businesses WHERE name = 'Fixora Operational A'$$,
   'Owner can create a fixed expense'
 );
 
 SELECT lives_ok(
-  $INSERT INTO public.fixora_expenses (business_id, expense_type, name, amount)
-    SELECT id, 'variable', 'Packaging', 2.5 FROM public.fixora_businesses WHERE name = 'Fixora Operational A'$,
+  $$INSERT INTO public.fixora_expenses (business_id, expense_type, name, amount)
+    SELECT id, 'variable', 'Packaging', 2.5 FROM public.fixora_businesses WHERE name = 'Fixora Operational A'$$,
   'Owner can create a variable expense'
 );
 
@@ -271,19 +271,19 @@ SELECT throws_ok(
 );
 
 SELECT throws_ok(
-  $INSERT INTO public.fixora_expenses (business_id, created_by, expense_type, name, amount)
+  $$INSERT INTO public.fixora_expenses (business_id, created_by, expense_type, name, amount)
     SELECT id, auth.uid(), 'fixed', 'Spoofed expense creator', 1
-    FROM public.fixora_businesses WHERE name = 'Fixora Operational A'$,
+    FROM public.fixora_businesses WHERE name = 'Fixora Operational A'$$,
   '42501',
   NULL,
   'Owner cannot set expense created_by directly on insert'
 );
 
 SELECT throws_ok(
-  $INSERT INTO public.fixora_calculation_snapshots
+  $$INSERT INTO public.fixora_calculation_snapshots
     (business_id, created_by, name, currency_code, formula_version, pricing_input, pricing_result)
     SELECT id, auth.uid(), 'Spoofed snapshot creator', 'MXN', '1.0.0', '{}'::jsonb, '{}'::jsonb
-    FROM public.fixora_businesses WHERE name = 'Fixora Operational A'$,
+    FROM public.fixora_businesses WHERE name = 'Fixora Operational A'$$,
   '42501',
   NULL,
   'Owner cannot set snapshot created_by directly on insert'
