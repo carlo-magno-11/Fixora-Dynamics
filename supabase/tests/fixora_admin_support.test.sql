@@ -248,6 +248,9 @@ BEGIN
   SELECT count(*) INTO v_count FROM public.fixora_support_tickets;
   IF v_count <> 0 THEN RAISE EXCEPTION 'Customer B can see Customer A ticket'; END IF;
 
+  SELECT count(*) INTO v_count FROM public.fixora_support_messages;
+  IF v_count <> 0 THEN RAISE EXCEPTION 'Customer B can see Customer A messages'; END IF;
+
   BEGIN
     PERFORM * FROM public.fixora_get_support_messages(v_ticket_a);
     RAISE EXCEPTION 'Customer B read another customer messages' USING ERRCODE = 'P0002';
