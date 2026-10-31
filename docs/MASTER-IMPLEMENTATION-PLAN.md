@@ -215,9 +215,9 @@ La base será el proyecto Supabase ya reservado exclusivamente para Fixora: `dcl
 - Tenant: `fixora_businesses`, `fixora_business_memberships`.
 - Operación: `fixora_catalog_items`, `fixora_materials`, `fixora_product_materials`, `fixora_labor_rates`, `fixora_expenses`.
 - Cálculos: `fixora_calculation_snapshots` y versiones.
-- Licencias/órdenes: `private.fixora_purchase_orders`, `private.fixora_licenses`, `private.fixora_license_entitlements`, `private.fixora_license_devices`, `private.fixora_activation_code_hashes`.
-- Canales: `private.fixora_provider_events` y referencias mínimas de pedido; credenciales fuera del cliente.
-- Administración: `private.fixora_admin_memberships`, `private.fixora_audit_events`, `private.fixora_support_tickets`.
+- Licencias/órdenes: `fixora_private.fixora_purchase_orders`, `fixora_private.fixora_licenses`, `fixora_private.fixora_license_entitlements`, `fixora_private.fixora_license_devices`, `fixora_private.fixora_activation_code_hashes`.
+- Canales: `fixora_private.fixora_provider_events` y referencias mínimas de pedido; credenciales fuera del cliente.
+- Administración: `fixora_private.fixora_admin_memberships`, `fixora_private.fixora_audit_events`, `fixora_private.fixora_support_tickets`.
 - Documentación legal: versiones y aceptación de términos/privacidad con fecha y versión.
 
 Cada tabla de negocio debe tener tenant `business_id`, restricciones e índices adecuados. Secretos, hashes y tokens internos deben permanecer en un esquema no expuesto. No guardar datos de tarjeta ni credenciales de plataformas en tablas públicas.
