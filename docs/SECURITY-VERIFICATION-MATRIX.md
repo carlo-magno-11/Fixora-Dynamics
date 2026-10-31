@@ -66,7 +66,7 @@ Proyecto verificado: `eyesite-security-test` (`dclaebknyalimmtgppeg`), PostgreSQ
 | Identidad/negocio | Parcial validado | 45/45 pgTAP en CI anterior; usuarios y negocios de prueba revertidos. |
 | Aislamiento de tenant | Parcial validado | Dos usuarios, negocio A/B, viewer; suites y mutation test inicial. Nueva CI integral pendiente. |
 | Datos operativos | Aplicado en test | Catálogo, gastos, settings optimistas y snapshots append-only; 71 assertions ejecutadas, resumen TAP completo no visible en conector. |
-| Licencias | Aplicado en test | Emisión, código hasheado, 12 meses desde activación, máximo 3 dispositivos, idempotencia, revocación y reembolso; 26 assertions + bloque funcional ejecutados. |
+| Licencias | Aplicado en test | Emisión, código hasheado, 12 meses desde activación, máximo 3 dispositivos, idempotencia, revocación y reembolso; 27 assertions + bloque funcional ejecutados. |
 | Acceso a licencia | RLS | RPC SECURITY INVOKER; usuario ve solo sus licencias/entitlements/dispositivos. |
 | Administración | Parcial validado | Matriz de roles, invitación con hash de correo, AAL2 requerido por backend, sin platform_owner seed; 23 assertions + bloque funcional ejecutados. |
 | Auditoría | Parcial validado | Admin/security events append-only; Edge Functions y pruebas de operación real pendientes. |
