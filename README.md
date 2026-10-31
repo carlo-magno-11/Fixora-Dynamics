@@ -20,7 +20,7 @@ Aplicación web adaptable para que profesionales independientes y pequeños nego
 
 ## Estado de lanzamiento
 
-Fixora sigue en desarrollo y no está lista para venderse ni para almacenar datos de clientes. La autenticación, sincronización Supabase, licencias verificadas en servidor, panel administrativo operativo y conexión con Etsy todavía están pendientes. La migración de fundación está versionada, pero no se ha aplicado; no habilitar registro remoto ni publicar builds hasta superar las pruebas locales/CI, la transición segura del trigger Auth heredado y la revisión de seguridad.
+Fixora sigue en desarrollo y no está lista para venderse ni para almacenar datos de clientes. El esquema de base de datos ya está aplicado en el proyecto Supabase de pruebas `eyesite-security-test` (`dclaebknyalimmtgppeg`), con identidad, operación, licencias, dispositivos, administración, auditoría y soporte; no es producción. La app todavía conserva persistencia local y no tiene Auth cloud ni Edge Functions conectadas. Falta CI de reconstrucción completa, AAL2 real, endpoints de compra/activación/admin, Storage privado, pruebas de concurrencia, backup/restore y staging. El proyecto oficial EYESITE `xhvpvpvtkdgnnxdwdrkn` no se ha tocado.
 
 ## Principios técnicos
 
@@ -50,6 +50,17 @@ Requisitos: Node.js 24 y pnpm 9.15.9. Ejecutar `pnpm install`, `pnpm dev`, `pnpm
 - `docs/EXECUTION-AUDIT-AND-PLAN-20261031.md`: auditoría de estado, hallazgos, pruebas de aceptación y secuencia de ejecución.
 - `docs/I18N.md`: convenciones para centralizar textos y agregar idiomas.
 - `docs/legal/`: borradores legales sujetos a revisión.
-- `docs/DATABASE-LOCAL-SETUP.md`: preparación segura de Supabase local y flujo de migraciones.\n- `docs/FIXORA-FOUNDATION-SPEC.md`: arquitectura de la primera base propia de Fixora.\n- `docs/FIXORA-FOUNDATION-MIGRATION-SQL.md`: registro de revisión y referencia a la migración canónica; aún no aplicada.
+- `docs/DATABASE-LOCAL-SETUP.md`: preparación segura de Supabase local y flujo de migraciones.\n- `docs/FIXORA-FOUNDATION-SPEC.md`: arquitectura de la primera base propia de Fixora.\n- `docs/FIXORA-FOUNDATION-MIGRATION-SQL.md`: registro histórico de revisión de la migración fundacional.
 - `docs/OPEN-SOURCE-RESEARCH.md`: repositorios evaluados, estrellas, licencias y decisiones de adopción.
 - `docs/DECISIONS/ADR-003-essentials-and-business-kits.md`: decisión de producto modular.
+
+
+## Estado de base de datos — 31 de octubre de 2026
+
+- Proyecto de pruebas: `eyesite-security-test`, ref `dclaebknyalimmtgppeg`, PostgreSQL 17.11.
+- Proyecto oficial EYESITE `xhvpvpvtkdgnnxdwdrkn`: no modificado.
+- 9 tablas públicas Fixora y 14 privadas; RLS en todas, FORCE RLS en privadas.
+- Security Advisor: 0 hallazgos; Performance Advisor: 0 claves foráneas sin índice.
+- Los datos de prueba se revirtieron: 0 usuarios Auth y 0 filas de negocio/licencias/soporte; solo quedan el SKU anual y 18 permisos de rol.
+- El bucket heredado vacío `eyesite-media` sigue pendiente de borrar mediante Storage API.
+- El estado detallado y las pruebas pendientes están en `docs/DATA-MODEL.md`, `docs/SECURITY-VERIFICATION-MATRIX.md` y `docs/EXECUTION-AUDIT-AND-PLAN-20261031.md`.
