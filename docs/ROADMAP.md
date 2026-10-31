@@ -50,6 +50,7 @@ La decisión vigente es continuar con una base local limpia y un modelo propio d
 
 Documentos vigentes:
 - `docs/EXECUTION-AUDIT-AND-PLAN-20261031.md`: auditoría comprobada, riesgos, matriz de pruebas y plan de ejecución por fases.
+- `docs/DATA-MODEL.md`: modelo objetivo de datos, licencias, dispositivos, administración y migraciones.
 - `docs/FIXORA-FOUNDATION-SPEC.md`: arquitectura de identidad, negocios, membresías y roadmap de datos.
 - `docs/FIXORA-FOUNDATION-MIGRATION-SQL.md`: registro y referencia de la migración canónica versionada.
 - `docs/DATABASE-LOCAL-SETUP.md`: stack local y comandos de validación.
