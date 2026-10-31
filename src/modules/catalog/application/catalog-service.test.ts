@@ -17,6 +17,8 @@ function setup() {
   let nextId = 0;
   const repository: CatalogRepositoryPort = {
     load: () => [...stored],
+    loadState: () => ({ items: [...stored], needsRecovery: false }),
+    reset: () => { stored = []; },
     create: (item) => {
       stored = [item, ...stored];
     },
@@ -35,6 +37,14 @@ describe("catalog application service", () => {
   it("loads records through the repository port", () => {
     const { service } = setup();
     expect(service.load()).toEqual([]);
+  });
+
+  it("exposes a recovery state and explicit reset command", () => {
+    const { service, readStored } = setup();
+    service.create(draft, []);
+    service.reset();
+    expect(service.loadState()).toEqual({ items: [], needsRecovery: false });
+    expect(readStored()).toEqual([]);
   });
 
   it("creates and persists a normalized item with an injected ID", () => {
