@@ -2,7 +2,7 @@ BEGIN;
 
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 
-SELECT plan(66);
+SELECT plan(70);
 
 SELECT has_table('public', 'fixora_catalog_items', 'Catalog table exists');
 SELECT has_table('public', 'fixora_expenses', 'Expenses table exists');
@@ -24,9 +24,12 @@ SELECT ok(has_table_privilege('authenticated', 'public.fixora_expenses', 'SELECT
 SELECT ok(has_table_privilege('authenticated', 'public.fixora_expense_settings', 'SELECT'), 'authenticated can read expense settings subject to RLS');
 SELECT ok(has_table_privilege('authenticated', 'public.fixora_calculation_snapshots', 'SELECT'), 'authenticated can read snapshots subject to RLS');
 
-SELECT ok(has_table_privilege('authenticated', 'public.fixora_catalog_items', 'INSERT'), 'authenticated can insert catalog rows subject to RLS');
-SELECT ok(has_table_privilege('authenticated', 'public.fixora_expenses', 'INSERT'), 'authenticated can insert expenses subject to RLS');
-SELECT ok(has_table_privilege('authenticated', 'public.fixora_calculation_snapshots', 'INSERT'), 'authenticated can insert snapshots subject to RLS');
+SELECT ok(has_column_privilege('authenticated', 'public.fixora_catalog_items', 'business_id', 'INSERT'), 'authenticated can insert catalog rows subject to RLS');
+SELECT ok(NOT has_table_privilege('authenticated', 'public.fixora_catalog_items', 'INSERT'), 'catalog insert is restricted to approved columns');
+SELECT ok(has_column_privilege('authenticated', 'public.fixora_expenses', 'business_id', 'INSERT'), 'authenticated can insert expenses subject to RLS');
+SELECT ok(NOT has_table_privilege('authenticated', 'public.fixora_expenses', 'INSERT'), 'expense insert is restricted to approved columns');
+SELECT ok(has_column_privilege('authenticated', 'public.fixora_calculation_snapshots', 'business_id', 'INSERT'), 'authenticated can insert snapshots subject to RLS');
+SELECT ok(NOT has_table_privilege('authenticated', 'public.fixora_calculation_snapshots', 'INSERT'), 'snapshot insert is restricted to approved columns');
 SELECT ok(NOT has_table_privilege('authenticated', 'public.fixora_expense_settings', 'INSERT'), 'settings are created by the business trigger');
 
 SELECT ok(has_column_privilege('authenticated', 'public.fixora_catalog_items', 'name', 'UPDATE'), 'authenticated can update catalog fields');
@@ -265,6 +268,25 @@ SELECT throws_ok(
   '42501',
   NULL,
   'Owner cannot set created_by directly on insert'
+);
+
+SELECT throws_ok(
+  $INSERT INTO public.fixora_expenses (business_id, created_by, expense_type, name, amount)
+    SELECT id, auth.uid(), 'fixed', 'Spoofed expense creator', 1
+    FROM public.fixora_businesses WHERE name = 'Fixora Operational A'$,
+  '42501',
+  NULL,
+  'Owner cannot set expense created_by directly on insert'
+);
+
+SELECT throws_ok(
+  $INSERT INTO public.fixora_calculation_snapshots
+    (business_id, created_by, name, currency_code, formula_version, pricing_input, pricing_result)
+    SELECT id, auth.uid(), 'Spoofed snapshot creator', 'MXN', '1.0.0', '{}'::jsonb, '{}'::jsonb
+    FROM public.fixora_businesses WHERE name = 'Fixora Operational A'$,
+  '42501',
+  NULL,
+  'Owner cannot set snapshot created_by directly on insert'
 );
 
 SELECT * FROM finish();
