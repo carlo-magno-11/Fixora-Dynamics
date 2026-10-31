@@ -93,6 +93,9 @@ describe("browser calculation history repository", () => {
       { ...validRecord, name: " " },
       { ...validRecord, result: { ...validRecord.result, suggestedPrice: -1 } },
       { ...validRecord, result: { ...validRecord.result, totalUnitCost: -1 } },
+      { ...validRecord, result: { ...validRecord.result, profitAtSuggestedPrice: -1 } },
+      { ...validRecord, result: { ...validRecord.result, effectiveMargin: 1 } },
+      { ...validRecord, result: { ...validRecord.result, markup: -1 } },
     ];
     expect(createCalculationHistoryRepository(createMemoryStorage({
       [CALCULATION_HISTORY_STORAGE_KEY]: JSON.stringify(invalidRecords),
