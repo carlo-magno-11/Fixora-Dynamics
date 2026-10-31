@@ -1,6 +1,6 @@
 # Modelo de datos objetivo — Fixora Essentials
 
-Estado: diseño para revisión; no es DDL aplicado. La única migración de fundación actualmente versionada es `supabase/migrations/20261030165305_fixora_identity_and_businesses.sql`. Los siguientes grupos se convierten en migraciones nuevas después de cerrar sus contratos de aplicación y pruebas.
+Estado: especificación objetivo; este documento no es DDL. La migración de identidad y negocios está versionada y reconstruida en CI sobre PostgreSQL 17; también fue aplicada al proyecto de pruebas `eyesite-security-test` (`dclaebknyalimmtgppeg`) después de inventariar y retirar los objetos Auth/RLS heredados de EYESITE. La transacción de smoke test fue revertida y los asesores de seguridad quedaron sin hallazgos. Catálogo, gastos, configuración y snapshots siguen pendientes de migración y pruebas.
 
 ## 1. Reglas no negociables
 
@@ -13,7 +13,7 @@ Estado: diseño para revisión; no es DDL aplicado. La única migración de fund
 7. Los cálculos guardados son snapshots inmutables: conservar inputs, outputs, versión de fórmula y versión de esquema.
 8. Los importes se guardan en unidades monetarias explícitas (`numeric`, no `float`) y nunca se convierte moneda de forma implícita.
 9. Las operaciones multiusuario que modifican un agregado usan transacción/versión para evitar lost updates.
-10. No copiar, mover, borrar ni reparar objetos heredados EYESITE. La transición remota de Auth se aprueba aparte.
+10. No copiar ni migrar datos EYESITE a Fixora. Cualquier retiro de objetos heredados debe limitarse al proyecto de pruebas exacto, tras inventario y autorización; el proyecto oficial EYESITE `xhvpvpvtkdgnnxdwdrkn` permanece fuera de alcance.
 
 ## 2. Datos de negocio expuestos con RLS
 
@@ -77,13 +77,13 @@ Etsy comienza con revisión manual de pedidos de la tienda propia. No scrapear n
 
 ## 5. Secuencia de migraciones propuesta
 
-1. **Identidad y negocios** — ya versionada; pendiente de reconstrucción y pgTAP local/CI.
+1. **Identidad y negocios** — versionada; reconstruida con PostgreSQL 17 y 45/45 aserciones pgTAP en CI; aplicada al proyecto de pruebas `eyesite-security-test` y verificada con smoke test transaccional.
 2. **Datos operativos** — catálogo, gastos, configuración y snapshots inmutables; RLS y tests A/B.
 3. **Licencias y activación** — órdenes, licencias, entitlements, códigos, dispositivos y funciones transaccionales; pruebas de carreras/idempotencia.
 4. **Administración y auditoría** — roles privados, AAL2, permisos por acción, auditoría append-only y tests negativos.
 5. **Proveedores y soporte** — eventos idempotentes, webhooks firmados, tickets y límites de tasa.
 
-No generar las migraciones 2–5 hasta cerrar sus contratos, invariantes y pruebas. No aplicar ninguna de ellas en remoto hasta aprobar la transición independiente del trigger Auth heredado y las funciones SECURITY DEFINER detectadas en el proyecto reservado.
+No generar las migraciones 2–5 hasta cerrar sus contratos, invariantes y pruebas. Antes de cada aplicación remota, validar que el destino siga siendo `dclaebknyalimmtgppeg`, revisar diff, backup/rollback y ejecutar primero en CI/local. El proyecto oficial EYESITE `xhvpvpvtkdgnnxdwdrkn` nunca es destino.
 
 ## 6. Puertas de aceptación
 
