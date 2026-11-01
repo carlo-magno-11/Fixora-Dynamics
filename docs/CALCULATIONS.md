@@ -1,0 +1,9 @@
+# Motor de cálculo
+
+Importes en moneda del negocio; porcentajes como fracciones 0..1; Decimal.js para aritmética y redondeo explícito.
+
+Materiales = cantidad × coste unitario. Mano de obra = minutos / 60 × coste/hora. Merma = coste base de materiales × tasa. Coste directo = materiales + mano de obra + otros costes directos + merma. Coste unitario total = coste directo + gasto fijo asignado por unidad.
+
+Con comisión f sobre ingreso después de descuento d y margen objetivo m definido como ganancia dividida entre ingreso después de comisión, precio de lista P = C / ((1-f) × (1-d) × (1-m)). El precio de lista visible se redondea hacia arriba al centavo para no quedar por debajo del margen objetivo por efecto del redondeo. Ingreso neto = P × (1-d); comisión = ingreso neto × f; ingreso después de comisión = ingreso neto - comisión; ganancia = ingreso después de comisión - C; margen efectivo = ganancia / ingreso después de comisión. Ganancia, margen y recargo se calculan sobre el mismo precio de lista que se muestra.
+
+Punto de equilibrio usa gastos fijos del periodo y contribución unitaria; no sumar simultáneamente asignación fija unitaria para evitar doble conteo. Los resultados fuera del rango numérico representable por JavaScript se rechazan; las unidades mínimas de equilibrio también deben ser enteros seguros. Bases de comisión sobre envío/impuestos/pedido se modelarán por separado. Rechazar NaN, Infinity, negativos y tasas >= 100%. No es asesoría contable/fiscal.
