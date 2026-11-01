@@ -159,3 +159,18 @@ La base de pruebas `eyesite-security-test` (`dclaebknyalimmtgppeg`) ya contiene 
 - La app todavía usa persistencia local; Auth cloud, Edge Functions, AAL2 real, consola conectada y staging no están listos.
 
 No considerar el producto comercial terminado hasta cerrar CI desde cero, Edge Functions, conexión de la app, prueba de concurrencia, Storage privado, backup/restore, staging y prueba física.
+
+
+## Revalidación CI — 31 de octubre de 2026
+
+- [x] Reconstruir en CI el esquema desde todas las migraciones versionadas con `supabase db reset`.
+- [x] Ejecutar las cinco suites pgTAP (166 aserciones).
+- [x] Mutation testing de aislamiento de negocio, catálogo y soporte.
+- [x] Prueba concurrente: exactamente un registro gana el último cupo de dispositivo; quedan 3 activos.
+- [x] Typecheck, pruebas de aplicación y build en CI.
+- [x] Generar tipos TypeScript del esquema público desde la base de pruebas.
+- [ ] Repetir CI después del commit de tipos generado.
+- [ ] Confirmar en Dashboard que `fixora_private` no aparece entre esquemas expuestos por PostgREST.
+- [ ] Eliminar bucket vacío heredado `eyesite-media` por Storage API.
+- [ ] Crear Edge Functions y validar JWT/AAL2 en servidor.
+- [ ] Integrar Auth y adaptadores cloud en la app.
