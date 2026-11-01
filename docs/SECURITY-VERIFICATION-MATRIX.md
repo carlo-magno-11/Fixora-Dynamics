@@ -120,3 +120,22 @@ Barrido del proyecto de pruebas: cero objetos, funciones, triggers o policies co
 - DB #464 SUCCESS: 17 migraciones aplicadas desde cero, 178 aserciones pgTAP, mutation testing y concurrencia.
 - CI #930 SUCCESS: typecheck, Vitest y build.
 - Pendiente fuera de CI: confirmar en Dashboard que `fixora_private` no esté expuesto por PostgREST; eliminar bucket vacío `eyesite-media`; integrar Auth/Edge Functions y probar en staging.
+
+
+### Revalidación estricta CI — 1 de noviembre de 2026
+
+- Commit `117b62c68adf932448eea52ec811854249b7ce91`.
+- Database tests #504 SUCCESS: 18 migraciones Fixora desde cero; 7 archivos pgTAP, 195 aserciones.
+- `ON_ERROR_STOP` habilitado en los siete archivos para que errores SQL no capturados fallen la suite.
+- Cuatro mutation tests independientes comprobaron que una policy permisiva rompe el aislamiento de negocios, catálogo, tickets y mensajes.
+- Concurrencia: un registro aceptado y otro rechazado al competir por el tercer dispositivo; quedan exactamente tres activos.
+- CI #970 SUCCESS: typecheck, Vitest, build, Deno check y pruebas Deno.
+- Security Advisor continúa con cero hallazgos. Performance Advisor no reporta FKs sin índice; informa 14 índices sin uso (esperable con base vacía) y una recomendación informativa sobre asignación de conexiones Auth.
+
+### Pendientes de seguridad de entorno
+
+- `authenticated` conserva USAGE sobre `fixora_private` porque los helpers del esquema se invocan desde RPCs y políticas RLS. La prueba de revocación demostró que quitarlo sin refactor rompe la creación de negocio. Las funciones administrativas sensibles y las tablas privadas mantienen grants restringidos.
+- No se confirmó desde Dashboard la lista de esquemas expuestos por PostgREST. Confirmar que `fixora_private` no esté expuesto y validar con una llamada REST real antes de producción.
+- El bucket `eyesite-media` sigue público y vacío; borrarlo por Storage API.
+- El proyecto de pruebas no tiene Edge Functions desplegadas; las funciones del repositorio solo pasaron chequeos estáticos Deno en CI.
+- Backup/restore, staging, DAST/SCA, rate limits y E2E siguen pendientes.
