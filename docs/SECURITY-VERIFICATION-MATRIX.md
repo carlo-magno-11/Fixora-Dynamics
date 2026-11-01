@@ -99,3 +99,12 @@ Proyecto verificado: `eyesite-security-test` (`dclaebknyalimmtgppeg`), PostgreSQ
 
 
 - Reintento de código de activación después de reembolso: corregido y probado. La rama idempotente vuelve a validar compra, licencia y dispositivo activo antes de devolver acceso.
+
+
+### Revalidación CI — 31 de octubre de 2026
+
+- Database tests #434 SUCCESS: reconstrucción desde cero, cinco suites pgTAP, mutation testing RLS y prueba de concurrencia del límite de tres dispositivos.
+- CI #900 SUCCESS: typecheck, Vitest y build.
+- El commit #434/#900 incluye las 17 migraciones Fixora actuales y la corrección de reintento de código después de reembolso.
+- El archivo de tipos públicos generado se añadió después de esos runs y aún necesita validación CI propia.
+- Configuración de esquemas expuestos PostgREST: pendiente de confirmación en Dashboard; no habilitar producción hasta verificar que `fixora_private` no está expuesto.
