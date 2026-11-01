@@ -452,6 +452,94 @@ export type Database = {
         Args: { p_body: string; p_ticket_id: string }
         Returns: string
       }
+      fixora_server_accept_admin_invite: {
+        Args: { p_aal: string; p_invite_hash: string; p_user_id: string }
+        Returns: string
+      }
+      fixora_server_activate_license: {
+        Args: {
+          p_code_hash: string
+          p_device_key_hash: string
+          p_device_label: string
+          p_user_id: string
+        }
+        Returns: {
+          activated_at: string
+          active_device_count: number
+          device_id: string
+          expires_at: string
+          license_id: string
+          max_active_devices: number
+        }[]
+      }
+      fixora_server_create_admin_invite: {
+        Args: {
+          p_aal: string
+          p_created_by: string
+          p_expires_at: string
+          p_invite_hash: string
+          p_invited_email_hash: string
+          p_role: string
+        }
+        Returns: string
+      }
+      fixora_server_has_admin_permission: {
+        Args: { p_aal: string; p_permission_key: string; p_user_id: string }
+        Returns: boolean
+      }
+      fixora_server_reissue_activation_code: {
+        Args: {
+          p_aal: string
+          p_actor_user_id: string
+          p_ip_hash?: string
+          p_license_id: string
+          p_request_id?: string
+          p_user_agent_hash?: string
+        }
+        Returns: string
+      }
+      fixora_server_revoke_license_device: {
+        Args: {
+          p_aal: string
+          p_actor_user_id: string
+          p_device_id: string
+          p_ip_hash?: string
+          p_license_id: string
+          p_request_id?: string
+          p_user_agent_hash?: string
+        }
+        Returns: undefined
+      }
+      fixora_server_support_reply: {
+        Args: {
+          p_aal: string
+          p_actor_user_id: string
+          p_body: string
+          p_ip_hash?: string
+          p_request_id?: string
+          p_ticket_id: string
+          p_user_agent_hash?: string
+        }
+        Returns: string
+      }
+      fixora_server_verify_etsy_purchase: {
+        Args: {
+          p_aal: string
+          p_actor_user_id: string
+          p_evidence_hash?: string
+          p_external_order_id: string
+          p_ip_hash?: string
+          p_product_sku: string
+          p_request_id?: string
+          p_review_note?: string
+          p_user_agent_hash?: string
+        }
+        Returns: {
+          activation_code: string
+          license_id: string
+          purchase_order_id: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never

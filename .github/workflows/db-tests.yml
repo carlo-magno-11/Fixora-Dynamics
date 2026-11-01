@@ -34,6 +34,7 @@ jobs:
           mkdir -p /tmp/fixora-db-ci
           cd /tmp/fixora-db-ci
           supabase init
+          cp "$GITHUB_WORKSPACE/supabase/config.toml" supabase/config.toml
           sed -i 's/^major_version = .*/major_version = 17/' supabase/config.toml
           cp -R "$GITHUB_WORKSPACE/supabase/migrations" supabase/
           cp -R "$GITHUB_WORKSPACE/supabase/tests" supabase/
