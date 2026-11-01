@@ -38,6 +38,7 @@ jobs:
           sed -i 's/^major_version = .*/major_version = 17/' supabase/config.toml
           cp -R "$GITHUB_WORKSPACE/supabase/migrations" supabase/
           cp -R "$GITHUB_WORKSPACE/supabase/tests" supabase/
+          cp -R "$GITHUB_WORKSPACE/supabase/functions" supabase/
 
       - name: Start isolated local Supabase stack
         working-directory: /tmp/fixora-db-ci
