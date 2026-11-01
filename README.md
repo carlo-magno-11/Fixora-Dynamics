@@ -20,7 +20,7 @@ Aplicación web adaptable para que profesionales independientes y pequeños nego
 
 ## Estado de lanzamiento
 
-Fixora sigue en desarrollo y no está lista para venderse ni para almacenar datos de clientes. El esquema de base de datos ya está aplicado en el proyecto Supabase de pruebas `eyesite-security-test` (`dclaebknyalimmtgppeg`), con identidad, operación, licencias, dispositivos, administración, auditoría y soporte; no es producción. La app todavía conserva persistencia local y no tiene Auth cloud ni Edge Functions conectadas. Falta CI de reconstrucción completa, AAL2 real, endpoints de compra/activación/admin, Storage privado, pruebas de concurrencia, backup/restore y staging. El proyecto oficial EYESITE `xhvpvpvtkdgnnxdwdrkn` no se ha tocado.
+Fixora sigue en desarrollo y no está lista para venderse ni para almacenar datos de clientes. El esquema de base de datos ya está aplicado en el proyecto Supabase de pruebas `eyesite-security-test` (`dclaebknyalimmtgppeg`), con identidad, operación, licencias, dispositivos, administración, auditoría y soporte; no es producción. La app todavía conserva persistencia local y no tiene Auth cloud ni Edge Functions conectadas. CI ya reconstruye el esquema desde cero; faltan AAL2 real, endpoints desplegados de compra/activación/admin, Storage privado, backup/restore, staging y pruebas E2E. El proyecto oficial EYESITE `xhvpvpvtkdgnnxdwdrkn` no se ha tocado.
 
 ## Principios técnicos
 
@@ -60,12 +60,12 @@ Requisitos: Node.js 24 y pnpm 9.15.9. Ejecutar `pnpm install`, `pnpm dev`, `pnpm
 - Proyecto de pruebas: `eyesite-security-test`, ref `dclaebknyalimmtgppeg`, PostgreSQL 17.11.
 - Proyecto oficial EYESITE `xhvpvpvtkdgnnxdwdrkn`: no modificado.
 - 9 tablas públicas Fixora y 14 privadas; RLS en todas, FORCE RLS en privadas.
-- Security Advisor: 0 hallazgos; Performance Advisor: 0 claves foráneas sin índice.
+- Security Advisor: 0 hallazgos; Performance Advisor: 0 claves foráneas sin índice. Quedan avisos informativos por índices no usados en una base sin tráfico y asignación fija de conexiones Auth.
 - Los datos de prueba se revirtieron: 0 usuarios Auth y 0 filas de negocio/licencias/soporte; solo quedan el SKU anual y 18 permisos de rol.
-- El bucket heredado vacío `eyesite-media` sigue pendiente de borrar mediante Storage API.
+- El bucket heredado `eyesite-media` sigue público y vacío; falta borrarlo mediante Storage API/Dashboard. `fixora_private` requiere confirmar en Dashboard que no está expuesto por PostgREST.
 - El estado detallado y las pruebas pendientes están en `docs/DATA-MODEL.md`, `docs/SECURITY-VERIFICATION-MATRIX.md` y `docs/EXECUTION-AUDIT-AND-PLAN-20261031.md`.
 
 
 ## Validación de base de datos
 
-El commit `35cae3b36721a3c18f214bb51dd83c345bf4d5ff` pasó CI #930 y Database tests #464. La base se reconstruyó desde cero con `supabase db reset`, aplicó las 17 migraciones Fixora y ejecutó seis suites pgTAP con 178 aserciones; también pasaron mutation tests RLS y concurrencia del límite de tres dispositivos. Los tipos TypeScript públicos generados pasaron typecheck, Vitest y build.
+El commit `117b62c68adf932448eea52ec811854249b7ce91` pasó CI #970 y Database tests #504. `supabase db reset` aplicó desde cero las 18 migraciones Fixora; siete suites pgTAP pasaron con 195 aserciones. Cuatro mutation tests independientes detectaron políticas SELECT permisivas en negocios, catálogo, tickets y mensajes. La prueba concurrente rechazó la cuarta activación y mantuvo el máximo de tres dispositivos. TypeScript, Vitest, build, `deno check` y utilidades Deno pasaron.
