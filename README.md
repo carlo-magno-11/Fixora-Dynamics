@@ -64,3 +64,8 @@ Requisitos: Node.js 24 y pnpm 9.15.9. Ejecutar `pnpm install`, `pnpm dev`, `pnpm
 - Los datos de prueba se revirtieron: 0 usuarios Auth y 0 filas de negocio/licencias/soporte; solo quedan el SKU anual y 18 permisos de rol.
 - El bucket heredado vacío `eyesite-media` sigue pendiente de borrar mediante Storage API.
 - El estado detallado y las pruebas pendientes están en `docs/DATA-MODEL.md`, `docs/SECURITY-VERIFICATION-MATRIX.md` y `docs/EXECUTION-AUDIT-AND-PLAN-20261031.md`.
+
+
+## Validación de base de datos
+
+El commit `0feefd620b345e2f3a2593b4b7e1c5cd936d65b4` pasó CI #900 y Database tests #434. La validación DB reconstruyó desde cero con `supabase db reset`, ejecutó 166 aserciones pgTAP, mutation tests RLS y concurrencia del límite de tres dispositivos. Posteriormente se añadió `src/shared/infrastructure/supabase/database.types.ts`, generado desde el esquema público del proyecto de pruebas; ese commit posterior aún requiere su propia corrida CI.
