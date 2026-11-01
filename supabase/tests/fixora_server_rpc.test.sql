@@ -181,7 +181,7 @@ BEGIN
     PERFORM public.fixora_server_accept_admin_invite(v_invite_hash, v_customer, 'aal2');
     RAISE EXCEPTION 'A redeemed invite was accepted twice' USING ERRCODE = 'P0002';
   EXCEPTION WHEN OTHERS THEN
-    IF SQLSTATE = 'P0002' THEN
+    IF SQLSTATE = 'P0001' THEN
       NULL;
     ELSE
       RAISE;
