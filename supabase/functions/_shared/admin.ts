@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "npm:@supabase/supabase-js@2.118.0";
-import { bytea, hmacSha256Hex, isUuid } from "./crypto.ts";
+import { toBytea, hmacSha256Hex, isUuid } from "./crypto.ts";
 
 export function getAuthenticatedUserId(
   claims: { sub?: unknown } | null | undefined,
@@ -34,7 +34,7 @@ export async function requestAuditHashes(
   const ip = request.headers.get("cf-connecting-ip") ?? request.headers.get("x-real-ip") ?? "";
   const userAgent = request.headers.get("user-agent") ?? "";
   return {
-    p_ip_hash: ip ? bytea(await hmacSha256Hex(secret, `ip:${ip}`)) : null,
+    p_ip_hash: ip ? toBytea(await hmacSha256Hex(secret, `ip:${ip}`)) : null,
     p_user_agent_hash: userAgent ? bytea(await hmacSha256Hex(secret, `ua:${userAgent}`)) : null,
   };
 }
