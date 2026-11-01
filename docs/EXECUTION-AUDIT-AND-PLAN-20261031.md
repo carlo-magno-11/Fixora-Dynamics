@@ -448,3 +448,22 @@ La base de pruebas ya contiene el esquema Fixora de identidad, operación, licen
 ## 19. Revalidación de reintentos de activación — 31 de octubre de 2026
 
 Se corrigió una rama idempotente: un código redimido previamente ya no devuelve una respuesta de activación si, entre el primer uso y el reintento, la compra fue reembolsada, la licencia quedó suspendida/revocada/expirada o el dispositivo fue revocado. Se comprueban de nuevo compra, licencia y dispositivo activo. La prueba de licencias incluye ahora el reintento posterior a reembolso y terminó en `ok 27`.
+
+
+## 20. Resultado de reconstrucción CI — 31 de octubre de 2026
+
+En commit `0feefd620b345e2f3a2593b4b7e1c5cd936d65b4`:
+- GitHub Actions CI #900: SUCCESS. Instalación frozen, TypeScript, pruebas de aplicación y build.
+- GitHub Actions Database tests #434: SUCCESS. Supabase CLI 2.122.0, PostgreSQL 17, stack aislado, `supabase db reset`, pgTAP, mutation tests RLS y prueba concurrente de dispositivos.
+- El log de DB confirma `All tests successful` en la pasada normal. La pasada de mutation test falló en las comprobaciones esperadas de aislamiento tras añadir policies `USING (true)`, las retiró, y la pasada de recuperación volvió a terminar `All tests successful`.
+- El script de concurrencia aceptó exactamente un alta y rechazó la otra con `Active device limit reached`; quedaron tres dispositivos activos.
+- La migración `20261031234007_fixora_redeemed_code_rechecks_license_state` quedó incluida en el reset.
+
+Después de esos runs se añadió el archivo de tipos `src/shared/infrastructure/supabase/database.types.ts` generado desde el proyecto remoto de pruebas. Ese commit posterior aún necesita sus propios runs; no atribuirle los resultados #900/#434.
+
+## 21. Límites restantes de la base de pruebas
+
+- No se pudo verificar desde la conexión disponible la configuración efectiva de esquemas expuestos de PostgREST. La configuración `pgrst.db_schemas` no aparece como parámetro SQL ni como ajuste de rol. Antes de habilitar Data API, confirmar en Dashboard que `fixora_private` no está en Exposed schemas; mantener `public,graphql_public` solamente.
+- `fixora_private` tiene USAGE para `authenticated` porque la RPC pública de acceso a licencia es SECURITY INVOKER; sus tablas sensibles no conceden SELECT al cliente. Solo licencias, entitlements y dispositivos tienen SELECT con RLS por propietario. Confirmar que el esquema no esté expuesto y revisar si conviene sustituir esa RPC por wrapper cuidadosamente autorizado.
+- La conexión Supabase disponible no tiene una operación Storage para borrar buckets. `eyesite-media` sigue vacío y público. No borrar registros internos de Storage por SQL.
+- El proyecto remoto de pruebas no tiene Edge Functions desplegadas; la app tampoco usa Supabase Auth ni repositorios cloud.
