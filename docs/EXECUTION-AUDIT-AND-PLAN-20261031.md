@@ -467,3 +467,16 @@ Después de esos runs se añadió el archivo de tipos `src/shared/infrastructure
 - `fixora_private` tiene USAGE para `authenticated` porque la RPC pública de acceso a licencia es SECURITY INVOKER; sus tablas sensibles no conceden SELECT al cliente. Solo licencias, entitlements y dispositivos tienen SELECT con RLS por propietario. Confirmar que el esquema no esté expuesto y revisar si conviene sustituir esa RPC por wrapper cuidadosamente autorizado.
 - La conexión Supabase disponible no tiene una operación Storage para borrar buckets. `eyesite-media` sigue vacío y público. No borrar registros internos de Storage por SQL.
 - El proyecto remoto de pruebas no tiene Edge Functions desplegadas; la app tampoco usa Supabase Auth ni repositorios cloud.
+
+
+## 22. Barrido de objetos heredados y suite de límites
+
+El inventario SQL del proyecto de pruebas devolvió:
+- Cero relaciones, funciones, triggers y policies con nombre/referencia EYESITE en los esquemas públicos y Storage.
+- Cero policies activas en el esquema Storage.
+- Las siete funciones públicas restantes pertenecen a Fixora; todas son SECURITY INVOKER y tienen `search_path = ''`.
+- Nueve tablas públicas Fixora con RLS; catorce privadas con RLS + FORCE.
+- Cero usuarios, negocios, catálogos, gastos, snapshots, compras, licencias, dispositivos, membresías administrativas, tickets o mensajes.
+- El único objeto heredado restante es el bucket `eyesite-media`, público y vacío.
+
+Se añadió `fixora_security_boundaries.test.sql` (12 aserciones) y se ejecutó contra el proyecto de pruebas: terminó en `ok 12`. La suite se incorpora a la siguiente reconstrucción CI. El total previsto pasa de 166 a 178 aserciones.
