@@ -557,3 +557,15 @@ Proyecto de destino verificado antes de las operaciones: `eyesite-security-test`
 ## 2026-10-31 — Corrección adicional: reintento de código tras reembolso
 
 Durante la revisión final detecté que el camino idempotente de un código ya redimido podía devolver metadatos de licencia aunque después hubiera ocurrido un reembolso. Se corrigió para revalidar estado de licencia, compra y dispositivo antes de devolver el resultado. Se añadió prueba funcional: repetir el código después de reembolso debe ser rechazado. La suite de licencias volvió a ejecutarse y terminó en `ok 27`.
+
+
+## 2026-10-31 — Entrega 15: reconstrucción completa y tipos Supabase
+
+- Se verificó el último commit previo a los tipos, `0feefd620b345e2f3a2593b4b7e1c5cd936d65b4`, en GitHub Actions: CI #900 SUCCESS y Database tests #434 SUCCESS.
+- DB #434 ejecutó todos los pasos: Supabase CLI, stack local aislado, `supabase db reset` desde los archivos versionados, cinco suites pgTAP, mutation testing RLS para negocio/catálogo/soporte y carrera concurrente del límite de dispositivos.
+- El log confirma `All tests successful` en la ejecución normal; el mutation test hizo fallar las comprobaciones de aislamiento como estaba previsto, retiró las cuatro policies temporales y la segunda pasada terminó `All tests successful`.
+- La prueba concurrente terminó: una alta aceptada, una rechazada por `Active device limit reached`, tres dispositivos activos.
+- CI #900: `pnpm install --frozen-lockfile`, `pnpm typecheck`, `pnpm test` y `pnpm build`, todos SUCCESS.
+- Se generó `src/shared/infrastructure/supabase/database.types.ts` desde el esquema real del proyecto de pruebas. Solo contiene tipos del esquema público; el esquema privado no se expone en los tipos frontend.
+- La migración final `20261031234007_fixora_redeemed_code_rechecks_license_state` ya está incluida en la reconstrucción CI.
+- Límite: el commit de tipos es posterior a los runs #900/#434; se debe esperar una nueva ejecución sobre ese HEAD antes de declarar validado ese archivo.
