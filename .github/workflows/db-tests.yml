@@ -50,29 +50,39 @@ jobs:
         working-directory: /tmp/fixora-db-ci
         run: supabase test db
 
-      - name: Prove tenant tests detect a permissive RLS policy
+      - name: Prove each tenant test detects a permissive RLS policy
         working-directory: /tmp/fixora-db-ci
         shell: bash
         run: |
           set -euo pipefail
           database_url="postgresql://postgres:postgres@127.0.0.1:54322/postgres"
-          psql "$database_url" -v ON_ERROR_STOP=1 -c 'CREATE POLICY "fixora_ci_mutation_allow_all" ON public.fixora_businesses FOR SELECT TO authenticated USING (true)'
-          psql "$database_url" -v ON_ERROR_STOP=1 -c 'CREATE POLICY "fixora_ci_mutation_catalog_allow_all" ON public.fixora_catalog_items FOR SELECT TO authenticated USING (true)'
-          psql "$database_url" -v ON_ERROR_STOP=1 -c 'CREATE POLICY "fixora_ci_mutation_support_allow_all" ON public.fixora_support_tickets FOR SELECT TO authenticated USING (true)'
-          psql "$database_url" -v ON_ERROR_STOP=1 -c 'CREATE POLICY "fixora_ci_mutation_support_messages_allow_all" ON public.fixora_support_messages FOR SELECT TO authenticated USING (true)'
-          set +e
-          supabase test db
-          test_status=$?
-          set -e
-          psql "$database_url" -v ON_ERROR_STOP=1 -c 'DROP POLICY IF EXISTS "fixora_ci_mutation_allow_all" ON public.fixora_businesses'
-          psql "$database_url" -v ON_ERROR_STOP=1 -c 'DROP POLICY IF EXISTS "fixora_ci_mutation_catalog_allow_all" ON public.fixora_catalog_items'
-          psql "$database_url" -v ON_ERROR_STOP=1 -c 'DROP POLICY IF EXISTS "fixora_ci_mutation_support_allow_all" ON public.fixora_support_tickets'
-          psql "$database_url" -v ON_ERROR_STOP=1 -c 'DROP POLICY IF EXISTS "fixora_ci_mutation_support_messages_allow_all" ON public.fixora_support_messages'
-          if [ "$test_status" -eq 0 ]; then
-            echo "RLS tests did not detect the intentionally permissive policy."
-            exit 1
-          fi
-          echo "RLS mutation detected: tenant isolation tests failed as expected."
+          run_mutation() {
+            policy_name="$1"
+            table_name="$2"
+            expected_failure="$3"
+            log_file="/tmp/${policy_name}.log"
+            psql "$database_url" -v ON_ERROR_STOP=1 -c "CREATE POLICY \"${policy_name}\" ON public.${table_name} FOR SELECT TO authenticated USING (true)"
+            set +e
+            supabase test db > "$log_file" 2>&1
+            test_status=$?
+            set -e
+            psql "$database_url" -v ON_ERROR_STOP=1 -c "DROP POLICY IF EXISTS \"${policy_name}\" ON public.${table_name}"
+            if [ "$test_status" -eq 0 ]; then
+              cat "$log_file"
+              echo "Mutation was not detected for public.${table_name}."
+              exit 1
+            fi
+            if ! grep -Fq "$expected_failure" "$log_file"; then
+              cat "$log_file"
+              echo "The expected isolation assertion did not fail for public.${table_name}."
+              exit 1
+            fi
+            echo "RLS mutation detected for public.${table_name}: $expected_failure"
+          }
+          run_mutation fixora_ci_mutation_business_allow_all fixora_businesses "User B cannot see User A business"
+          run_mutation fixora_ci_mutation_catalog_allow_all fixora_catalog_items "User B sees only their catalog row"
+          run_mutation fixora_ci_mutation_support_ticket_allow_all fixora_support_tickets "Customer B can see Customer A ticket"
+          run_mutation fixora_ci_mutation_support_message_allow_all fixora_support_messages "Customer B can see Customer A messages"
           supabase test db
 
       - name: Test concurrent license device activation limit
