@@ -169,8 +169,8 @@ No considerar el producto comercial terminado hasta cerrar CI desde cero, Edge F
 - [x] Prueba concurrente: exactamente un registro gana el último cupo de dispositivo; quedan 3 activos.
 - [x] Typecheck, pruebas de aplicación y build en CI.
 - [x] Generar tipos TypeScript del esquema público desde la base de pruebas.
-- [ ] Repetir CI después del commit de tipos generado.
-- [ ] Confirmar en Dashboard que `fixora_private` no aparece entre esquemas expuestos por PostgREST.
+- [x] Repetir CI después del commit de tipos generado.
+- [ ] Confirmar en Dashboard que `fixora_private` no aparece entre esquemas expuestos por PostgREST; `authenticated` conserva USAGE para helpers RLS/RPC.
 - [ ] Eliminar bucket vacío heredado `eyesite-media` por Storage API.
 - [ ] Crear Edge Functions y validar JWT/AAL2 en servidor.
 - [ ] Integrar Auth y adaptadores cloud en la app.
@@ -181,5 +181,18 @@ No considerar el producto comercial terminado hasta cerrar CI desde cero, Edge F
 - [x] Barrer funciones, triggers, policies y relaciones EYESITE residuales en public/Storage.
 - [x] Verificar cero policies activas en Storage.
 - [x] Añadir suite pgTAP de 12 límites de seguridad y ejecutarla en el proyecto de pruebas.
-- [ ] Repetir DB CI con la suite de límites incluida (178 aserciones).
+- [x] Repetir DB CI con la suite de límites incluida y pruebas SQL estrictas (195 aserciones, 18 migraciones).
 - [ ] Borrar el bucket heredado vacío por Storage API y verificar su ausencia.
+
+
+### Revalidación estricta — 1 de noviembre de 2026
+
+- [x] CI #970: typecheck, Vitest, build, Deno check y pruebas Deno.
+- [x] Database tests #504: 18 migraciones desde cero, 7 archivos pgTAP / 195 aserciones.
+- [x] Mutation tests independientes para negocios, catálogo, tickets y mensajes.
+- [x] Errores SQL no capturados hacen fallar pgTAP mediante `ON_ERROR_STOP`.
+- [x] Concurrencia del límite de dispositivos: tres activos, cuarta alta rechazada.
+- [ ] Confirmar en Dashboard la no exposición de `fixora_private` por PostgREST.
+- [ ] Borrar el bucket vacío heredado `eyesite-media` por Storage API.
+- [ ] Desplegar y probar Edge Functions; actualmente no hay funciones desplegadas.
+- [ ] Conectar Auth y adaptadores cloud en la app; realizar backup/restore, staging y E2E.
