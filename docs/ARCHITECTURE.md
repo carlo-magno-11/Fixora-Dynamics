@@ -118,3 +118,8 @@ El composition root se está separando de la vista principal: `src/app/create-ap
 El puerto de catálogo opera por entidad (create/update). El puerto de gastos conserva por ahora un agregado completo local; su futuro adaptador cloud no podrá hacer last-write-wins: deberá aplicar versión optimista o una operación transaccional que evite perder cambios de otro miembro. Historial tiene recuperación explícita para no sobrescribir JSON dañado.
 
 `src/architecture/architecture-boundaries.test.ts` hace cumplir las primeras reglas de dependencias en Vitest. Se amplía conforme se extraigan los módulos restantes; no sustituye un lint completo.
+
+
+## Tipos de base de datos
+
+El esquema público de Supabase genera sus tipos en `src/shared/infrastructure/supabase/database.types.ts`. Se generan desde el proyecto de pruebas, no se escriben a mano. El archivo no contiene `fixora_private`; los tipos internos de licencia, compra y administración nunca deben importarse desde el frontend. Regenerar después de cada migración pública. La app aún no tiene `@supabase/supabase-js` ni un adaptador cloud conectado.
