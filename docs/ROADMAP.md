@@ -174,3 +174,12 @@ No considerar el producto comercial terminado hasta cerrar CI desde cero, Edge F
 - [ ] Eliminar bucket vacío heredado `eyesite-media` por Storage API.
 - [ ] Crear Edge Functions y validar JWT/AAL2 en servidor.
 - [ ] Integrar Auth y adaptadores cloud en la app.
+
+
+### Seguridad residual y limpieza
+
+- [x] Barrer funciones, triggers, policies y relaciones EYESITE residuales en public/Storage.
+- [x] Verificar cero policies activas en Storage.
+- [x] Añadir suite pgTAP de 12 límites de seguridad y ejecutarla en el proyecto de pruebas.
+- [ ] Repetir DB CI con la suite de límites incluida (178 aserciones).
+- [ ] Borrar el bucket heredado vacío por Storage API y verificar su ausencia.
