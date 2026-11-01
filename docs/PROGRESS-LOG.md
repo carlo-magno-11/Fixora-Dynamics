@@ -589,3 +589,20 @@ Durante la revisión final detecté que el camino idempotente de un código ya r
 - Prueba concurrente: una de dos altas ganó el último cupo, la otra fue rechazada por límite de dispositivos y el total quedó en tres.
 - CI #930 SUCCESS con los tipos generados: instalación frozen, TypeScript, Vitest y build.
 - Esto valida el esquema y las pruebas en CI; no despliega Edge Functions ni conecta Auth a la aplicación.
+
+
+## 2026-11-01 — Entrega 18: pruebas SQL estrictas y mutation tests independientes
+
+- Se detectó una debilidad en el workflow previo: los bloques `DO` que lanzaban una excepción no siempre hacían fallar pg_prove porque psql no tenía `ON_ERROR_STOP` activado.
+- Se añadió `\set ON_ERROR_STOP on` a los siete archivos pgTAP.
+- El workflow de CI ahora añade una policy SELECT permisiva y ejecuta la suite por separado cuatro veces: negocios, catálogo, tickets y mensajes. Cada mutación debe producir el fallo de aislamiento esperado; no basta con que falle cualquier test.
+- Database tests #504 SUCCESS: 18 migraciones Fixora reconstruidas desde cero, siete archivos y 195 aserciones pgTAP.
+- Se detectaron las cuatro mutaciones: negocios, catálogo, tickets y mensajes. Se eliminaron las policies temporales y el pase final volvió a terminar con `All tests successful`.
+- Concurrencia #504: una activación aceptada, otra rechazada y tres dispositivos activos.
+- CI #970 SUCCESS: typecheck, Vitest, build, Deno check y pruebas Deno.
+- Se ejecutaron las siete suites secuencialmente contra `eyesite-security-test`; todas terminaron en sus últimas aserciones esperadas y revirtieron los fixtures.
+- Inventario final: 9 tablas públicas Fixora, 14 privadas; RLS en todas, FORCE RLS en privadas; cero usuarios y datos operativos persistidos; solo el SKU anual y 18 permisos administrativos.
+- Security Advisor: cero hallazgos. Performance Advisor: cero FKs sin índice; 14 avisos informativos de índices no usados y una recomendación de conexiones Auth.
+- Se confirmó que `authenticated` tiene USAGE sobre `fixora_private`; revocarlo rompe el RPC público de creación de negocio. No se cambió ese grant. Antes de producción hay que confirmar que el esquema no esté expuesto por PostgREST.
+- El bucket heredado `eyesite-media` sigue público y vacío; no se borró porque no hay acción Storage API en el conector actual.
+- El proyecto oficial EYESITE `xhvpvpvtkdgnnxdwdrkn` permanece intacto.
