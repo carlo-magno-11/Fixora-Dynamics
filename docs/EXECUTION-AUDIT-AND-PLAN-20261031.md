@@ -489,3 +489,23 @@ Se añadió `fixora_security_boundaries.test.sql` (12 aserciones) y se ejecutó 
 - CI #930: SUCCESS. TypeScript, Vitest y build pasaron con el archivo de tipos generado.
 - El proyecto remoto `eyesite-security-test` mantiene el inventario limpio: no hay objetos EYESITE activos en public/Storage; el bucket `eyesite-media` sigue siendo el único recurso heredado y está vacío.
 - La base de pruebas está validada; la aplicación comercial no está lista para producción porque faltan integración Supabase Auth, Edge Functions, esquema expuesto confirmado, Storage privado, backup/restore y staging.
+
+
+## 24. Revalidación estricta de base de datos — 1 de noviembre de 2026
+
+- Commit validado: `117b62c68adf932448eea52ec811854249b7ce91`.
+- Database tests #504 SUCCESS: reconstrucción aislada con `supabase db reset`, 18 migraciones Fixora, 7 archivos pgTAP y 195 aserciones.
+- CI #970 SUCCESS: TypeScript, Vitest, build, Deno check y pruebas Deno.
+- Los siete archivos pgTAP incluyen `\set ON_ERROR_STOP on`, de modo que los errores SQL no capturados no queden ocultos por una salida TAP posterior.
+- Se probaron cuatro mutaciones separadas: SELECT permisivo en negocios, catálogo, tickets y mensajes. Cada mutación produjo el fallo de aislamiento esperado; después se retiró y la suite completa volvió a pasar.
+- Concurrencia: el script registró una activación aceptada, una rechazada y tres dispositivos activos.
+- El proyecto remoto `eyesite-security-test` sigue sin usuarios ni datos operativos de prueba; las suites remotas se ejecutaron con rollback.
+- El proyecto oficial EYESITE `xhvpvpvtkdgnnxdwdrkn` no se modificó.
+
+### Riesgos abiertos que no se deben ocultar
+
+- `fixora_private` tiene USAGE para `authenticated`, necesario para helpers invocados desde RPCs/policies. Revocarlo sin refactor rompe `fixora_create_business`. Confirmar en Dashboard que el esquema no esté expuesto por PostgREST; no se pudo comprobar ese ajuste desde la conexión actual.
+- El bucket heredado `eyesite-media` permanece público y vacío; el conector disponible no ofrece operación de borrado Storage.
+- No hay Edge Functions desplegadas en el proyecto; CI solo valida las fuentes Deno del repositorio.
+- Los avisos Performance restantes son 14 índices no usados en un entorno sin tráfico y la configuración fija de conexiones Auth; no hay FKs sin índice.
+- No aplicar a producción ni al proyecto oficial EYESITE.
