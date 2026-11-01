@@ -145,3 +145,8 @@ La migración `20261031234007_fixora_redeemed_code_rechecks_license_state` refue
 ## 7. Tipos generados
 
 El archivo `src/shared/infrastructure/supabase/database.types.ts` se generó directamente desde el proyecto de pruebas después de aplicar todas las migraciones. Solo contiene el esquema `public`; no exporta los tipos internos de `fixora_private`. Debe regenerarse después de cualquier migración que cambie tablas o RPC públicos. La aplicación todavía no importa el SDK de Supabase; el archivo es la fuente de tipos para el adaptador cloud futuro.
+
+
+### Suite adicional de límites de seguridad
+
+`supabase/tests/fixora_security_boundaries.test.sql` añade 12 comprobaciones: ausencia de objetos EYESITE activos, RPCs públicos SECURITY INVOKER con search_path vacío, RLS en todas las tablas Fixora, FORCE RLS en privadas, denegación de USAGE a anon, ausencia de SELECT autenticado en datos sensibles, historiales append-only, bucket EYESITE sin objetos y ausencia de administrador inicial. La suite se ejecutó en el proyecto de pruebas y terminó en `ok 12`; queda incluida en la siguiente reconstrucción CI.
