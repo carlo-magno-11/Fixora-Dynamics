@@ -419,3 +419,12 @@ La base de pruebas Fixora está construida en `eyesite-security-test` (`dclaebkn
 El proyecto oficial EYESITE `xhvpvpvtkdgnnxdwdrkn` no fue modificado. No hay datos de prueba persistidos. El único recurso EYESITE que queda es el bucket vacío `eyesite-media`, pendiente de eliminar con Storage API.
 
 Las suites nuevas se ejecutaron contra el proyecto de pruebas; falta una nueva corrida CI que reconstruya todas las migraciones desde cero. La app todavía conserva persistencia local y no usa Supabase Auth/repositorios cloud. No hay Edge Functions ni administrador inicial. Por tanto, el esquema de base de datos de prueba está implementado, pero el producto completo no está listo para producción.
+
+
+## Anexo de verificación de base de datos — 1 de noviembre de 2026
+
+La reconstrucción de la base de datos quedó validada en Database tests #504 sobre el commit `117b62c68adf932448eea52ec811854249b7ce91`: 18 migraciones Fixora, siete suites pgTAP, 195 aserciones, cuatro mutation tests RLS independientes y prueba concurrente del máximo de tres dispositivos. CI #970 pasó typecheck, Vitest, build, Deno check y pruebas Deno.
+
+La base remota de pruebas `eyesite-security-test` mantiene 9 tablas públicas y 14 privadas, RLS en todas y FORCE RLS en privadas. No hay usuarios ni datos operativos persistidos; solo permanecen el SKU anual y la matriz de 18 permisos. El proyecto oficial EYESITE no fue modificado.
+
+No confundir la validación del esquema con la salida a producción. Quedan: verificar en Dashboard que `fixora_private` no esté expuesto por PostgREST (authenticated conserva USAGE porque los helpers se invocan desde RPC/RLS), borrar por Storage API el bucket público vacío `eyesite-media`, desplegar Edge Functions, conectar Auth y repositorios cloud en la app, y ejecutar backup/restore, staging, E2E y DAST/SCA.
