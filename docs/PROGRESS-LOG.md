@@ -569,3 +569,12 @@ Durante la revisión final detecté que el camino idempotente de un código ya r
 - Se generó `src/shared/infrastructure/supabase/database.types.ts` desde el esquema real del proyecto de pruebas. Solo contiene tipos del esquema público; el esquema privado no se expone en los tipos frontend.
 - La migración final `20261031234007_fixora_redeemed_code_rechecks_license_state` ya está incluida en la reconstrucción CI.
 - Límite: el commit de tipos es posterior a los runs #900/#434; se debe esperar una nueva ejecución sobre ese HEAD antes de declarar validado ese archivo.
+
+
+## 2026-10-31 — Entrega 16: suite de límites de seguridad y limpieza EYESITE
+
+- Se añadió `supabase/tests/fixora_security_boundaries.test.sql` con 12 aserciones para detectar objetos EYESITE residuales, RPCs públicos con privilegios elevados, tablas sin RLS, tablas privadas sin FORCE RLS, permisos anon indebidos, exposición directa de datos sensibles, mutación de historiales append-only, objetos en el bucket heredado y provisionamiento accidental de administradores.
+- La suite se ejecutó contra `eyesite-security-test` y la última aserción devolvió `ok 12`, sin error SQL; el bloque terminó con ROLLBACK.
+- El inventario remoto confirmó: cero relaciones públicas EYESITE, cero funciones EYESITE, cero triggers EYESITE, cero políticas EYESITE en public/Storage y cero políticas Storage activas. Las únicas funciones públicas son siete RPCs Fixora SECURITY INVOKER con search_path vacío.
+- El bucket `eyesite-media` sigue existiendo, pero está público y sin objetos. Su eliminación requiere Storage API; no se borró por SQL.
+- La suite añade 12 a las 166 aserciones anteriores (178 en total); la corrida CI completa con esta nueva suite queda pendiente.
