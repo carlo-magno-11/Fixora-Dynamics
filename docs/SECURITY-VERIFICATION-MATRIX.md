@@ -76,7 +76,7 @@ Proyecto verificado: `eyesite-security-test` (`dclaebknyalimmtgppeg`), PostgreSQ
 | Claves foráneas | Configurado | Performance Advisor sin FKs sin índice. |
 | Auth/AAL2 real | Pendiente | No se ha conectado Auth en la app ni implementado Edge Function para validar claims. |
 | Storage privado | Pendiente | Bucket de soporte/adjuntos y políticas no implementados. El bucket heredado vacío `eyesite-media` sigue presente. |
-| CI reconstrucción completa | Pendiente | Workflow actualizado para mutation tests de negocio, catálogo y soporte; falta corrida DB en HEAD actual. |
+| CI reconstrucción completa | Validada en commit previo | DB #434 SUCCESS y CI #900 SUCCESS; la suite nueva de límites de seguridad (12 assertions) requiere la siguiente corrida.
 | Backup/restore y staging | Pendiente | No se ha realizado un ciclo de restauración ni despliegue staging. |
 
 ### Invariantes obligatorias antes de producción
@@ -108,3 +108,8 @@ Proyecto verificado: `eyesite-security-test` (`dclaebknyalimmtgppeg`), PostgreSQ
 - El commit #434/#900 incluye las 17 migraciones Fixora actuales y la corrección de reintento de código después de reembolso.
 - El archivo de tipos públicos generado se añadió después de esos runs y aún necesita validación CI propia.
 - Configuración de esquemas expuestos PostgREST: pendiente de confirmación en Dashboard; no habilitar producción hasta verificar que `fixora_private` no está expuesto.
+
+
+### Limpieza de objetos heredados
+
+Barrido del proyecto de pruebas: cero objetos, funciones, triggers o policies con nombre/referencia EYESITE en public/Storage; cero policies Storage activas; siete RPCs públicos Fixora SECURITY INVOKER; bucket `eyesite-media` público y vacío, pendiente de borrar por Storage API. La suite `fixora_security_boundaries.test.sql` terminó en `ok 12` en la base de pruebas.
