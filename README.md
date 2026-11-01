@@ -69,3 +69,5 @@ Requisitos: Node.js 24 y pnpm 9.15.9. Ejecutar `pnpm install`, `pnpm dev`, `pnpm
 ## Validación de base de datos
 
 El commit `0feefd620b345e2f3a2593b4b7e1c5cd936d65b4` pasó CI #900 y Database tests #434. La validación DB reconstruyó desde cero con `supabase db reset`, ejecutó 166 aserciones pgTAP, mutation tests RLS y concurrencia del límite de tres dispositivos. Posteriormente se añadió `src/shared/infrastructure/supabase/database.types.ts`, generado desde el esquema público del proyecto de pruebas; ese commit posterior aún requiere su propia corrida CI.
+
+La suite `supabase/tests/fixora_security_boundaries.test.sql` agrega 12 pruebas de ausencia de objetos EYESITE residuales, RLS, grants, RPCs y almacenamiento heredado; se ejecutó en el proyecto de pruebas y requiere aún su confirmación en CI.
