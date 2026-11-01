@@ -35,6 +35,6 @@ export async function requestAuditHashes(
   const userAgent = request.headers.get("user-agent") ?? "";
   return {
     p_ip_hash: ip ? toBytea(await hmacSha256Hex(secret, `ip:${ip}`)) : null,
-    p_user_agent_hash: userAgent ? bytea(await hmacSha256Hex(secret, `ua:${userAgent}`)) : null,
+    p_user_agent_hash: userAgent ? toBytea(await hmacSha256Hex(secret, `ua:${userAgent}`)) : null,
   };
 }
