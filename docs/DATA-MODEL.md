@@ -113,6 +113,7 @@ Las migraciones de Fixora registradas en el proyecto de pruebas y versionadas en
 14. `20261031232256_fixora_invoker_rpcs_and_customer_rls`
 15. `20261031232319_fixora_support_business_binding_and_admin_invite_email`
 16. `20261031232423_fixora_support_event_definer_triggers`
+17. `20261031234007_fixora_redeemed_code_rechecks_license_state`
 
 El historial remoto también conserva las tres migraciones históricas EYESITE que precedían a la limpieza. No forman parte del esquema nuevo y no deben copiarse a una instalación Fixora nueva.
 
@@ -123,19 +124,24 @@ El historial remoto también conserva las tres migraciones históricas EYESITE q
 - Licencias: 27 aserciones estructurales y bloque funcional ejecutados; se verificaron emisión idempotente, activación, expiración anual, hashes, límite de 3 dispositivos, revocación, reintentos y rechazo de compras no elegibles.
 - Administración/soporte: 23 aserciones estructurales y bloque funcional ejecutados; se verificaron AAL2, invitación por correo coincidente, permisos, auditoría, creación/respuesta/cierre de tickets y aislamiento entre clientes.
 - Security Advisor: 0 hallazgos. Performance Advisor: 0 FKs sin índice.
-- El workflow CI fue actualizado para reconstruir el esquema y ejecutar pruebas de mutación en aislamiento de negocio, catálogo y soporte. Falta una nueva corrida CI sobre el HEAD que contiene todas las migraciones.
+- GitHub Actions Database tests #434: SUCCESS en commit `0feefd620b345e2f3a2593b4b7e1c5cd936d65b4`. El workflow ejecutó `supabase start`, `supabase db reset`, `supabase test db`, mutation testing RLS y la prueba de concurrencia. CI #900 también terminó SUCCESS con typecheck, Vitest y build. La migración final de reintento de código está incluida en ese HEAD.
 - La app todavía conserva persistencia local y no usa Supabase Auth/repositorios cloud; no se debe declarar el producto listo para producción.
 - No se ha aplicado ninguna migración al proyecto oficial EYESITE ni a una base de producción.
 
 
 ### Evidencia de concurrencia y mutation testing
 
-- Carrera concurrente ejecutada en el proyecto de pruebas: con dos dispositivos activos, dos altas simultáneas compitieron por el tercero; una fue aceptada y la otra rechazada con `Active device limit reached`. Recuento final: 3.
+- Carrera concurrente ejecutada en proyecto de pruebas y repetida en GitHub Actions DB #434: con dos dispositivos activos, dos altas simultáneas compitieron por el tercero; una fue aceptada y la otra rechazada con `Active device limit reached`. Recuento final: 3.
 - El fixture fue eliminado después de la prueba; usuario, compra, licencia y dispositivos quedaron en cero.
 - Mutation test de soporte con policy SELECT permisiva detectó el acceso cruzado entre dos clientes y revirtió la policy temporal.
-- El mismo test de concurrencia está versionado en `scripts/test-license-concurrency.sh` y agregado al workflow DB CI; falta su primera ejecución en GitHub Actions.
+- El test de concurrencia está versionado en `scripts/test-license-concurrency.sh` y su ejecución en GitHub Actions DB #434 terminó SUCCESS.
 
 
 ### Reintento de código después de reembolso
 
-La última migración `20261031234007_fixora_redeemed_code_rechecks_license_state` refuerza la rama idempotente de redención: un código ya redimido no devuelve acceso si la licencia fue suspendida/revocada/expirada, si la compra dejó de ser elegible o si el dispositivo ya no está activo. La suite de licencias prueba este caso tras un reembolso.
+La migración `20261031234007_fixora_redeemed_code_rechecks_license_state` refuerza la rama idempotente de redención: un código ya redimido no devuelve acceso si la licencia fue suspendida/revocada/expirada, si la compra dejó de ser elegible o si el dispositivo ya no está activo. La suite de licencias prueba este caso tras un reembolso. La reconstrucción CI #434 incluyó esta migración.
+
+
+## 7. Tipos generados
+
+El archivo `src/shared/infrastructure/supabase/database.types.ts` se generó directamente desde el proyecto de pruebas después de aplicar todas las migraciones. Solo contiene el esquema `public`; no exporta los tipos internos de `fixora_private`. Debe regenerarse después de cualquier migración que cambie tablas o RPC públicos. La aplicación todavía no importa el SDK de Supabase; el archivo es la fuente de tipos para el adaptador cloud futuro.
