@@ -106,10 +106,17 @@ Proyecto verificado: `eyesite-security-test` (`dclaebknyalimmtgppeg`), PostgreSQ
 - Database tests #434 SUCCESS: reconstrucción desde cero, cinco suites pgTAP, mutation testing RLS y prueba de concurrencia del límite de tres dispositivos.
 - CI #900 SUCCESS: typecheck, Vitest y build.
 - El commit #434/#900 incluye las 17 migraciones Fixora actuales y la corrección de reintento de código después de reembolso.
-- El archivo de tipos públicos generado se añadió después de esos runs y aún necesita validación CI propia.
+- El archivo de tipos públicos generado pasó TypeScript, Vitest y build en CI #930.
 - Configuración de esquemas expuestos PostgREST: pendiente de confirmación en Dashboard; no habilitar producción hasta verificar que `fixora_private` no está expuesto.
 
 
 ### Limpieza de objetos heredados
 
-Barrido del proyecto de pruebas: cero objetos, funciones, triggers o policies con nombre/referencia EYESITE en public/Storage; cero policies Storage activas; siete RPCs públicos Fixora SECURITY INVOKER; bucket `eyesite-media` público y vacío, pendiente de borrar por Storage API. La suite `fixora_security_boundaries.test.sql` terminó en `ok 12` en la base de pruebas.
+Barrido del proyecto de pruebas: cero objetos, funciones, triggers o policies con nombre/referencia EYESITE en public/Storage; cero policies Storage activas; siete RPCs públicos Fixora SECURITY INVOKER; bucket `eyesite-media` público y vacío, pendiente de borrar por Storage API. La suite `fixora_security_boundaries.test.sql` terminó en `ok 12` en el proyecto remoto y quedó validada también en DB CI #464.
+
+
+### Estado final de CI — 1 de noviembre de 2026
+
+- DB #464 SUCCESS: 17 migraciones aplicadas desde cero, 178 aserciones pgTAP, mutation testing y concurrencia.
+- CI #930 SUCCESS: typecheck, Vitest y build.
+- Pendiente fuera de CI: confirmar en Dashboard que `fixora_private` no esté expuesto por PostgREST; eliminar bucket vacío `eyesite-media`; integrar Auth/Edge Functions y probar en staging.

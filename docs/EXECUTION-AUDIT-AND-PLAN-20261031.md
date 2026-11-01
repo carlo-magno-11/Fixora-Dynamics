@@ -479,4 +479,13 @@ El inventario SQL del proyecto de pruebas devolvió:
 - Cero usuarios, negocios, catálogos, gastos, snapshots, compras, licencias, dispositivos, membresías administrativas, tickets o mensajes.
 - El único objeto heredado restante es el bucket `eyesite-media`, público y vacío.
 
-Se añadió `fixora_security_boundaries.test.sql` (12 aserciones) y se ejecutó contra el proyecto de pruebas: terminó en `ok 12`. La suite se incorpora a la siguiente reconstrucción CI. El total previsto pasa de 166 a 178 aserciones.
+Se añadió `fixora_security_boundaries.test.sql` (12 aserciones) y se ejecutó contra el proyecto de pruebas: terminó en `ok 12`. Database tests #464 SUCCESS incluyó la suite en la reconstrucción CI desde cero. Las seis suites suman 178 aserciones.
+
+
+## 23. Validación final de CI para el esquema actual — 1 de noviembre de 2026
+
+- Commit: `35cae3b36721a3c18f214bb51dd83c345bf4d5ff`.
+- Database tests #464: SUCCESS. Las 17 migraciones Fixora se aplicaron desde cero; pgTAP ejecutó seis suites con 178 aserciones; mutation tests RLS y prueba concurrente terminaron correctamente.
+- CI #930: SUCCESS. TypeScript, Vitest y build pasaron con el archivo de tipos generado.
+- El proyecto remoto `eyesite-security-test` mantiene el inventario limpio: no hay objetos EYESITE activos en public/Storage; el bucket `eyesite-media` sigue siendo el único recurso heredado y está vacío.
+- La base de pruebas está validada; la aplicación comercial no está lista para producción porque faltan integración Supabase Auth, Edge Functions, esquema expuesto confirmado, Storage privado, backup/restore y staging.

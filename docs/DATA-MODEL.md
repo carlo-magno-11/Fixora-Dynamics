@@ -149,4 +149,11 @@ El archivo `src/shared/infrastructure/supabase/database.types.ts` se generó dir
 
 ### Suite adicional de límites de seguridad
 
-`supabase/tests/fixora_security_boundaries.test.sql` añade 12 comprobaciones: ausencia de objetos EYESITE activos, RPCs públicos SECURITY INVOKER con search_path vacío, RLS en todas las tablas Fixora, FORCE RLS en privadas, denegación de USAGE a anon, ausencia de SELECT autenticado en datos sensibles, historiales append-only, bucket EYESITE sin objetos y ausencia de administrador inicial. La suite se ejecutó en el proyecto de pruebas y terminó en `ok 12`; queda incluida en la siguiente reconstrucción CI.
+`supabase/tests/fixora_security_boundaries.test.sql` añade 12 comprobaciones: ausencia de objetos EYESITE activos, RPCs públicos SECURITY INVOKER con search_path vacío, RLS en todas las tablas Fixora, FORCE RLS en privadas, denegación de USAGE a anon, ausencia de SELECT autenticado en datos sensibles, historiales append-only, bucket EYESITE sin objetos y ausencia de administrador inicial. La suite se ejecutó en el proyecto de pruebas y terminó en `ok 12`. Database tests #464 SUCCESS la incluyó en reconstrucción CI desde cero; las seis suites (25 + 20 + 71 + 27 + 23 + 12) suman 178 aserciones pgTAP.
+
+
+### Reconstrucción CI completa — 1 de noviembre de 2026
+
+- Database tests #464: SUCCESS. `supabase db reset` aplicó las 17 migraciones Fixora, las seis suites pgTAP finalizaron sin fallos, mutation testing detectó las policies permisivas como se esperaba y la prueba concurrente mantuvo el límite en tres dispositivos.
+- CI #930: SUCCESS; typecheck, Vitest y build pasaron con los tipos generados incluidos.
+- El commit validado es `35cae3b36721a3c18f214bb51dd83c345bf4d5ff`.

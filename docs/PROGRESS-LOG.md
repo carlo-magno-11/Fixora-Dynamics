@@ -578,3 +578,14 @@ Durante la revisión final detecté que el camino idempotente de un código ya r
 - El inventario remoto confirmó: cero relaciones públicas EYESITE, cero funciones EYESITE, cero triggers EYESITE, cero políticas EYESITE en public/Storage y cero políticas Storage activas. Las únicas funciones públicas son siete RPCs Fixora SECURITY INVOKER con search_path vacío.
 - El bucket `eyesite-media` sigue existiendo, pero está público y sin objetos. Su eliminación requiere Storage API; no se borró por SQL.
 - La suite añade 12 a las 166 aserciones anteriores (178 en total); la corrida CI completa con esta nueva suite queda pendiente.
+
+
+## 2026-11-01 — Entrega 17: reconstrucción completa con 178 aserciones
+
+- Database tests #464 SUCCESS sobre el commit `35cae3b36721a3c18f214bb51dd83c345bf4d5ff`.
+- `supabase start` y `supabase db reset` finalizaron correctamente; se aplicaron desde cero las 17 migraciones Fixora versionadas.
+- Las seis suites pgTAP pasaron: fundación 25, negocio/RLS 20, operación 71, licencias 27, admin/soporte 23 y límites de seguridad 12; total **178 aserciones**.
+- Mutation test: las policies temporales permisivas hicieron fallar las pruebas de aislamiento de negocio, catálogo y soporte; se retiraron y la segunda ejecución terminó `All tests successful`.
+- Prueba concurrente: una de dos altas ganó el último cupo, la otra fue rechazada por límite de dispositivos y el total quedó en tres.
+- CI #930 SUCCESS con los tipos generados: instalación frozen, TypeScript, Vitest y build.
+- Esto valida el esquema y las pruebas en CI; no despliega Edge Functions ni conecta Auth a la aplicación.
