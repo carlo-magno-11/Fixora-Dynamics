@@ -114,6 +114,7 @@ Las migraciones de Fixora registradas en el proyecto de pruebas y versionadas en
 15. `20261031232319_fixora_support_business_binding_and_admin_invite_email`
 16. `20261031232423_fixora_support_event_definer_triggers`
 17. `20261031234007_fixora_redeemed_code_rechecks_license_state`
+18. `20261101002538_fixora_server_rpc_entrypoints`
 
 El historial remoto también conserva las tres migraciones históricas EYESITE que precedían a la limpieza. No forman parte del esquema nuevo y no deben copiarse a una instalación Fixora nueva.
 
@@ -149,11 +150,25 @@ El archivo `src/shared/infrastructure/supabase/database.types.ts` se generó dir
 
 ### Suite adicional de límites de seguridad
 
-`supabase/tests/fixora_security_boundaries.test.sql` añade 12 comprobaciones: ausencia de objetos EYESITE activos, RPCs públicos SECURITY INVOKER con search_path vacío, RLS en todas las tablas Fixora, FORCE RLS en privadas, denegación de USAGE a anon, ausencia de SELECT autenticado en datos sensibles, historiales append-only, bucket EYESITE sin objetos y ausencia de administrador inicial. La suite se ejecutó en el proyecto de pruebas y terminó en `ok 12`. Database tests #464 SUCCESS la incluyó en reconstrucción CI desde cero; las seis suites (25 + 20 + 71 + 27 + 23 + 12) suman 178 aserciones pgTAP.
+`supabase/tests/fixora_security_boundaries.test.sql` añade 12 comprobaciones: ausencia de objetos EYESITE activos, RPCs públicos SECURITY INVOKER con search_path vacío, RLS en todas las tablas Fixora, FORCE RLS en privadas, denegación de USAGE a anon, ausencia de SELECT autenticado en datos sensibles, historiales append-only, bucket EYESITE sin objetos y ausencia de administrador inicial. La suite se ejecutó en el proyecto de pruebas y terminó en `ok 12`. Database tests #504 SUCCESS la incluyó en reconstrucción CI desde cero; las siete suites (25 + 20 + 71 + 27 + 23 + 12 + 17) suman 195 aserciones pgTAP.
 
 
 ### Reconstrucción CI completa — 1 de noviembre de 2026
 
-- Database tests #464: SUCCESS. `supabase db reset` aplicó las 17 migraciones Fixora, las seis suites pgTAP finalizaron sin fallos, mutation testing detectó las policies permisivas como se esperaba y la prueba concurrente mantuvo el límite en tres dispositivos.
-- CI #930: SUCCESS; typecheck, Vitest y build pasaron con los tipos generados incluidos.
-- El commit validado es `35cae3b36721a3c18f214bb51dd83c345bf4d5ff`.
+- Database tests #504: SUCCESS. `supabase db reset` aplicó las 18 migraciones Fixora, las siete suites pgTAP finalizaron sin fallos, cuatro mutation tests independientes detectaron policies permisivas en negocios, catálogo, tickets y mensajes, y la prueba concurrente mantuvo el límite en tres dispositivos.
+- CI #970: SUCCESS; typecheck, Vitest, build, `deno check` y pruebas Deno pasaron con los tipos generados incluidos.
+- El commit validado es `117b62c68adf932448eea52ec811854249b7ce91`.
+
+
+### Revalidación estricta — 1 de noviembre de 2026
+
+- Se agregó `\set ON_ERROR_STOP on` al inicio de las siete suites para que cualquier error SQL no capturado haga fallar el archivo en pg_prove, incluidos errores dentro de bloques `DO`.
+- Database tests #504 SUCCESS reconstruyó desde cero las 18 migraciones Fixora y ejecutó 7 archivos / 195 aserciones pgTAP.
+- Mutation tests independientes: negocios, catálogo, tickets y mensajes fallaron exactamente en sus comprobaciones de aislamiento cuando se añadió una policy permisiva temporal; las policies se eliminaron y la suite completa volvió a pasar.
+- La prueba de concurrencia volvió a confirmar: una activación aceptada, otra rechazada y exactamente tres dispositivos activos.
+- CI #970 SUCCESS: typecheck, Vitest, build, Deno check y pruebas Deno.
+- En el proyecto remoto de pruebas se ejecutaron secuencialmente las siete suites; las siete finalizaron en sus últimas aserciones esperadas y todos los bloques transaccionales hicieron ROLLBACK.
+
+### Frontera de exposición de esquema
+
+`authenticated` tiene actualmente USAGE sobre `fixora_private`, porque el RPC público de creación de negocio y las políticas RLS invocan helpers de ese esquema. Una prueba transaccional confirmó que revocar ese USAGE rompe `fixora_create_business`; por tanto, no se retiró a ciegas. Los grants de tablas y funciones sensibles siguen restringidos. Antes de producción se debe confirmar en Dashboard que `fixora_private` no está en los esquemas expuestos por PostgREST y añadir una prueba de API. La configuración no se pudo leer desde las herramientas disponibles en esta sesión.
