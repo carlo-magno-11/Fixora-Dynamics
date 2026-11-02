@@ -78,3 +78,13 @@ Fixora no se considera lista para vender hasta que Auth, persistencia cloud, lic
 - Supabase — [Environment variables / secrets](https://supabase.com/docs/guides/functions/secrets).
 - Supabase — [Deploy Edge Functions](https://supabase.com/docs/guides/functions/deploy).
 - OWASP — [ASVS 5.0.0](https://asvs.owasp.org/).
+
+
+## Revisión adicional de acceso y Auth — 2 de noviembre de 2026
+
+- Los privilegios de cliente son explícitos y mínimos: `anon` no tiene SELECT en las nueve tablas públicas Fixora; `authenticated` sí tiene SELECT sujeto a RLS. Las escrituras están concedidas por columna donde corresponde (catálogo, gastos, snapshots y soporte); no hay INSERT/UPDATE/DELETE indiscriminado a nivel de tabla.
+- Los RPCs públicos de negocio/soporte requeridos por clientes tienen EXECUTE para `authenticated` y no para `anon`. Los ocho RPCs `fixora_server_*` son ejecutables por `service_role` solamente, no por `anon` ni `authenticated`.
+- `anon` no tiene USAGE en `fixora_private`; `authenticated` sí lo conserva para los helpers usados por políticas/RPC de negocio. Esto refuerza la necesidad de verificar que el esquema no esté en Exposed schemas de PostgREST.
+- Los triggers de Auth ahora son propios de Fixora: `fixora_on_auth_user_created` → `fixora_private.handle_new_auth_user` y `fixora_on_auth_user_email_updated` → `fixora_private.sync_auth_user_email`. La migración fundacional muestra que los handlers son SECURITY DEFINER con search_path vacío y EXECUTE revocado a los roles cliente.
+- Smoke test transaccional remoto (2 de noviembre): inserté una identidad ficticia dentro de una transacción, comprobé la creación automática del perfil por trigger, cambié a rol `authenticated` con su claim JWT y ejecuté `fixora_create_business`; devolvió un negocio y creó la membresía owner. Antes del ROLLBACK se observaron 1 perfil, 1 negocio y 1 membresía. Consulta posterior al ROLLBACK: los cuatro conteos de usuario/perfil/negocio/membresía quedaron en 0. No se dejó ningún dato de prueba.
+- Esta prueba confirma que el trigger y RPC fundacionales responden en la base de pruebas; no significa que el frontend tenga Auth conectado ni que el signup esté listo para clientes reales.
