@@ -75,7 +75,7 @@ export function AccountPage({ locale, onOpenGuide, authMode = "local", userEmail
           : licenseError ? <p role="alert">{licenseError}</p>
           : licenseAccess ? <>
             <p><b>{licenseAccess.product_sku}</b> · Estado: <b>{licenseAccess.status === "active" ? "Activa" : licenseAccess.status === "expired" ? "Vencida" : licenseAccess.status === "pending" ? "Pendiente" : licenseAccess.status}</b></p>
-            <p>Vigencia hasta: <b>{new Date(licenseAccess.expires_at).toLocaleDateString("es-MX", { dateStyle: "long" })}</b></p>
+            <p>Vigencia hasta: <b>{licenseAccess.expires_at ? new Date(licenseAccess.expires_at).toLocaleDateString("es-MX", { dateStyle: "long" }) : "Pendiente de activación"}</b></p>
             <p>Dispositivos activos: <b>{licenseAccess.active_device_count} de {licenseAccess.max_active_devices}</b></p>
             <p>Funciones habilitadas: {licenseAccess.available_entitlements.length ? licenseAccess.available_entitlements.join(", ") : "Ninguna disponible en este momento."}</p>
           </>
