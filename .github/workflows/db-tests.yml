@@ -27,14 +27,7 @@ jobs:
         with:
           version: 2.122.0
 
-      - name: TEMP generate migration filename
-        run: |
-          set -euo pipefail
-          supabase migration new fixora_admin_dashboard_summary
-          find supabase/migrations -maxdepth 1 -type f -name '*_fixora_admin_dashboard_summary.sql' -printf '%f\\n'
-
       - name: Prepare isolated local Supabase project
-        if: false
         shell: bash
         run: |
           set -euo pipefail
@@ -46,22 +39,18 @@ jobs:
           cp -R "$GITHUB_WORKSPACE/supabase/tests" supabase/
 
       - name: Start isolated local Supabase stack
-        if: false
         working-directory: /tmp/fixora-db-ci
         run: supabase start
 
       - name: Rebuild database from committed migrations
-        if: false
         working-directory: /tmp/fixora-db-ci
         run: supabase db reset
 
       - name: Run pgTAP database tests
-        if: false
         working-directory: /tmp/fixora-db-ci
         run: supabase test db
 
       - name: Prove each tenant test detects a permissive RLS policy
-        if: false
         working-directory: /tmp/fixora-db-ci
         shell: bash
         run: |
@@ -97,5 +86,4 @@ jobs:
           supabase test db
 
       - name: Test concurrent license device activation limit
-        if: false
         run: bash scripts/test-license-concurrency.sh "postgresql://postgres:postgres@127.0.0.1:54322/postgres"
