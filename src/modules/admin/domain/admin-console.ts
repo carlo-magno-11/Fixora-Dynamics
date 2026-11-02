@@ -16,7 +16,7 @@ const SECTION_PERMISSIONS: Record<AdminSection, readonly AdminPermission[]> = {
   users: ["users.read", "users.read_limited"],
   purchases: ["purchases.read"],
   licenses: ["licenses.read", "licenses.read_limited"],
-  devices: ["devices.read"],
+  devices: ["devices.read", "devices.revoke"],
   support: ["support.read"],
   audit: ["audit.read"],
   settings: ["settings.read"],
