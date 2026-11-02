@@ -494,3 +494,29 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
 
 .connected-pill { display: inline-flex; align-items: center; max-width: 190px; padding: 5px 9px; border: 1px solid #c9ddcf; border-radius: 999px; background: #eff6f1; color: #356b4f; font-size: 9px; font-weight: 700; letter-spacing: .05em; }
 .account-preferences { flex-wrap: wrap; }
+
+.support-layout { display: grid; grid-template-columns: minmax(230px, .72fr) minmax(0, 1.5fr); gap: 18px; margin: 26px 0; align-items: start; }
+.support-ticket-list, .support-conversation, .support-new-ticket { min-width: 0; padding: 20px; border: 1px solid var(--line); border-radius: 9px; background: var(--paper); }
+.support-section-heading { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 14px; }
+.support-section-heading h2, .support-new-ticket h2 { margin: 0; color: var(--ink); font-size: 16px; }
+.support-ticket-option { display: grid; gap: 5px; width: 100%; margin-top: 8px; padding: 12px; border: 1px solid var(--line); border-radius: 6px; background: #fff; color: var(--ink); text-align: left; }
+.support-ticket-option.selected { border-color: var(--gold); background: #faf7ef; }
+.support-ticket-option strong { font-size: 11px; }
+.support-ticket-option span, .support-ticket-option small { color: var(--muted); font-size: 9px; }
+.support-ticket-option span { text-transform: uppercase; letter-spacing: .07em; }
+.support-message-list { display: grid; gap: 11px; max-height: 420px; overflow-y: auto; padding: 12px 0; }
+.support-message { max-width: 92%; padding: 12px 14px; border: 1px solid var(--line); border-radius: 7px; background: #fff; }
+.support-message.customer { justify-self: end; border-color: #e8ddc6; background: #faf7ef; }
+.support-message > div { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; color: var(--muted); font-size: 9px; }
+.support-message p { margin: 8px 0 0; color: var(--ink); font-size: 11px; line-height: 1.7; white-space: pre-wrap; overflow-wrap: anywhere; }
+.support-message time { color: #929990; }
+.support-reply-form, .support-new-ticket form { display: grid; gap: 10px; margin-top: 16px; }
+.support-reply-form label, .support-new-ticket label { color: var(--ink); font-size: 10px; font-weight: 700; }
+.support-reply-form textarea, .support-new-ticket textarea, .support-new-ticket input, .support-new-ticket select { width: 100%; min-height: 42px; padding: 11px 12px; border: 1px solid var(--line); border-radius: 6px; background: #fff; color: var(--ink); font: inherit; font-size: 11px; }
+.support-reply-form textarea, .support-new-ticket textarea { resize: vertical; }
+.support-reply-form > div { display: flex; flex-wrap: wrap; gap: 9px; }
+.support-new-ticket { margin-top: 18px; }
+.support-empty { display: grid; min-height: 180px; align-content: center; text-align: center; }
+.support-empty h2 { color: var(--ink); font-size: 16px; }
+.support-empty p, .support-ticket-list > p, .support-conversation > p { color: var(--muted); font-size: 11px; line-height: 1.7; }
+@media (max-width: 760px) { .support-layout { grid-template-columns: 1fr; } .support-ticket-list, .support-conversation, .support-new-ticket { padding: 15px; } }
