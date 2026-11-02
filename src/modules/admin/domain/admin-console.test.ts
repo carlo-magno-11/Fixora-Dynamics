@@ -20,10 +20,8 @@ describe("admin console section visibility", () => {
 
   it("shows only sections permitted to support agents", () => {
     expect(getAccessibleAdminSections(resolveAdminAccess(principal))).toEqual([
-      "overview",
       "users",
       "licenses",
-      "devices",
       "support",
     ]);
   });
