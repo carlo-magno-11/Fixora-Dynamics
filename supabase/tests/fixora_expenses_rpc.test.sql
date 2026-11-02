@@ -36,9 +36,11 @@ SET LOCAL request.jwt.claim.sub = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaa31';
 
 SELECT public.fixora_create_business('Expense RPC A', 'general', 'MXN', 'America/Merida');
 
+SELECT set_config('app.fixora_test_business_id', (SELECT id::text FROM public.fixora_businesses WHERE name = 'Expense RPC A'), true);
+
 SELECT results_eq(
   $$SELECT public.fixora_save_expenses(
-    (SELECT id FROM public.fixora_businesses WHERE name = 'Expense RPC A'),
+    current_setting('app.fixora_test_business_id')::uuid,
     250,
     'month',
     1,
