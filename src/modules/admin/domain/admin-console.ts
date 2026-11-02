@@ -1,4 +1,4 @@
-import { hasAdminPermission, type AdminAccessDecision, type AdminPermission } from "./admin-access";
+import { hasAnyAdminPermission, type AdminAccessDecision, type AdminPermission } from "./admin-access";
 
 export type AdminSection =
   | "overview"
@@ -11,16 +11,16 @@ export type AdminSection =
   | "settings"
   | "administrators";
 
-const SECTION_PERMISSIONS: Record<AdminSection, AdminPermission> = {
-  overview: "dashboard.read",
-  users: "users.read",
-  purchases: "purchases.read",
-  licenses: "licenses.read",
-  devices: "devices.read",
-  support: "support.read",
-  audit: "audit.read",
-  settings: "settings.read",
-  administrators: "admins.manage",
+const SECTION_PERMISSIONS: Record<AdminSection, readonly AdminPermission[]> = {
+  overview: ["dashboard.read"],
+  users: ["users.read", "users.read_limited"],
+  purchases: ["purchases.read"],
+  licenses: ["licenses.read", "licenses.read_limited"],
+  devices: ["devices.read"],
+  support: ["support.read"],
+  audit: ["audit.read"],
+  settings: ["settings.read"],
+  administrators: ["admins.manage"],
 };
 
 export const ADMIN_SECTION_LABELS: Record<AdminSection, string> = {
@@ -35,12 +35,10 @@ export const ADMIN_SECTION_LABELS: Record<AdminSection, string> = {
   administrators: "Administradores",
 };
 
-export function getAccessibleAdminSections(
-  access: AdminAccessDecision,
-): AdminSection[] {
+export function getAccessibleAdminSections(access: AdminAccessDecision): AdminSection[] {
   if (!access.allowed) return [];
   return (Object.keys(SECTION_PERMISSIONS) as AdminSection[])
-    .filter((section) => hasAdminPermission(access, SECTION_PERMISSIONS[section]));
+    .filter((section) => hasAnyAdminPermission(access, SECTION_PERMISSIONS[section]));
 }
 
 export interface AdminDashboardSnapshot {
