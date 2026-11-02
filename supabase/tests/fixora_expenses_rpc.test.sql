@@ -52,20 +52,20 @@ SELECT results_eq(
 );
 
 SELECT results_eq(
-  $$SELECT count(*) FROM public.fixora_expenses WHERE business_id = (SELECT id FROM public.fixora_businesses WHERE name = 'Expense RPC A') AND is_active$$,
+  $$SELECT count(*) FROM public.fixora_expenses WHERE business_id = current_setting('app.fixora_test_business_id')::uuid AND is_active$$,
   ARRAY[2::bigint],
   'First batch stores both active expense types'
 );
 
 SELECT results_eq(
-  $$SELECT expected_units FROM public.fixora_expense_settings WHERE business_id = (SELECT id FROM public.fixora_businesses WHERE name = 'Expense RPC A')$$,
+  $$SELECT expected_units FROM public.fixora_expense_settings WHERE business_id = current_setting('app.fixora_test_business_id')::uuid$$,
   ARRAY[250::numeric],
   'First batch updates expected units'
 );
 
 SELECT results_eq(
   $$SELECT public.fixora_save_expenses(
-    (SELECT id FROM public.fixora_businesses WHERE name = 'Expense RPC A'),
+    current_setting('app.fixora_test_business_id')::uuid,
     300,
     'quarter',
     2,
@@ -81,7 +81,7 @@ SELECT results_eq(
 );
 
 SELECT results_eq(
-  $$SELECT count(*) FROM public.fixora_expenses WHERE business_id = (SELECT id FROM public.fixora_businesses WHERE name = 'Expense RPC A') AND is_active$$,
+  $$SELECT count(*) FROM public.fixora_expenses WHERE business_id = current_setting('app.fixora_test_business_id')::uuid AND is_active$$,
   ARRAY[1::bigint],
   'Removed expenses are archived, not hard-deleted'
 );
@@ -94,7 +94,7 @@ SELECT results_eq(
 
 SELECT throws_ok(
   $$SELECT public.fixora_save_expenses(
-    (SELECT id FROM public.fixora_businesses WHERE name = 'Expense RPC A'),
+    current_setting('app.fixora_test_business_id')::uuid,
     300, 'quarter', 2, '[]'::jsonb, '[]'::jsonb
   )$$,
   '40001',
@@ -104,7 +104,7 @@ SELECT throws_ok(
 
 SELECT throws_ok(
   $$SELECT public.fixora_save_expenses(
-    (SELECT id FROM public.fixora_businesses WHERE name = 'Expense RPC A'),
+    current_setting('app.fixora_test_business_id')::uuid,
     300, 'quarter', 3, '[{"name":"Invalid","amount":-1}]'::jsonb, '[]'::jsonb
   )$$,
   '22023',
@@ -123,7 +123,7 @@ SET LOCAL request.jwt.claim.sub = 'cccccccc-cccc-4ccc-8ccc-cccccccccc33';
 
 SELECT throws_ok(
   $$SELECT public.fixora_save_expenses(
-    (SELECT id FROM public.fixora_businesses WHERE name = 'Expense RPC A'),
+    current_setting('app.fixora_test_business_id')::uuid,
     300, 'quarter', 3, '[]'::jsonb, '[]'::jsonb
   )$$,
   '42501',
@@ -137,7 +137,7 @@ SELECT public.fixora_create_business('Expense RPC B', 'general', 'MXN', 'America
 
 SELECT throws_ok(
   $$SELECT public.fixora_save_expenses(
-    (SELECT id FROM public.fixora_businesses WHERE name = 'Expense RPC A'),
+    current_setting('app.fixora_test_business_id')::uuid,
     300, 'quarter', 3, '[]'::jsonb, '[]'::jsonb
   )$$,
   '42501',
