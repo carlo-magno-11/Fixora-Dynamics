@@ -317,7 +317,7 @@ export function AuthGate({ children }: AuthGateProps) {
     <>
       <div className="cloud-data-notice" role="status">
         <strong>Cuenta y negocio conectados.</strong>
-        <span>La identidad y el negocio están en Supabase. Catálogo, gastos e historial aún se guardan en este navegador. Los datos del modo local anterior permanecen intactos y no se importan automáticamente.</span>
+        <span>Tu cuenta, negocio, catálogo, gastos e historial están conectados a Supabase. Los datos previos del modo local permanecen intactos y no se importan automáticamente. La sincronización sin conexión aún no está disponible.</span>
       </div>
       {children({
         authMode: "cloud",
