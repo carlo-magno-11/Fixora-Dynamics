@@ -12,6 +12,7 @@ import { LegalPage } from "./LegalPages";
 import { createAppServices } from "./create-app-services";
 import { calculationsToCsv } from "../modules/snapshots/domain/calculation-export";
 import type { SavedCalculation } from "../modules/snapshots/domain/saved-calculation";
+import { createNamespacedKeyValueStorage, type KeyValueStorage } from "../shared/infrastructure/key-value-storage";
 
 type View = "essentials" | "calculator" | "breakEven" | "expenses" | "catalog" | "kits" | "history" | "guide" | "account" | "about" | "terms" | "privacy";
 type BusinessType = "general" | "retail" | "food" | "services_beauty" | "digital_products" | "workshop";
@@ -25,9 +26,9 @@ const businessTypes: { id: BusinessType; title: string; subtitle: string; detail
   { id: "digital_products", title: "Productos digitales y creativos", subtitle: "Creación y plataformas", detail: "Tiempo de creación, comisiones y costes recurrentes." },
   { id: "workshop", title: "Taller y manufactura", subtitle: "Producción por etapas", detail: "Materiales, operaciones, lotes y desperdicio." },
 ];
-function readBusinessType(): BusinessType {
+function readBusinessType(storage: KeyValueStorage): BusinessType {
   try {
-    const value = window.localStorage.getItem(BUSINESS_TYPE_KEY);
+    const value = storage.getItem(BUSINESS_TYPE_KEY);
     return businessTypes.some((item) => item.id === value) ? (value as BusinessType) : "general";
   } catch {
     return "general";
@@ -82,20 +83,48 @@ function percent(value: number) {
   return `${(value * 100).toFixed(1)}%`;
 }
 
-export function App() {
+interface AppProps {
+  storageScope?: string;
+  authMode?: "cloud" | "local";
+  userEmail?: string;
+  businessName?: string;
+  initialBusinessType?: BusinessType;
+  initialCurrency?: CurrencyCode;
+  onSignOut?: () => void;
+  onSwitchBusiness?: () => void;
+  onBusinessTypeChange?: (businessType: BusinessType) => Promise<void>;
+}
+
+export function App({
+  storageScope,
+  authMode = "local",
+  userEmail,
+  businessName,
+  initialBusinessType,
+  initialCurrency,
+  onSignOut,
+  onSwitchBusiness,
+  onBusinessTypeChange,
+}: AppProps = {}) {
+  const storage = useMemo(
+    () => storageScope
+      ? createNamespacedKeyValueStorage(window.localStorage, storageScope)
+      : window.localStorage,
+    [storageScope],
+  );
   const appServices = useMemo(
     () => createAppServices({
-      storage: () => window.localStorage,
+      storage,
       generateId: () => crypto.randomUUID(),
       now: () => new Date().toISOString(),
     }),
-    [],
+    [storage],
   );
   const { historyRepository, snapshotService, catalogService, expensesService } = appServices;
   const [input, setInput] = useState<PricingInput>(initial);
-  const [currency, setCurrency] = useState<CurrencyCode>("MXN");
+  const [currency, setCurrency] = useState<CurrencyCode>(initialCurrency ?? "MXN");
   const [view, setView] = useState<View>("essentials");
-  const [businessType, setBusinessType] = useState<BusinessType>(readBusinessType);
+  const [businessType, setBusinessType] = useState<BusinessType>(() => initialBusinessType ?? readBusinessType(storage));
   const [profileMessage, setProfileMessage] = useState("");
   const [breakEvenInput, setBreakEvenInput] = useState<BreakEvenInput>(initialBreakEven);
   const [name, setName] = useState("Mi primer producto");
@@ -126,11 +155,11 @@ export function App() {
 
   useEffect(() => {
     try {
-      window.localStorage.setItem(BUSINESS_TYPE_KEY, businessType);
+      storage.setItem(BUSINESS_TYPE_KEY, businessType);
     } catch {
       setProfileMessage("No fue posible guardar el perfil en este navegador.");
     }
-  }, [businessType]);
+  }, [businessType, storage]);
 
   useEffect(() => {
     if (historyNeedsRecovery) return;
@@ -141,10 +170,17 @@ export function App() {
     }
   }, [history, historyNeedsRecovery, historyRepository]);
 
-  function chooseBusinessType(type: BusinessType) {
-    setBusinessType(type);
-    setProfileMessage("Perfil guardado en este dispositivo. Los kits especializados se habilitarán por etapas.");
-    setView("essentials");
+  async function chooseBusinessType(type: BusinessType) {
+    try {
+      await onBusinessTypeChange?.(type);
+      setBusinessType(type);
+      setProfileMessage(authMode === "cloud"
+        ? "Actividad actualizada en tu negocio."
+        : "Perfil guardado en este dispositivo. Los kits especializados se habilitarán por etapas.");
+      setView("essentials");
+    } catch (error) {
+      setProfileMessage(error instanceof Error ? error.message : "No fue posible actualizar el perfil del negocio.");
+    }
   }
 
   function updateBreakEven(key: keyof BreakEvenInput, rawValue: string) {
@@ -249,8 +285,10 @@ export function App() {
         </a>
         <div className="topbar-right">
           <span className="status-dot" />
-          <span className="topbar-caption">ESPACIO DE TRABAJO</span>
-          <button className="avatar avatar-button" aria-label="Abrir mi cuenta" onClick={() => setView("account")}>U</button>
+          <span className="topbar-caption">{authMode === "cloud" ? (businessName ?? "NEGOCIO CONECTADO") : "MODO LOCAL · SIN CUENTA"}</span>
+          {onSwitchBusiness && <button className="topbar-action" onClick={onSwitchBusiness}>Cambiar negocio</button>}
+          {onSignOut && <button className="topbar-action" onClick={onSignOut}>Salir</button>}
+          <button className="avatar avatar-button" aria-label="Abrir mi cuenta" onClick={() => setView("account")}>{userEmail?.trim().slice(0, 1).toUpperCase() ?? "U"}</button>
         </div>
       </header>
 

@@ -1,0 +1,30 @@
+name: Bootstrap Supabase SDK lockfile
+on:
+  push:
+    branches: [feat/web-auth-cloud-20261102]
+    paths:
+      - .github/workflows/bootstrap-supabase-lock.yml
+permissions:
+  contents: write
+jobs:
+  lockfile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: feat/web-auth-cloud-20261102
+      - uses: pnpm/action-setup@v5
+        with:
+          version: 9.15.9
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - run: pnpm install --lockfile-only --no-frozen-lockfile
+      - name: Commit the generated lockfile
+        run: |
+          if git diff --quiet -- pnpm-lock.yaml; then exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add pnpm-lock.yaml
+          git commit -m "chore(deps): lock Supabase JS SDK"
+          git push origin HEAD:feat/web-auth-cloud-20261102
