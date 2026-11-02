@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { calculatePrice } from "../modules/pricing/domain/pricing";
 import { ExpensesPage } from "../modules/expenses/ui/ExpensesPage";
+import { CloudExpensesPage } from "../modules/expenses/ui/CloudExpensesPage";
 import { CatalogPage } from "../modules/catalog/ui/CatalogPage";
 import { CloudCatalogPage } from "../modules/catalog/ui/CloudCatalogPage";
 import { CloudHistoryPage } from "../modules/snapshots/ui/CloudHistoryPage";
@@ -550,7 +551,9 @@ export function App({
             </div>
           )}
 
-          {view === "expenses" && <ExpensesPage service={expensesService} currency={currency} formatMoney={formatMoney} />}
+          {view === "expenses" && authMode === "cloud" && businessId
+            ? <CloudExpensesPage businessId={businessId} currency={initialCurrency ?? currency} formatMoney={formatMoney} />
+            : view === "expenses" && <ExpensesPage service={expensesService} currency={currency} formatMoney={formatMoney} />}
           {view === "catalog" && authMode === "cloud" && businessId
             ? <CloudCatalogPage businessId={businessId} currency={initialCurrency ?? currency} formatMoney={formatMoney} onUseInCalculator={useCatalogItem} />
             : view === "catalog" && <CatalogPage service={catalogService} currency={currency} formatMoney={formatMoney} onUseInCalculator={useCatalogItem} />}
