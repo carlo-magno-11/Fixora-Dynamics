@@ -23,3 +23,9 @@ verify_jwt = true
 
 [functions.admin-support-reply]
 verify_jwt = true
+
+[functions.admin-create-invite]
+verify_jwt = true
+
+[functions.admin-accept-invite]
+verify_jwt = true
