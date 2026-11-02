@@ -109,19 +109,19 @@ export function SupportPage({ businessId }: { businessId?: string }) {
         <div className="support-section-heading"><h2>Tus solicitudes</h2><button className="outline-button" onClick={() => void loadTickets()}>Actualizar</button></div>
         {loading ? <p>Consultando solicitudes…</p> : tickets.length === 0 ? <p>Aún no tienes solicitudes.</p> : tickets.map((ticket) =>
           <button type="button" key={ticket.ticket_id} className={ticket.ticket_id === selectedId ? "support-ticket-option selected" : "support-ticket-option"} onClick={() => setSelectedId(ticket.ticket_id)}>
-            <strong>{ticket.subject}</strong><span>{ticket.status === "open" ? "Abierta" : "Cerrada"}</span><small>{dateLabel(ticket.updated_at)} · {ticket.message_count} mensajes</small>
+            <strong>{ticket.subject}</strong><span>{ticket.status === "open" ? "Abierta" : ticket.status === "answered" ? "Respondida" : ticket.status === "resolved" ? "Resuelta" : "Cerrada"}</span><small>{dateLabel(ticket.updated_at)} · {ticket.message_count} mensajes</small>
           </button>)}
       </div>
       <div className="support-conversation">
         {selected ? <>
-          <div className="support-section-heading"><div><span className="eyebrow">{selected.category}</span><h2>{selected.subject}</h2></div><span className="planned-pill">{selected.status === "open" ? "ABIERTA" : "CERRADA"}</span></div>
+          <div className="support-section-heading"><div><span className="eyebrow">{selected.category}</span><h2>{selected.subject}</h2></div><span className="planned-pill">{selected.status === "open" ? "ABIERTA" : selected.status === "answered" ? "RESPONDIDA" : selected.status === "resolved" ? "RESUELTA" : "CERRADA"}</span></div>
           <div className="support-message-list" aria-live="polite">
             {messages.length === 0 ? <p>Cargando conversación…</p> : messages.map((message) =>
               <article className={message.sender_type === "customer" ? "support-message customer" : "support-message team"} key={message.message_id}>
                 <div><strong>{message.sender_type === "customer" ? "Tú" : "Equipo Fixora"}</strong><time>{dateLabel(message.created_at)}</time></div><p>{message.body}</p>
               </article>)}
           </div>
-          {selected.status === "open" ? <form className="support-reply-form" onSubmit={sendReply}>
+          {selected.status !== "closed" && selected.status !== "resolved" ? <form className="support-reply-form" onSubmit={sendReply}>
             <label htmlFor="support-reply">Tu respuesta</label><textarea id="support-reply" rows={3} maxLength={5000} required value={reply} onChange={(event) => setReply(event.target.value)} placeholder="Escribe aquí tu mensaje…" />
             <div><button className="welcome-primary" type="submit" disabled={busy || !reply.trim()}>{busy ? "Enviando…" : "Enviar respuesta"}</button><button className="outline-button" type="button" disabled={busy} onClick={() => void closeTicket()}>Cerrar solicitud</button></div>
           </form> : <p>Esta solicitud está cerrada. Si necesitas más ayuda, crea una nueva.</p>}
