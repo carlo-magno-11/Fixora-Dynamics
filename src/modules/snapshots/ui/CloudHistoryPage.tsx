@@ -4,7 +4,7 @@ import { isSavedCalculation } from "../domain/saved-calculation";
 import { calculationsToCsv } from "../domain/calculation-export";
 import type { CatalogItemSnapshot } from "../domain/calculation-snapshot";
 import type { PricingInput, PricingResult } from "../../pricing/domain/pricing";
-import type { Database, Json } from "../../../shared/infrastructure/supabase/database.types";
+import type { Database } from "../../../shared/infrastructure/supabase/database.types";
 import { getSupabaseClient } from "../../../shared/infrastructure/supabase/client";
 
 type SnapshotRow = Database["public"]["Tables"]["fixora_calculation_snapshots"]["Row"];
@@ -19,7 +19,7 @@ function mapSnapshotRow(row: SnapshotRow): SavedCalculation | null {
     result: row.pricing_result as unknown as PricingResult,
     formulaVersion: row.formula_version as SavedCalculation["formulaVersion"],
     snapshotVersion: row.schema_version as 1,
-    catalogItem: row.catalog_item_snapshot as Json | null as unknown as CatalogItemSnapshot | undefined,
+    catalogItem: row.catalog_item_snapshot === null ? undefined : row.catalog_item_snapshot as unknown as CatalogItemSnapshot,
   };
   return isSavedCalculation(record) ? record : null;
 }
