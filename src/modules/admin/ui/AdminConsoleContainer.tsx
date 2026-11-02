@@ -9,6 +9,8 @@ import type { AdminAccessDecision } from "../domain/admin-access";
 import { AdminConsolePage } from "./AdminConsolePage";
 import { AdminInviteCreationPanel } from "./AdminInviteCreationPanel";
 import { AdminPurchaseReviewPanel } from "./AdminPurchaseReviewPanel";
+import { AdminReissueActivationPanel } from "./AdminReissueActivationPanel";
+import { AdminSupportReplyPanel } from "./AdminSupportReplyPanel";
 
 const denied: AdminAccessDecision = { allowed: false, reason: "role_missing", permissions: [] };
 
@@ -58,7 +60,11 @@ export function AdminConsoleContainer() {
       ? <AdminInviteCreationPanel />
       : activeSection === "purchases" && access.allowed && access.permissions.includes("purchases.verify")
         ? <AdminPurchaseReviewPanel />
-        : undefined}
+        : activeSection === "licenses" && access.allowed && access.permissions.includes("licenses.issue")
+          ? <AdminReissueActivationPanel />
+          : activeSection === "support" && access.allowed && access.permissions.includes("support.reply")
+            ? <AdminSupportReplyPanel />
+            : undefined}
     onRefresh={() => void refresh()}
     onOpenSection={setActiveSection}
   />;
