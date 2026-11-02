@@ -34,6 +34,10 @@ export function AdminConsolePage({
   onRefresh,
   onOpenSection,
 }: Props) {
+  if (loading && !access.allowed) {
+    return <main className="admin-access-denied" aria-live="polite"><span className="admin-eyebrow">FIXORA DYNAMICS / ADMINISTRACIÓN</span><h1>Comprobando autorización</h1><p>Validando tu sesión y los permisos en el servidor…</p></main>;
+  }
+
   if (!access.allowed) {
     const reason = access.reason === "mfa_required"
       ? "Completa la verificación multifactor para continuar."
