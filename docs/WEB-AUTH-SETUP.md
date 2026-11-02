@@ -1,12 +1,14 @@
-# Fixora Web — Auth y entorno
+# Fixora Web — Auth, negocios y persistencia cloud
 
-## Variables de compilación
+## Proyecto y variables de compilación
+
+El destino de pruebas aprobado para Fixora es `eyesite-security-test`, ref `dclaebknyalimmtgppeg`. El proyecto oficial EYESITE `xhvpvpvtkdgnnxdwdrkn` queda fuera de alcance.
 
 Configura estas variables en el entorno que compila la aplicación:
 
 ```dotenv
 VITE_FIXORA_AUTH_MODE=cloud
-VITE_SUPABASE_URL=https://<project-ref>.supabase.co
+VITE_SUPABASE_URL=https://dclaebknyalimmtgppeg.supabase.co
 VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
 ```
 
@@ -16,21 +18,38 @@ El modo `local` conserva el comportamiento anterior basado en almacenamiento de 
 
 ## Supabase Auth
 
-En el proyecto de pruebas asignado a Fixora, configura el proveedor Email con confirmación de correo habilitada y establece los redirect URLs de los entornos reales (localhost para desarrollo y el dominio HTTPS de staging/producción). No habilites signup público ni cambies la configuración del proyecto oficial EYESITE como parte de esta etapa.
+La aplicación usa el SDK oficial `@supabase/supabase-js` 2.118.0. Incluye contraseña, registro, confirmación de correo, recuperación y actualización de contraseña. La sesión se conserva mediante refresh automático y flujo PKCE.
 
-La aplicación usa contraseña, confirmación por correo, recuperación y actualización de contraseña. La sesión se conserva mediante el SDK oficial, con refresh automático y flujo PKCE.
+En el Dashboard del proyecto de pruebas:
+- Confirma que el proveedor Email está configurado y que las plantillas de confirmación/recuperación son válidas.
+- Añade localhost y los dominios HTTPS de staging/producción a la lista de Redirect URLs.
+- Configura Site URL para el entorno desplegado.
+- Mantén signup público deshabilitado hasta aprobar el proceso de alta comercial.
+- No cambies la configuración del proyecto oficial EYESITE como parte de esta etapa.
 
 ## Negocios y aislamiento
 
-Después de autenticar, la aplicación consulta los negocios visibles por RLS. Si no existe uno, crea el primero mediante `fixora_create_business`. El negocio seleccionado determina el espacio local de datos de catálogo, gastos e historial, usando una clave namespaced por usuario y negocio.
+Después de autenticar, la aplicación consulta los negocios visibles por RLS. Si no existe uno, crea el primero mediante `fixora_create_business`. El negocio seleccionado se usa como ámbito de todas las consultas de datos operativos. El tipo de negocio se actualiza en la fila del negocio.
 
-Cambiar de usuario o negocio no mezcla el almacenamiento local. Esto no es sincronización cloud ni respaldo: los registros operativos permanecen en el navegador hasta que se complete la siguiente etapa de repositorios remotos.
+El almacenamiento local de la calculadora se namespacia por usuario y negocio para que una sesión distinta no lea el catálogo/historial local anterior. Los registros locales previos no se borran ni se importan automáticamente.
 
-## Estado de esta entrega
+## Persistencia cloud implementada
 
-- Auth web y sesión Supabase: implementadas en el cliente.
-- Alta/selección de negocio con RPC y RLS: implementada.
-- Perfil de negocio: el tipo de negocio se actualiza en la fila del negocio.
-- Catálogo, gastos e historial cloud: pendiente; la interfaz muestra una advertencia explícita y mantiene almacenamiento local aislado.
-- Licencias, activación y panel de administración: no se habilitan en esta entrega.
-- Pruebas E2E con correo real y confirmación: requieren redirect URL, SMTP y dominio de staging configurados.
+- **Catálogo:** lectura, alta, edición y archivo en `fixora_catalog_items`, filtrado por negocio y RLS.
+- **Gastos:** lectura y guardado en lote mediante `fixora_save_expenses`. La RPC es SECURITY INVOKER, comprueba rol de negocio, valida el payload, usa versión optimista y archiva filas retiradas dentro de una sola transacción.
+- **Historial:** los cálculos se guardan como snapshots inmutables en `fixora_calculation_snapshots`; la vista permite abrirlos y exportarlos a CSV. No hay borrado directo.
+- **Cuenta/negocio:** identidad y perfil del negocio se leen desde Auth/Postgres.
+
+La sincronización offline, la importación guiada del almacenamiento local y la recuperación de borradores de calculadora aún no están implementadas. No se debe presentar el almacenamiento local como respaldo cloud.
+
+## Pendientes antes de habilitar clientes
+
+- Ejecutar la migración de `fixora_save_expenses` en el proyecto de pruebas después de que pase el rebuild local de migraciones y pgTAP.
+- Confirmar el esquema expuesto de PostgREST y probar REST desde una sesión cliente.
+- Configurar redirect URLs/SMTP y realizar E2E de registro, confirmación, login, recuperación y logout con un correo de prueba.
+- Implementar licencias, activación, revisión de compra, panel administrativo, MFA de operadores y soporte.
+- Crear staging HTTPS, backups/restauración, monitoreo, pruebas de accesibilidad, DAST/SCA y dispositivos reales.
+
+## Criterio de salida
+
+La integración de identidad y persistencia cloud no equivale a lanzamiento comercial. El PR debe permanecer en borrador hasta que CI, reconstrucción de base, pgTAP, E2E con Auth, revisión de seguridad y configuración de staging estén aprobados.
