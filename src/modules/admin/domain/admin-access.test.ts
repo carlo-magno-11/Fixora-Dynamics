@@ -60,7 +60,9 @@ describe("platform admin authorization policy", () => {
 
   it("keeps support agents away from purchase verification and settings", () => {
     const decision = resolveAdminAccess({ ...activeOwner, roles: ["support_agent"] });
-    expect(hasAdminPermission(decision, "support.respond")).toBe(true);
+    expect(hasAdminPermission(decision, "support.reply")).toBe(true);
+    expect(hasAdminPermission(decision, "users.read_limited")).toBe(true);
+    expect(hasAdminPermission(decision, "users.read")).toBe(false);
     expect(hasAdminPermission(decision, "purchases.verify")).toBe(false);
     expect(hasAdminPermission(decision, "settings.write")).toBe(false);
   });
@@ -76,7 +78,7 @@ describe("platform admin authorization policy", () => {
       ...activeOwner,
       roles: ["support_agent", "purchase_reviewer"],
     });
-    expect(hasAdminPermission(decision, "support.respond")).toBe(true);
+    expect(hasAdminPermission(decision, "support.reply")).toBe(true);
     expect(hasAdminPermission(decision, "purchases.verify")).toBe(true);
     expect(hasAdminPermission(decision, "settings.write")).toBe(false);
   });
