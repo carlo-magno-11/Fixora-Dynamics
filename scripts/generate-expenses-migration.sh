@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+if find supabase/migrations -maxdepth 1 -type f -name "*_fixora_save_expenses_batch_rpc.sql" -print -quit | grep -q .; then exit 0; fi
+
 supabase migration new fixora_save_expenses_batch_rpc
 migration_file="$(find supabase/migrations -maxdepth 1 -type f -name '*_fixora_save_expenses_batch_rpc.sql' -print -quit)"
 test -n "$migration_file"
