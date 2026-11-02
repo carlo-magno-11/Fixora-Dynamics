@@ -33,6 +33,11 @@ describe("admin console section visibility", () => {
     expect(getAccessibleAdminSections(support)).not.toContain("administrators");
   });
 
+  it("allows license managers to access device revocation controls", () => {
+    const access = resolveAdminAccess({ ...principal, roles: ["license_manager"] });
+    expect(getAccessibleAdminSections(access)).toContain("devices");
+  });
+
   it("does not expose settings to license managers", () => {
     const access = resolveAdminAccess({ ...principal, roles: ["license_manager"] });
     expect(getAccessibleAdminSections(access)).not.toContain("settings");
