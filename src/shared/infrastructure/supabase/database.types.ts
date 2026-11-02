@@ -403,6 +403,17 @@ export type Database = {
         }
         Returns: string
       }
+      fixora_save_expenses: {
+        Args: {
+          p_business_id: string
+          p_expected_units: number
+          p_period: string
+          p_expected_version: number
+          p_fixed: Json
+          p_variable: Json
+        }
+        Returns: number
+      }
       fixora_create_support_ticket: {
         Args: {
           p_body: string
