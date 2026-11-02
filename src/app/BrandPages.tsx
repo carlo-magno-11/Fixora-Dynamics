@@ -37,7 +37,13 @@ export function AboutPage({ locale }: PageProps) {
   );
 }
 
-export function AccountPage({ locale, onOpenGuide }: PageProps & { onOpenGuide: () => void }) {
+export function AccountPage({ locale, onOpenGuide, authMode = "local", userEmail, businessName, onSignOut }: PageProps & {
+  onOpenGuide: () => void;
+  authMode?: "cloud" | "local";
+  userEmail?: string;
+  businessName?: string;
+  onSignOut?: () => void;
+}) {
   const copy = getMessages(locale).account;
   const sections = [
     { icon: "◉", title: copy.profile, detail: "Nombre visible, correo verificado y preferencias." },
@@ -54,8 +60,8 @@ export function AccountPage({ locale, onOpenGuide }: PageProps & { onOpenGuide: 
       <p className="page-lead">{copy.lead}</p>
       <section className="account-security-banner">
         <span className="account-security-icon">⌑</span>
-        <div><strong>{copy.authTitle}</strong><p>{copy.authBody}</p></div>
-        <span className="planned-pill">{copy.pending}</span>
+        <div><strong>{authMode === "cloud" ? "Cuenta y negocio conectados" : copy.authTitle}</strong><p>{authMode === "cloud" ? `Sesión activa para ${userEmail || "tu cuenta"} en ${businessName || "tu negocio"}.` : copy.authBody}</p></div>
+        <span className={authMode === "cloud" ? "connected-pill" : "planned-pill"}>{authMode === "cloud" ? "CONECTADA" : copy.pending}</span>
       </section>
       <div className="account-summary-grid">
         {sections.map((section) => (
@@ -66,10 +72,15 @@ export function AccountPage({ locale, onOpenGuide }: PageProps & { onOpenGuide: 
         ))}
       </div>
       <section className="account-preferences">
+        <div><span className="eyebrow">CORREO DE ACCESO</span><strong>{userEmail || "Modo local"}</strong></div>
+        <div><span className="eyebrow">NEGOCIO ACTIVO</span><strong>{businessName || "Sin negocio cloud"}</strong></div>
         <div><span className="eyebrow">{copy.language}</span><strong>{copy.languageValue}</strong></div>
         <button className="outline-button" onClick={onOpenGuide}>Abrir guía y ayuda</button>
+        {onSignOut && <button className="outline-button" onClick={onSignOut}>Cerrar sesión</button>}
       </section>
-      <p className="local-storage-note">{copy.storageNotice}</p>
+      <p className="local-storage-note">{authMode === "cloud"
+        ? "Tu cuenta, negocio, catálogo, gastos e historial se guardan en Supabase. Los registros previos del modo local no se importan automáticamente; la sincronización sin conexión aún no está disponible."
+        : copy.storageNotice}</p>
     </div>
   );
 }
