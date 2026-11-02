@@ -540,3 +540,10 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
 .account-activation-panel label { color: var(--ink); font-size: 10px; font-weight: 700; }
 .account-activation-panel input { width: 100%; min-height: 42px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 6px; background: white; color: var(--ink); font: inherit; font-size: 11px; }
 .account-activation-panel input#fixora-activation-code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .06em; }
+
+.admin-invite-panel { display: grid; gap: 10px; margin: 18px 0; }
+.admin-invite-panel > p { margin: 0; color: var(--muted); font-size: 11px; line-height: 1.7; }
+.admin-invite-panel form { display: grid; gap: 10px; max-width: 430px; }
+.admin-invite-panel label { color: var(--ink); font-size: 10px; font-weight: 700; }
+.admin-invite-panel input { width: 100%; min-height: 42px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 6px; background: white; color: var(--ink); font: inherit; font-size: 11px; }
+.admin-invite-panel input { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .06em; }
