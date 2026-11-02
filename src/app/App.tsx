@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { calculatePrice } from "../modules/pricing/domain/pricing";
 import { ExpensesPage } from "../modules/expenses/ui/ExpensesPage";
 import { CatalogPage } from "../modules/catalog/ui/CatalogPage";
+import { CloudCatalogPage } from "../modules/catalog/ui/CloudCatalogPage";
+import { CloudHistoryPage } from "../modules/snapshots/ui/CloudHistoryPage";
 import type { CatalogItem } from "../modules/catalog/domain/catalog";
 import type { CatalogItemSnapshot } from "../modules/snapshots/domain/calculation-snapshot";
 import { calculateBreakEven } from "../modules/break-even/domain/break-even";
@@ -13,6 +15,8 @@ import { createAppServices } from "./create-app-services";
 import { calculationsToCsv } from "../modules/snapshots/domain/calculation-export";
 import type { SavedCalculation } from "../modules/snapshots/domain/saved-calculation";
 import { createNamespacedKeyValueStorage, type KeyValueStorage } from "../shared/infrastructure/key-value-storage";
+import { getSupabaseClient } from "../shared/infrastructure/supabase/client";
+import type { Json } from "../shared/infrastructure/supabase/database.types";
 
 type View = "essentials" | "calculator" | "breakEven" | "expenses" | "catalog" | "kits" | "history" | "guide" | "account" | "about" | "terms" | "privacy";
 type BusinessType = "general" | "retail" | "food" | "services_beauty" | "digital_products" | "workshop";
@@ -85,6 +89,7 @@ function percent(value: number) {
 
 interface AppProps {
   storageScope?: string;
+  businessId?: string;
   authMode?: "cloud" | "local";
   userEmail?: string;
   businessName?: string;
@@ -97,6 +102,7 @@ interface AppProps {
 
 export function App({
   storageScope,
+  businessId,
   authMode = "local",
   userEmail,
   businessName,
@@ -106,6 +112,7 @@ export function App({
   onSwitchBusiness,
   onBusinessTypeChange,
 }: AppProps = {}) {
+  const supabase = useMemo(() => getSupabaseClient(), []);
   const storage = useMemo(
     () => storageScope
       ? createNamespacedKeyValueStorage(window.localStorage, storageScope)
@@ -162,13 +169,13 @@ export function App({
   }, [businessType, storage]);
 
   useEffect(() => {
-    if (historyNeedsRecovery) return;
+    if (authMode === "cloud" || historyNeedsRecovery) return;
     try {
       historyRepository.save(history);
     } catch {
       setSavedMessage("No fue posible guardar en este navegador.");
     }
-  }, [history, historyNeedsRecovery, historyRepository]);
+  }, [authMode, history, historyNeedsRecovery, historyRepository]);
 
   async function chooseBusinessType(type: BusinessType) {
     try {
@@ -213,8 +220,8 @@ export function App({
     setSavedMessage("Elemento del catálogo vinculado. Completa y revisa los costes antes de guardar.");
   }
 
-  function saveCalculation() {
-    if (historyNeedsRecovery) {
+  async function saveCalculation() {
+    if (authMode !== "cloud" && historyNeedsRecovery) {
       setSavedMessage("Revisa o reinicia el historial antes de guardar un cálculo nuevo.");
       return;
     }
@@ -226,7 +233,7 @@ export function App({
         pricingInput: input,
         catalogItem: selectedCatalogItem,
       });
-      const record: SavedCalculation = {
+      let record: SavedCalculation = {
         id: snapshot.id,
         name: snapshot.name,
         createdAt: snapshot.createdAt,
@@ -237,6 +244,30 @@ export function App({
         snapshotVersion: snapshot.schemaVersion,
         catalogItem: snapshot.catalogItem,
       };
+      if (authMode === "cloud") {
+        if (!supabase || !businessId) throw new Error("No hay un negocio cloud seleccionado.");
+        const { data, error } = await supabase
+          .from("fixora_calculation_snapshots")
+          .insert({
+            business_id: businessId,
+            name: snapshot.name,
+            currency_code: snapshot.currency,
+            schema_version: snapshot.schemaVersion,
+            formula_version: snapshot.formulaVersion,
+            pricing_input: JSON.parse(JSON.stringify(snapshot.pricingInput)) as Json,
+            pricing_result: JSON.parse(JSON.stringify(snapshot.pricingResult)) as Json,
+            catalog_item_snapshot: snapshot.catalogItem
+              ? JSON.parse(JSON.stringify(snapshot.catalogItem)) as Json
+              : null,
+          })
+          .select("id, created_at")
+          .single();
+        if (error) throw error;
+        record = { ...record, id: data.id, createdAt: data.created_at };
+        setHistory((current) => [record, ...current].slice(0, 100));
+        setSavedMessage("Cálculo guardado en Supabase para este negocio.");
+        return;
+      }
       setHistory((current) => [record, ...current].slice(0, 100));
       setSavedMessage("Cálculo guardado en este dispositivo.");
     } catch (error) {
@@ -520,9 +551,13 @@ export function App({
           )}
 
           {view === "expenses" && <ExpensesPage service={expensesService} currency={currency} formatMoney={formatMoney} />}
-          {view === "catalog" && <CatalogPage service={catalogService} currency={currency} formatMoney={formatMoney} onUseInCalculator={useCatalogItem} />}
+          {view === "catalog" && authMode === "cloud" && businessId
+            ? <CloudCatalogPage businessId={businessId} currency={initialCurrency ?? currency} formatMoney={formatMoney} onUseInCalculator={useCatalogItem} />
+            : view === "catalog" && <CatalogPage service={catalogService} currency={currency} formatMoney={formatMoney} onUseInCalculator={useCatalogItem} />}
 
-          {view === "history" && (
+          {view === "history" && authMode === "cloud" && businessId
+            ? <CloudHistoryPage businessId={businessId} formatMoney={formatMoney} onOpenCalculation={openCalculation} onRecordsLoaded={setHistory} />
+            : view === "history" && (
             <div className="secondary-page">
               <p className="eyebrow">TU ACTIVIDAD <span> / </span> 02</p>
               <h1>Mis cálculos.</h1>
