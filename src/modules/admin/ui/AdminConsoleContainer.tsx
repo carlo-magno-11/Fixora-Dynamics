@@ -11,6 +11,7 @@ import { AdminInviteCreationPanel } from "./AdminInviteCreationPanel";
 import { AdminPurchaseReviewPanel } from "./AdminPurchaseReviewPanel";
 import { AdminReissueActivationPanel } from "./AdminReissueActivationPanel";
 import { AdminSupportReplyPanel } from "./AdminSupportReplyPanel";
+import { AdminDeviceRevocationPanel } from "./AdminDeviceRevocationPanel";
 
 const denied: AdminAccessDecision = { allowed: false, reason: "role_missing", permissions: [] };
 
@@ -64,7 +65,9 @@ export function AdminConsoleContainer() {
           ? <AdminReissueActivationPanel />
           : activeSection === "support" && access.allowed && access.permissions.includes("support.reply")
             ? <AdminSupportReplyPanel />
-            : undefined}
+            : activeSection === "devices" && access.allowed && access.permissions.includes("devices.revoke")
+              ? <AdminDeviceRevocationPanel />
+              : undefined}
     onRefresh={() => void refresh()}
     onOpenSection={setActiveSection}
   />;
