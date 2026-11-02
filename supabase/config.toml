@@ -10,7 +10,7 @@ max_rows = 1000
 major_version = 17
 
 [functions.activate-license]
-verify_jwt = false
+verify_jwt = true
 
 [functions.admin-verify-etsy-purchase]
-verify_jwt = false
+verify_jwt = true
