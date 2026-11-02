@@ -1,6 +1,7 @@
 import { getMessages, type SupportedLocale } from "../i18n/messages";
 import { MfaSettings } from "../modules/auth/ui/MfaSettings";
 import { LicenseActivationPanel } from "../modules/licensing/ui/LicenseActivationPanel";
+import { AdminInviteAcceptancePanel } from "../modules/admin/ui/AdminInviteAcceptancePanel";
 import type { Database } from "../shared/infrastructure/supabase/database.types";
 
 type LicenseAccess = Database["public"]["Functions"]["fixora_get_license_access"]["Returns"][number];
@@ -73,6 +74,7 @@ export function AccountPage({ locale, onOpenGuide, authMode = "local", userEmail
         <span className={authMode === "cloud" ? "connected-pill" : "planned-pill"}>{authMode === "cloud" ? "CONECTADA" : copy.pending}</span>
       </section>
       {authMode === "cloud" && <MfaSettings />}
+      {authMode === "cloud" && <AdminInviteAcceptancePanel />}
       {authMode === "cloud" && <section className="guide-callout account-license-panel" aria-live="polite">
         <strong>Estado de tu licencia</strong>
         {licenseLoading ? <p>Consultando la licencia vinculada a tu cuenta…</p>
