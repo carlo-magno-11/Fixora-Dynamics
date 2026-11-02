@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import {
   ADMIN_SECTION_LABELS,
   getAccessibleAdminSections,
@@ -15,6 +16,7 @@ type Props = {
   loading: boolean;
   error?: string;
   activeSection: AdminSection;
+  sectionContent?: ReactNode;
   onRefresh: () => void;
   onOpenSection: (section: AdminSection) => void;
 };
@@ -28,6 +30,7 @@ export function AdminConsolePage({
   loading,
   error,
   activeSection,
+  sectionContent,
   onRefresh,
   onOpenSection,
 }: Props) {
@@ -79,7 +82,7 @@ export function AdminConsolePage({
       {activeSection !== "overview" ? (
         <section className="admin-empty-state">
           <h2>{ADMIN_SECTION_LABELS[activeSection]}</h2>
-          <p>Tu autorización para esta sección fue comprobada en el servidor. Las consultas y acciones operativas de este apartado todavía no están conectadas; no se muestran registros ficticios ni se habilitan cambios sin una API autorizada.</p>
+          {sectionContent ?? <p>Tu autorización para esta sección fue comprobada en el servidor. Las consultas y acciones operativas de este apartado todavía no están conectadas; no se muestran registros ficticios ni se habilitan cambios sin una API autorizada.</p>}
         </section>
       ) : !canReadDashboard ? (
         <section className="admin-empty-state">
