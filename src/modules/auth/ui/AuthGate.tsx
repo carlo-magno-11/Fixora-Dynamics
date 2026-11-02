@@ -239,7 +239,7 @@ export function AuthGate({ children }: AuthGateProps) {
     return <AuthShell><p className="auth-eyebrow">FIXORA DYNAMICS</p><h1>Preparando tu espacio.</h1><p className="auth-lead">Comprobando tu sesión segura…</p></AuthShell>;
   }
 
-  if (!session?.user) {
+  if (!session?.user || authView === "update-password") {
     const title = authView === "sign-up" ? "Crea tu cuenta." : authView === "recover" ? "Recupera tu acceso." : authView === "update-password" ? "Elige una nueva contraseña." : "Qué gusto tenerte de vuelta.";
     return (
       <AuthShell>
@@ -279,42 +279,6 @@ export function AuthGate({ children }: AuthGateProps) {
     );
   }
 
-  if (!selectedBusiness) {
-    return (
-      <AuthShell>
-        <p className="auth-eyebrow">FIXORA DYNAMICS · PRIMER PASO</p>
-        <h1>Cuéntanos de tu negocio.</h1>
-        <p className="auth-lead">Este espacio será el contenedor de tus herramientas y registros. Podrás invitar colaboradores en una etapa posterior.</p>
-        <form className="auth-form" onSubmit={createBusiness}>
-          <label className="field"><span>Nombre del negocio</span><input value={businessName} minLength={2} maxLength={100} required placeholder="Ej. Taller Luna" onChange={(event) => setBusinessName(event.target.value)} /></label>
-          <label className="field"><span>Actividad principal</span><select value={businessType} onChange={(event) => setBusinessType(event.target.value as BusinessType)}>{businessTypes.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</select></label>
-          <label className="field"><span>Moneda principal</span><select value={currency} onChange={(event) => setCurrency(event.target.value as CurrencyCode)}><option value="MXN">MXN · Peso mexicano</option><option value="USD">USD · Dólar estadounidense</option></select></label>
-          <button className="primary-button auth-submit" type="submit" disabled={busy}>{busy ? "Creando espacio…" : "Crear mi negocio"} <span>↗</span></button>
-        </form>
-        {errorMessage && <p className="auth-error" role="alert">{errorMessage}</p>}
-        <button className="text-button" onClick={() => void signOut()}>Cerrar sesión</button>
-      </AuthShell>
-    );
-  }
-
-  if (!selectedBusiness) {
-    return (
-      <AuthShell>
-        <p className="auth-eyebrow">FIXORA DYNAMICS · PRIMER PASO</p>
-        <h1>Cuéntanos de tu negocio.</h1>
-        <p className="auth-lead">Este espacio será el contenedor de tus herramientas y registros. Podrás invitar colaboradores en una etapa posterior.</p>
-        <form className="auth-form" onSubmit={createBusiness}>
-          <label className="field"><span>Nombre del negocio</span><input value={businessName} minLength={2} maxLength={100} required placeholder="Ej. Taller Luna" onChange={(event) => setBusinessName(event.target.value)} /></label>
-          <label className="field"><span>Actividad principal</span><select value={businessType} onChange={(event) => setBusinessType(event.target.value as BusinessType)}>{businessTypes.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</select></label>
-          <label className="field"><span>Moneda principal</span><select value={currency} onChange={(event) => setCurrency(event.target.value as CurrencyCode)}><option value="MXN">MXN · Peso mexicano</option><option value="USD">USD · Dólar estadounidense</option></select></label>
-          <button className="primary-button auth-submit" type="submit" disabled={busy}>{busy ? "Creando espacio…" : "Crear mi negocio"} <span>↗</span></button>
-        </form>
-        {errorMessage && <p className="auth-error" role="alert">{errorMessage}</p>}
-        <button className="text-button" onClick={() => void signOut()}>Cerrar sesión</button>
-      </AuthShell>
-    );
-  }
-
   if (businesses.length > 1 && !selectedBusinessId) {
     return (
       <AuthShell>
@@ -327,6 +291,41 @@ export function AuthGate({ children }: AuthGateProps) {
     );
   }
 
+  if (!selectedBusiness) {
+    return (
+      <AuthShell>
+        <p className="auth-eyebrow">FIXORA DYNAMICS · PRIMER PASO</p>
+        <h1>Cuéntanos de tu negocio.</h1>
+        <p className="auth-lead">Este espacio será el contenedor de tus herramientas y registros. Podrás invitar colaboradores en una etapa posterior.</p>
+        <form className="auth-form" onSubmit={createBusiness}>
+          <label className="field"><span>Nombre del negocio</span><input value={businessName} minLength={2} maxLength={100} required placeholder="Ej. Taller Luna" onChange={(event) => setBusinessName(event.target.value)} /></label>
+          <label className="field"><span>Actividad principal</span><select value={businessType} onChange={(event) => setBusinessType(event.target.value as BusinessType)}>{businessTypes.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</select></label>
+          <label className="field"><span>Moneda principal</span><select value={currency} onChange={(event) => setCurrency(event.target.value as CurrencyCode)}><option value="MXN">MXN · Peso mexicano</option><option value="USD">USD · Dólar estadounidense</option></select></label>
+          <button className="primary-button auth-submit" type="submit" disabled={busy}>{busy ? "Creando espacio…" : "Crear mi negocio"} <span>↗</span></button>
+        </form>
+        {errorMessage && <p className="auth-error" role="alert">{errorMessage}</p>}
+        <button className="text-button" onClick={() => void signOut()}>Cerrar sesión</button>
+      </AuthShell>
+    );
+  }
+
+  if (!selectedBusiness) {
+    return (
+      <AuthShell>
+        <p className="auth-eyebrow">FIXORA DYNAMICS · PRIMER PASO</p>
+        <h1>Cuéntanos de tu negocio.</h1>
+        <p className="auth-lead">Este espacio será el contenedor de tus herramientas y registros. Podrás invitar colaboradores en una etapa posterior.</p>
+        <form className="auth-form" onSubmit={createBusiness}>
+          <label className="field"><span>Nombre del negocio</span><input value={businessName} minLength={2} maxLength={100} required placeholder="Ej. Taller Luna" onChange={(event) => setBusinessName(event.target.value)} /></label>
+          <label className="field"><span>Actividad principal</span><select value={businessType} onChange={(event) => setBusinessType(event.target.value as BusinessType)}>{businessTypes.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</select></label>
+          <label className="field"><span>Moneda principal</span><select value={currency} onChange={(event) => setCurrency(event.target.value as CurrencyCode)}><option value="MXN">MXN · Peso mexicano</option><option value="USD">USD · Dólar estadounidense</option></select></label>
+          <button className="primary-button auth-submit" type="submit" disabled={busy}>{busy ? "Creando espacio…" : "Crear mi negocio"} <span>↗</span></button>
+        </form>
+        {errorMessage && <p className="auth-error" role="alert">{errorMessage}</p>}
+        <button className="text-button" onClick={() => void signOut()}>Cerrar sesión</button>
+      </AuthShell>
+    );
+  }
 
 
   return (
