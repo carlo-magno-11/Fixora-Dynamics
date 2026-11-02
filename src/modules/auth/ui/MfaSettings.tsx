@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import type { FormEvent } from "react";
 import { getSupabaseClient } from "../../../shared/infrastructure/supabase/client";
 
-type TotpFactor = { id: string; friendly_name: string; status: "verified" | "unverified" };
+type TotpFactor = { id: string; friendly_name: string | null; status: "verified" | "unverified" };
 
 export function MfaSettings() {
   const supabase = useMemo(() => getSupabaseClient(), []);
@@ -42,7 +43,7 @@ export function MfaSettings() {
     setBusy(false);
   }
 
-  async function verifyEnrollment(event: React.FormEvent<HTMLFormElement>) {
+  async function verifyEnrollment(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!supabase || !pending || busy) return;
     setBusy(true); setError(""); setNotice("");
