@@ -40,6 +40,7 @@ export function AdminConsolePage({
         <span className="admin-eyebrow">FIXORA DYNAMICS / ADMINISTRACIÓN</span>
         <h1>Acceso restringido</h1>
         <p>{reason}</p>
+        {error && <p className="admin-error" role="alert">{error}</p>}
       </main>
     );
   }
