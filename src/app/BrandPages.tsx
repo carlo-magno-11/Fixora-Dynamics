@@ -61,7 +61,7 @@ export function AccountPage({ locale, onOpenGuide }: PageProps & { onOpenGuide: 
         {sections.map((section) => (
           <article className="account-section-card" key={section.title}>
             <span className="account-section-icon">{section.icon}</span>
-            <div><h2>{section.title}</h2><p>{section.detail}</p><span className="account-card-status">{copy.pending}</span></div>
+            <div><h2>{section.title}</h2><p>{section.detail}</p><span className="account-card-status">{authMode === "cloud" && (section.title === copy.profile || section.title === copy.business) ? "CONECTADO" : copy.pending}</span></div>
           </article>
         ))}
       </div>
