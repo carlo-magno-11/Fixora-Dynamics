@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import { getSupabaseClient } from "../../../shared/infrastructure/supabase/client";
 
-type TotpFactor = { id: string; friendly_name: string | null; status: "verified" | "unverified" };
+type TotpFactor = { id: string; friendly_name?: string | null; status: "verified" | "unverified" };
 
 export function MfaSettings() {
   const supabase = useMemo(() => getSupabaseClient(), []);
