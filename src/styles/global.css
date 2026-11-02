@@ -533,3 +533,10 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
 .mfa-enrollment form { display: grid; gap: 10px; max-width: 380px; }
 .mfa-enrollment label { color: var(--ink); font-size: 10px; font-weight: 700; }
 .mfa-enrollment input { min-height: 42px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 6px; background: white; color: var(--ink); font-size: 14px; letter-spacing: .15em; }
+
+.account-activation-panel { display: grid; gap: 11px; margin: 18px 0; }
+.account-activation-panel > p { margin: 0; color: var(--muted); font-size: 11px; line-height: 1.7; }
+.account-activation-panel form { display: grid; gap: 10px; max-width: 430px; }
+.account-activation-panel label { color: var(--ink); font-size: 10px; font-weight: 700; }
+.account-activation-panel input { width: 100%; min-height: 42px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 6px; background: white; color: var(--ink); font: inherit; font-size: 11px; }
+.account-activation-panel input#fixora-activation-code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .06em; }
