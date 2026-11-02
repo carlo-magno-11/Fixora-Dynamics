@@ -12,11 +12,10 @@ export const FIXORA_AUTH_MODE: FixoraAuthMode =
       : "cloud";
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL?.trim() ?? "";
-const publishableKey = (
-  import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ??
-  import.meta.env.VITE_SUPABASE_ANON_KEY ??
-  ""
-).trim();
+const publishableKey =
+  import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY?.trim() ||
+  import.meta.env.VITE_SUPABASE_ANON_KEY?.trim() ||
+  "";
 
 let client: SupabaseClient<Database> | null = null;
 
