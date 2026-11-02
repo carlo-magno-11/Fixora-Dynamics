@@ -206,6 +206,19 @@ export function App({
     }
   }, [authMode, history, historyNeedsRecovery, historyRepository]);
 
+  async function refreshLicenseAccess() {
+    if (authMode !== "cloud" || !supabase) return;
+    setLicenseLoading(true);
+    const { data, error } = await supabase.rpc("fixora_get_license_access");
+    if (error) {
+      setLicenseError("No fue posible actualizar el estado de la licencia.");
+    } else {
+      setLicenseAccess(data?.[0] ?? null);
+      setLicenseError("");
+    }
+    setLicenseLoading(false);
+  }
+
   async function chooseBusinessType(type: BusinessType) {
     try {
       await onBusinessTypeChange?.(type);
@@ -623,7 +636,7 @@ export function App({
 
           {view === "support" && authMode === "cloud" && <SupportPage businessId={businessId} />}
           {view === "guide" && <GuidePage />}
-          {view === "account" && <AccountPage onOpenGuide={() => setView("guide")} authMode={authMode} userEmail={userEmail} businessName={businessName} onSignOut={onSignOut} licenseAccess={licenseAccess} licenseLoading={licenseLoading} licenseError={licenseError} />}
+          {view === "account" && <AccountPage onOpenGuide={() => setView("guide")} authMode={authMode} userEmail={userEmail} businessName={businessName} onSignOut={onSignOut} licenseAccess={licenseAccess} licenseLoading={licenseLoading} licenseError={licenseError} onLicenseActivated={refreshLicenseAccess} />}
           {view === "about" && <AboutPage />}
           {view === "terms" && <LegalPage kind="terms" />}
           {view === "privacy" && <LegalPage kind="privacy" />}
