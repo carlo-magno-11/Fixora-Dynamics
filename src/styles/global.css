@@ -432,6 +432,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
 .admin-eyebrow { color: #9b8358; font-size: 9px; font-weight: 750; letter-spacing: .14em; }
 .admin-section-nav { display: flex; flex-wrap: wrap; gap: 8px; padding: 13px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
 .admin-section-nav button { min-height: 34px; padding: 0 12px; border: 1px solid #e2ded3; border-radius: 5px; background: #fffefa; color: #43514c; font-size: 10px; }
+.admin-section-nav button.active { border-color: #bba579; background: #f2ecde; color: #273c34; font-weight: 700; }
 .admin-section-nav button:hover { border-color: #bba579; background: #f5f0e5; }
 .admin-metric-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 22px 0; }
 .admin-metric-grid article { display: grid; gap: 8px; min-height: 115px; padding: 17px; border: 1px solid var(--line); border-radius: 7px; background: var(--paper); }
