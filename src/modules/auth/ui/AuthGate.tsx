@@ -102,11 +102,13 @@ export function AuthGate({ children }: AuthGateProps) {
       setSession(data.session);
       setSessionLoading(false);
     });
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, nextSession) => {
       setSession(nextSession);
-      setBusinesses([]);
-      setSelectedBusinessId(null);
-      setErrorMessage("");
+      if (event === "SIGNED_IN" || event === "SIGNED_OUT") {
+        setBusinesses([]);
+        setSelectedBusinessId(null);
+      }
+      if (event !== "TOKEN_REFRESHED") setErrorMessage("");
     });
     return () => {
       active = false;
@@ -314,7 +316,7 @@ export function AuthGate({ children }: AuthGateProps) {
     <>
       <div className="cloud-data-notice" role="status">
         <strong>Cuenta y negocio conectados.</strong>
-        <span>La identidad y el espacio están en Supabase. Catálogo, gastos e historial aún se guardan en este navegador; la sincronización cloud de esos registros sigue en desarrollo.</span>
+        <span>La identidad y el negocio están en Supabase. Catálogo, gastos e historial aún se guardan en este navegador. Los datos del modo local anterior permanecen intactos y no se importan automáticamente.</span>
       </div>
       {children({
         authMode: "cloud",
@@ -326,7 +328,7 @@ export function AuthGate({ children }: AuthGateProps) {
           : "general",
         initialCurrency: selectedBusiness.currency_code === "USD" ? "USD" : "MXN",
         onSignOut: () => { void signOut(); },
-        onSwitchBusiness: () => setSelectedBusinessId(null),
+        onSwitchBusiness: businesses.length > 1 ? () => setSelectedBusinessId(null) : undefined,
         onBusinessTypeChange: updateBusinessType,
       })}
     </>
