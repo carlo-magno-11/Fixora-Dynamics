@@ -320,7 +320,7 @@ export function App({
           <span className="topbar-caption">{authMode === "cloud" ? (businessName ?? "NEGOCIO CONECTADO") : "MODO LOCAL · SIN CUENTA"}</span>
           {onSwitchBusiness && <button className="topbar-action" onClick={onSwitchBusiness}>Cambiar negocio</button>}
           {onSignOut && <button className="topbar-action" onClick={onSignOut}>Salir</button>}
-          <button className="avatar avatar-button" aria-label="Abrir mi cuenta" onClick={() => setView("account")}>{userEmail?.trim().slice(0, 1).toUpperCase() ?? "U"}</button>
+          <button className="avatar avatar-button" title={userEmail ?? "Cuenta"} aria-label="Abrir mi cuenta" onClick={() => setView("account")}>{userEmail?.trim().slice(0, 1).toUpperCase() ?? "U"}</button>
         </div>
       </header>
 
@@ -412,7 +412,7 @@ export function App({
                 ))}
               </div>
               <div className="guide-callout"><strong>¿Todavía no tienes un sector definido?</strong><p>Conserva el perfil general. Fixora Essentials funciona como base y no necesitas elegir un kit especializado para calcular costes y precios.</p><button className="text-button" onClick={() => chooseBusinessType("general")}>Mantener perfil general</button></div>
-              <p className="local-storage-note">La selección del perfil se guarda únicamente en este navegador por ahora. Todavía no crea una cuenta ni sincroniza datos.</p>
+              <p className="local-storage-note">{authMode === "cloud" ? "La selección del perfil se guarda en la configuración de este negocio en Supabase." : "La selección del perfil se guarda únicamente en este navegador. Todavía no crea una cuenta ni sincroniza datos."}</p>
             </div>
           )}
 
@@ -593,7 +593,7 @@ export function App({
           )}
 
           {view === "guide" && <GuidePage />}
-          {view === "account" && <AccountPage onOpenGuide={() => setView("guide")} />}
+          {view === "account" && <AccountPage onOpenGuide={() => setView("guide")} authMode={authMode} userEmail={userEmail} businessName={businessName} onSignOut={onSignOut} />}
           {view === "about" && <AboutPage />}
           {view === "terms" && <LegalPage kind="terms" />}
           {view === "privacy" && <LegalPage kind="privacy" />}
