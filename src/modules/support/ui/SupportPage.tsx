@@ -8,8 +8,8 @@ type Message = Database["public"]["Functions"]["fixora_get_support_messages"]["R
 
 const categories = [
   ["technical", "Problema técnico"], ["billing", "Compra o pago"],
-  ["license", "Licencia y dispositivos"], ["account", "Cuenta y acceso"],
-  ["question", "Duda de uso"], ["other", "Otro tema"],
+  ["activation", "Activación de licencia"], ["calculation", "Cálculos y precios"],
+  ["account", "Cuenta y acceso"], ["other", "Otro tema"],
 ];
 
 function dateLabel(value: string) {
