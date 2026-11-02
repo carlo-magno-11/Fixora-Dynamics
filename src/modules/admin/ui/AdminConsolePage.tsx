@@ -14,6 +14,7 @@ type Props = {
   snapshot: AdminDashboardSnapshot | null;
   loading: boolean;
   error?: string;
+  activeSection: AdminSection;
   onRefresh: () => void;
   onOpenSection: (section: AdminSection) => void;
 };
@@ -26,6 +27,7 @@ export function AdminConsolePage({
   snapshot,
   loading,
   error,
+  activeSection,
   onRefresh,
   onOpenSection,
 }: Props) {
@@ -63,6 +65,7 @@ export function AdminConsolePage({
           <button
             type="button"
             key={section}
+            className={section === activeSection ? "active" : ""}
             onClick={() => onOpenSection(section)}
           >
             {ADMIN_SECTION_LABELS[section]}
@@ -72,7 +75,12 @@ export function AdminConsolePage({
 
       {error && <p className="admin-error" role="alert">{error}</p>}
 
-      {!canReadDashboard ? (
+      {activeSection !== "overview" ? (
+        <section className="admin-empty-state">
+          <h2>{ADMIN_SECTION_LABELS[activeSection]}</h2>
+          <p>Tu autorización para esta sección fue comprobada en el servidor. Las consultas y acciones operativas de este apartado todavía no están conectadas; no se muestran registros ficticios ni se habilitan cambios sin una API autorizada.</p>
+        </section>
+      ) : !canReadDashboard ? (
         <section className="admin-empty-state">
           <h2>Resumen no autorizado</h2>
           <p>Tu rol permite otras tareas, pero no consultar las métricas generales.</p>
