@@ -17,7 +17,7 @@ import { calculationsToCsv } from "../modules/snapshots/domain/calculation-expor
 import type { SavedCalculation } from "../modules/snapshots/domain/saved-calculation";
 import { createNamespacedKeyValueStorage, type KeyValueStorage } from "../shared/infrastructure/key-value-storage";
 import { getSupabaseClient } from "../shared/infrastructure/supabase/client";
-import type { Json } from "../shared/infrastructure/supabase/database.types";
+import type { Database, Json } from "../shared/infrastructure/supabase/database.types";
 
 type View = "essentials" | "calculator" | "breakEven" | "expenses" | "catalog" | "kits" | "history" | "guide" | "account" | "about" | "terms" | "privacy";
 type BusinessType = "general" | "retail" | "food" | "services_beauty" | "digital_products" | "workshop";
@@ -54,6 +54,7 @@ const initial: PricingInput = {
 };
 
 const currencyOptions: CurrencyCode[] = ["MXN", "USD"];
+type LicenseAccess = Database["public"]["Functions"]["fixora_get_license_access"]["Returns"][number];
 
 function downloadHistoryCsv(records: readonly SavedCalculation[]) {
   const csv = calculationsToCsv(records.map((record) => ({
@@ -134,6 +135,9 @@ export function App({
   const [view, setView] = useState<View>("essentials");
   const [businessType, setBusinessType] = useState<BusinessType>(() => initialBusinessType ?? readBusinessType(storage));
   const [profileMessage, setProfileMessage] = useState("");
+  const [licenseAccess, setLicenseAccess] = useState<LicenseAccess | null>(null);
+  const [licenseLoading, setLicenseLoading] = useState(false);
+  const [licenseError, setLicenseError] = useState("");
   const [breakEvenInput, setBreakEvenInput] = useState<BreakEvenInput>(initialBreakEven);
   const [name, setName] = useState("Mi primer producto");
   const [selectedCatalogItem, setSelectedCatalogItem] = useState<CatalogItemSnapshot | undefined>();
@@ -168,6 +172,29 @@ export function App({
       setProfileMessage("No fue posible guardar el perfil en este navegador.");
     }
   }, [businessType, storage]);
+
+  useEffect(() => {
+    if (authMode !== "cloud" || !supabase) {
+      setLicenseAccess(null);
+      setLicenseLoading(false);
+      setLicenseError("");
+      return;
+    }
+    let active = true;
+    setLicenseLoading(true);
+    setLicenseError("");
+    void supabase.rpc("fixora_get_license_access").then(({ data, error }) => {
+      if (!active) return;
+      if (error) {
+        setLicenseError("No fue posible consultar el estado de la licencia. Inténtalo más tarde.");
+        setLicenseAccess(null);
+      } else {
+        setLicenseAccess(data?.[0] ?? null);
+      }
+      setLicenseLoading(false);
+    });
+    return () => { active = false; };
+  }, [authMode, supabase]);
 
   useEffect(() => {
     if (authMode === "cloud" || historyNeedsRecovery) return;
@@ -593,7 +620,7 @@ export function App({
           )}
 
           {view === "guide" && <GuidePage />}
-          {view === "account" && <AccountPage onOpenGuide={() => setView("guide")} authMode={authMode} userEmail={userEmail} businessName={businessName} onSignOut={onSignOut} />}
+          {view === "account" && <AccountPage onOpenGuide={() => setView("guide")} authMode={authMode} userEmail={userEmail} businessName={businessName} onSignOut={onSignOut} licenseAccess={licenseAccess} licenseLoading={licenseLoading} licenseError={licenseError} />}
           {view === "about" && <AboutPage />}
           {view === "terms" && <LegalPage kind="terms" />}
           {view === "privacy" && <LegalPage kind="privacy" />}
