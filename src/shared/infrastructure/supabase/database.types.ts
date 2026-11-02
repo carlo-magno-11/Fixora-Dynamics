@@ -426,10 +426,10 @@ export type Database = {
       fixora_get_license_access: {
         Args: never
         Returns: {
-          activated_at: string
+          activated_at: string | null
           active_device_count: number
           available_entitlements: string[]
-          expires_at: string
+          expires_at: string | null
           license_id: string
           max_active_devices: number
           product_sku: string
