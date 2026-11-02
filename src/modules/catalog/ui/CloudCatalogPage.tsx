@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import { createCatalogItem, updateCatalogItem } from "../domain/catalog";
 import type { CatalogCurrency, CatalogDraft, CatalogItem, CatalogItemKind } from "../domain/catalog";
@@ -40,7 +40,7 @@ export function CloudCatalogPage({ businessId, currency, formatMoney, onUseInCal
   const [message, setMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
-  async function loadItems() {
+  const loadItems = useCallback(async () => {
     if (!supabase) {
       setErrorMessage("No se pudo inicializar la conexión con Supabase.");
       setLoading(false);
@@ -61,11 +61,11 @@ export function CloudCatalogPage({ businessId, currency, formatMoney, onUseInCal
     }
     setErrorMessage("");
     setItems((data ?? []).map(mapCatalogRow));
-  }
+  }, [businessId, supabase]);
 
   useEffect(() => {
     void loadItems();
-  }, [businessId, supabase]);
+  }, [loadItems]);
 
   function resetForm() {
     setEditingId(null);
