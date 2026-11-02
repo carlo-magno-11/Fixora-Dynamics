@@ -38,16 +38,22 @@ El almacenamiento local de la calculadora se namespacia por usuario y negocio pa
 - **Catálogo:** lectura, alta, edición y archivo en `fixora_catalog_items`, filtrado por negocio y RLS.
 - **Gastos:** lectura y guardado en lote mediante `fixora_save_expenses`. La RPC es SECURITY INVOKER, comprueba rol de negocio, valida el payload, usa versión optimista y archiva filas retiradas dentro de una sola transacción.
 - **Historial:** los cálculos se guardan como snapshots inmutables en `fixora_calculation_snapshots`; la vista permite abrirlos y exportarlos a CSV. No hay borrado directo.
-- **Cuenta/negocio:** identidad y perfil del negocio se leen desde Auth/Postgres.
+- **Cuenta/negocio:** identidad y perfil del negocio se leen desde Auth/Postgres; la cuenta consulta el estado de licencia y los límites de dispositivos.
+- **Soporte de cliente:** creación de tickets, listado propio, lectura de mensajes, respuestas y cierre mediante RPCs autenticados y RLS por propietario.
+- **MFA TOTP:** inscripción/verificación desde Mi cuenta y challenge automático al iniciar sesión cuando el usuario ya tiene un factor verificado. La autorización administrativa sigue dependiendo de AAL2 validado en servidor.
+- **Activación de licencia:** existe una interfaz preparada, pero se mantiene bloqueada por defecto mediante `VITE_FIXORA_LICENSE_ACTIVATION_ENABLED=false`.
 
-La sincronización offline, la importación guiada del almacenamiento local y la recuperación de borradores de calculadora aún no están implementadas. No se debe presentar el almacenamiento local como respaldo cloud.
+La sincronización offline, la importación guiada del almacenamiento local y la recuperación de borradores de calculadora aún no están implementadas. Las pantallas de licencias, soporte y MFA no sustituyen pruebas E2E contra Auth real. No se debe presentar el almacenamiento local como respaldo cloud.
 
 ## Pendientes antes de habilitar clientes
 
-- Ejecutar la migración de `fixora_save_expenses` en el proyecto de pruebas después de que pase el rebuild local de migraciones y pgTAP.
+- La migración `20261102230706_fixora_save_expenses_batch_rpc` ya está aplicada en el proyecto de pruebas; pgTAP remoto 14/14 pasó y CI reconstruyó la base desde migraciones en DB #552.
 - Confirmar el esquema expuesto de PostgREST y probar REST desde una sesión cliente.
 - Configurar redirect URLs/SMTP y realizar E2E de registro, confirmación, login, recuperación y logout con un correo de prueba.
-- Implementar licencias, activación, revisión de compra, panel administrativo, MFA de operadores y soporte.
+- Configurar y desplegar `activate-license` con `FIXORA_DEVICE_HMAC_SECRET` de al menos 32 bytes antes de cambiar la bandera de activación a `true`.
+- Desplegar y probar las Edge Functions administrativas con `FIXORA_AUDIT_HASH_SECRET` de al menos 32 bytes; provisionar el primer `platform_owner` fuera de banda y probar AAL2/roles.
+- Conectar la consola administrativa y sus secciones a endpoints reales; la UI de administración aún no está conectada.
+- Completar revisión de compras, gestión de dispositivos, revocación, invitaciones de administradores y respuestas de soporte desde el panel.
 - Crear staging HTTPS, backups/restauración, monitoreo, pruebas de accesibilidad, DAST/SCA y dispositivos reales.
 
 ## Criterio de salida
