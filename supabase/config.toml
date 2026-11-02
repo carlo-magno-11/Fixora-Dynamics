@@ -29,3 +29,6 @@ verify_jwt = true
 
 [functions.admin-accept-invite]
 verify_jwt = true
+
+[functions.admin-console]
+verify_jwt = true
