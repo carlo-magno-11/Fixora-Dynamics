@@ -494,6 +494,10 @@ export type Database = {
         }
         Returns: string
       }
+      fixora_server_get_admin_dashboard: {
+        Args: { p_user_id: string; p_aal: string }
+        Returns: Json
+      }
       fixora_server_has_admin_permission: {
         Args: { p_aal: string; p_permission_key: string; p_user_id: string }
         Returns: boolean
