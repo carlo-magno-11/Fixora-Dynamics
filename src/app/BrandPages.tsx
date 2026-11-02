@@ -1,5 +1,6 @@
 import { getMessages, type SupportedLocale } from "../i18n/messages";
 import { MfaSettings } from "../modules/auth/ui/MfaSettings";
+import { LicenseActivationPanel } from "../modules/licensing/ui/LicenseActivationPanel";
 import type { Database } from "../shared/infrastructure/supabase/database.types";
 
 type LicenseAccess = Database["public"]["Functions"]["fixora_get_license_access"]["Returns"][number];
@@ -41,7 +42,7 @@ export function AboutPage({ locale }: PageProps) {
   );
 }
 
-export function AccountPage({ locale, onOpenGuide, authMode = "local", userEmail, businessName, onSignOut, licenseAccess, licenseLoading = false, licenseError }: PageProps & {
+export function AccountPage({ locale, onOpenGuide, authMode = "local", userEmail, businessName, onSignOut, licenseAccess, licenseLoading = false, licenseError, onLicenseActivated }: PageProps & {
   onOpenGuide: () => void;
   authMode?: "cloud" | "local";
   userEmail?: string;
@@ -50,6 +51,7 @@ export function AccountPage({ locale, onOpenGuide, authMode = "local", userEmail
   licenseAccess?: LicenseAccess | null;
   licenseLoading?: boolean;
   licenseError?: string;
+  onLicenseActivated?: () => Promise<void>;
 }) {
   const copy = getMessages(locale).account;
   const sections = [
@@ -83,6 +85,7 @@ export function AccountPage({ locale, onOpenGuide, authMode = "local", userEmail
           </>
           : <p>Aún no hay una licencia vinculada a esta cuenta. La activación y la validación de compras se habilitarán cuando se complete la configuración segura del servicio.</p>}
       </section>}
+      {authMode === "cloud" && <LicenseActivationPanel onActivated={onLicenseActivated} />}
       <div className="account-summary-grid">
         {sections.map((section) => (
           <article className="account-section-card" key={section.title}>
