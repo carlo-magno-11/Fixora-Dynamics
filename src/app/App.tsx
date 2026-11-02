@@ -6,6 +6,7 @@ import { CatalogPage } from "../modules/catalog/ui/CatalogPage";
 import { CloudCatalogPage } from "../modules/catalog/ui/CloudCatalogPage";
 import { CloudHistoryPage } from "../modules/snapshots/ui/CloudHistoryPage";
 import { SupportPage } from "../modules/support/ui/SupportPage";
+import { AdminConsoleContainer } from "../modules/admin/ui/AdminConsoleContainer";
 import type { CatalogItem } from "../modules/catalog/domain/catalog";
 import type { CatalogItemSnapshot } from "../modules/snapshots/domain/calculation-snapshot";
 import { calculateBreakEven } from "../modules/break-even/domain/break-even";
@@ -20,7 +21,7 @@ import { createNamespacedKeyValueStorage, type KeyValueStorage } from "../shared
 import { getSupabaseClient } from "../shared/infrastructure/supabase/client";
 import type { Database, Json } from "../shared/infrastructure/supabase/database.types";
 
-type View = "essentials" | "calculator" | "breakEven" | "expenses" | "catalog" | "kits" | "history" | "guide" | "account" | "support" | "about" | "terms" | "privacy";
+type View = "essentials" | "calculator" | "breakEven" | "expenses" | "catalog" | "kits" | "history" | "guide" | "account" | "support" | "admin" | "about" | "terms" | "privacy";
 type BusinessType = "general" | "retail" | "food" | "services_beauty" | "digital_products" | "workshop";
 type CurrencyCode = "MXN" | "USD";
 const BUSINESS_TYPE_KEY = "fixora.business-type.v1";
@@ -394,6 +395,7 @@ export function App({
           <p className="nav-label nav-label-spaced">TU CUENTA</p>
           <button className={view === "account" ? "nav-item active" : "nav-item"} onClick={() => setView("account")}><span className="nav-icon">◉</span> Mi cuenta</button>
           {authMode === "cloud" && <button className={view === "support" ? "nav-item active" : "nav-item"} onClick={() => setView("support")}><span className="nav-icon">?</span> Soporte</button>}
+          {authMode === "cloud" && <button className={view === "admin" ? "nav-item active" : "nav-item"} onClick={() => setView("admin")}><span className="nav-icon">⌘</span> Administración</button>}
           <button className={view === "about" ? "nav-item active" : "nav-item"} onClick={() => setView("about")}><span className="nav-icon">✳</span> Nuestra familia</button>
           <p className="nav-label nav-label-spaced">RECURSOS</p>
           <button className={view === "guide" ? "nav-item active" : "nav-item"} onClick={() => setView("guide")}>
@@ -635,6 +637,7 @@ export function App({
           )}
 
           {view === "support" && authMode === "cloud" && <SupportPage businessId={businessId} />}
+          {view === "admin" && authMode === "cloud" && <AdminConsoleContainer />}
           {view === "guide" && <GuidePage />}
           {view === "account" && <AccountPage onOpenGuide={() => setView("guide")} authMode={authMode} userEmail={userEmail} businessName={businessName} onSignOut={onSignOut} licenseAccess={licenseAccess} licenseLoading={licenseLoading} licenseError={licenseError} onLicenseActivated={refreshLicenseAccess} />}
           {view === "about" && <AboutPage />}
