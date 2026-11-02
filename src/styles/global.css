@@ -520,3 +520,16 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
 .support-empty h2 { color: var(--ink); font-size: 16px; }
 .support-empty p, .support-ticket-list > p, .support-conversation > p { color: var(--muted); font-size: 11px; line-height: 1.7; }
 @media (max-width: 760px) { .support-layout { grid-template-columns: 1fr; } .support-ticket-list, .support-conversation, .support-new-ticket { padding: 15px; } }
+
+.account-mfa-panel { display: grid; gap: 11px; margin: 18px 0; }
+.account-mfa-panel > p { margin: 0; color: var(--muted); font-size: 11px; line-height: 1.7; }
+.mfa-factor-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 11px 0; border-top: 1px solid var(--line); }
+.mfa-factor-row > span { display: grid; gap: 4px; color: var(--ink); font-size: 11px; }
+.mfa-factor-row small { color: var(--muted); font-size: 9px; }
+.mfa-enrollment { display: grid; gap: 12px; padding-top: 12px; border-top: 1px solid var(--line); }
+.mfa-enrollment p { color: var(--muted); font-size: 11px; line-height: 1.7; }
+.mfa-enrollment img { width: min(220px, 100%); padding: 10px; border: 1px solid var(--line); border-radius: 6px; background: white; }
+.mfa-enrollment code { width: fit-content; max-width: 100%; padding: 8px 10px; border-radius: 5px; background: #f2f0e9; color: var(--ink); font-size: 11px; overflow-wrap: anywhere; }
+.mfa-enrollment form { display: grid; gap: 10px; max-width: 380px; }
+.mfa-enrollment label { color: var(--ink); font-size: 10px; font-weight: 700; }
+.mfa-enrollment input { min-height: 42px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 6px; background: white; color: var(--ink); font-size: 14px; letter-spacing: .15em; }
