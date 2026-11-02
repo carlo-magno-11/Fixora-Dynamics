@@ -7,6 +7,7 @@ import {
 } from "../domain/admin-console";
 import type { AdminAccessDecision } from "../domain/admin-access";
 import { AdminConsolePage } from "./AdminConsolePage";
+import { AdminInviteCreationPanel } from "./AdminInviteCreationPanel";
 
 const denied: AdminAccessDecision = { allowed: false, reason: "role_missing", permissions: [] };
 
@@ -52,6 +53,9 @@ export function AdminConsoleContainer() {
     loading={loading}
     error={error}
     activeSection={activeSection}
+    sectionContent={activeSection === "administrators" && access.allowed && access.permissions.includes("admins.manage")
+      ? <AdminInviteCreationPanel />
+      : undefined}
     onRefresh={() => void refresh()}
     onOpenSection={setActiveSection}
   />;
