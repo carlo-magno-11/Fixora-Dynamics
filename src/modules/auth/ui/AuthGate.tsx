@@ -15,6 +15,7 @@ type AuthView = "sign-in" | "sign-up" | "recover" | "update-password";
 
 export interface AuthWorkspaceProps {
   storageScope?: string;
+  businessId?: string;
   authMode: "cloud" | "local";
   userEmail?: string;
   businessName?: string;
@@ -321,6 +322,7 @@ export function AuthGate({ children }: AuthGateProps) {
       {children({
         authMode: "cloud",
         storageScope: `${session.user.id}:${selectedBusiness.id}`,
+        businessId: selectedBusiness.id,
         userEmail: session.user.email ?? "",
         businessName: selectedBusiness.name,
         initialBusinessType: businessTypes.some((item) => item.value === selectedBusiness.business_type)
