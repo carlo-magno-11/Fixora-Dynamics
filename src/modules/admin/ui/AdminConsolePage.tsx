@@ -97,7 +97,7 @@ export function AdminConsolePage({
       ) : (
         <>
           <section className="admin-metric-grid" aria-label="Resumen de plataforma">
-            <article><span>Usuarios</span><strong>{formatCount(snapshot.users.total)}</strong><small>{formatCount(snapshot.users.active)} activos</small></article>
+            <article><span>Usuarios</span><strong>{formatCount(snapshot.users.total)}</strong><small>{formatCount(snapshot.users.active)} con negocio activo</small></article>
             <article><span>Compras por revisar</span><strong>{formatCount(snapshot.purchases.pendingReview)}</strong><small>Cola de validación</small></article>
             <article><span>Licencias activas</span><strong>{formatCount(snapshot.licenses.active)}</strong><small>{formatCount(snapshot.licenses.expired)} vencidas · {formatCount(snapshot.licenses.suspended)} suspendidas</small></article>
             <article><span>Dispositivos activos</span><strong>{formatCount(snapshot.devices.active)}</strong><small>Instalaciones registradas</small></article>
