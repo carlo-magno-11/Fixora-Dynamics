@@ -1,0 +1,23 @@
+name: Temporary migration filename generator
+
+on:
+  pull_request:
+    paths:
+      - .github/workflows/tmp-generate-admin-summary.yml
+
+permissions:
+  contents: read
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: supabase/setup-cli@v3
+        with:
+          version: 2.122.0
+      - name: Generate migration filename
+        run: |
+          set -euo pipefail
+          supabase migration new fixora_admin_dashboard_summary
+          find supabase/migrations -maxdepth 1 -type f -name '*_fixora_admin_dashboard_summary.sql' -printf '%f\n'
