@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { SavedCalculation } from "../domain/saved-calculation";
 import { isSavedCalculation } from "../domain/saved-calculation";
 import { calculationsToCsv } from "../domain/calculation-export";
@@ -51,7 +51,7 @@ export function CloudHistoryPage({ businessId, formatMoney, onOpenCalculation, o
   onOpenCalculation: (record: SavedCalculation) => void;
   onRecordsLoaded: (records: SavedCalculation[]) => void;
 }) {
-  const supabase = getSupabaseClient();
+  const supabase = useMemo(() => getSupabaseClient(), []);
   const [records, setRecords] = useState<SavedCalculation[]>([]);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
