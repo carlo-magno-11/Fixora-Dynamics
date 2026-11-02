@@ -66,6 +66,9 @@ export function AuthGate({ children }: AuthGateProps) {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+  const [mfaCode, setMfaCode] = useState("");
+  const [mfaBusy, setMfaBusy] = useState(false);
+  const [mfaState, setMfaState] = useState<{ status: "checking" | "none" } | { status: "challenge"; factorId: string; challengeId: string } | { status: "error"; message: string }>({ status: "checking" });
 
   const loadBusinesses = useCallback(async (userId: string) => {
     if (!supabase) return;
@@ -125,6 +128,72 @@ export function AuthGate({ children }: AuthGateProps) {
     }
     void loadBusinesses(session.user.id);
   }, [session?.user.id, supabase, loadBusinesses]);
+
+  useEffect(() => {
+    if (!session?.user.id || !supabase) {
+      setMfaState({ status: "none" });
+      setMfaCode("");
+      return;
+    }
+    let active = true;
+    setMfaState({ status: "checking" });
+    void (async () => {
+      const { data: assurance, error: assuranceError } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+      if (!active) return;
+      if (assuranceError) {
+        setMfaState({ status: "error", message: "No fue posible comprobar el nivel de seguridad de la sesión." });
+        return;
+      }
+      if (assurance.currentLevel === "aal2" || assurance.nextLevel !== "aal2") {
+        setMfaState({ status: "none" });
+        return;
+      }
+      const { data: factors, error: factorsError } = await supabase.auth.mfa.listFactors();
+      if (!active) return;
+      if (factorsError) {
+        setMfaState({ status: "error", message: "No fue posible consultar tus factores multifactor." });
+        return;
+      }
+      const verifiedFactor = factors.totp.find((factor) => factor.status === "verified");
+      if (!verifiedFactor) {
+        setMfaState({ status: "none" });
+        return;
+      }
+      const { data: challenge, error: challengeError } = await supabase.auth.mfa.challenge({ factorId: verifiedFactor.id });
+      if (!active) return;
+      if (challengeError) {
+        setMfaState({ status: "error", message: "No se pudo iniciar la verificación multifactor. Inténtalo de nuevo." });
+        return;
+      }
+      setMfaState({ status: "challenge", factorId: verifiedFactor.id, challengeId: challenge.id });
+    })();
+    return () => { active = false; };
+  }, [session?.access_token, session?.user.id, supabase]);
+
+  async function verifyMfaChallenge(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!supabase || mfaState.status !== "challenge" || mfaBusy) return;
+    setMfaBusy(true);
+    setErrorMessage("");
+    const { error } = await supabase.auth.mfa.verify({
+      factorId: mfaState.factorId,
+      challengeId: mfaState.challengeId,
+      code: mfaCode.trim(),
+    });
+    if (error) {
+      setErrorMessage("El código multifactor no es válido. Revisa tu aplicación autenticadora e inténtalo de nuevo.");
+    } else {
+      const { data: assurance, error: assuranceError } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+      if (assuranceError || assurance.currentLevel !== "aal2") {
+        setMfaState({ status: "error", message: "La verificación no elevó la sesión a AAL2. Vuelve a iniciar sesión e inténtalo de nuevo." });
+      } else {
+        setMfaCode("");
+        setMfaState({ status: "none" });
+        await supabase.auth.refreshSession();
+      }
+    }
+    setMfaBusy(false);
+  }
 
   const selectedBusiness = businesses.find((business) => business.id === selectedBusinessId) ?? null;
 
@@ -264,6 +333,34 @@ export function AuthGate({ children }: AuthGateProps) {
         <p className="auth-help">Al continuar, aceptas que Fixora utilice tu correo para gestionar el acceso a tu cuenta. La activación comercial de licencias se conectará en una etapa posterior.</p>
       </AuthShell>
     );
+  }
+
+  if (mfaState.status === "checking") {
+    return <AuthShell><p className="auth-eyebrow">FIXORA DYNAMICS · SEGURIDAD</p><h1>Comprobando tu acceso.</h1><p className="auth-lead">Verificando si esta sesión necesita un segundo factor…</p></AuthShell>;
+  }
+
+  if (mfaState.status === "challenge") {
+    return <AuthShell>
+      <p className="auth-eyebrow">FIXORA DYNAMICS · VERIFICACIÓN</p>
+      <h1>Confirma que eres tú.</h1>
+      <p className="auth-lead">Introduce el código de seis dígitos de tu aplicación autenticadora para completar el inicio de sesión.</p>
+      <form className="auth-form" onSubmit={verifyMfaChallenge}>
+        <label className="field"><span>Código de autenticación</span><input inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6} value={mfaCode} onChange={(event) => setMfaCode(event.target.value.replace(/\D/g, "").slice(0, 6))} required /></label>
+        <button className="primary-button auth-submit" type="submit" disabled={mfaBusy || mfaCode.length !== 6}>{mfaBusy ? "Verificando…" : "Verificar y continuar"}</button>
+      </form>
+      {errorMessage && <p className="auth-error" role="alert">{errorMessage}</p>}
+      <button className="text-button" onClick={() => void signOut()}>Cerrar sesión</button>
+    </AuthShell>;
+  }
+
+  if (mfaState.status === "error") {
+    return <AuthShell>
+      <p className="auth-eyebrow">FIXORA DYNAMICS · SEGURIDAD</p>
+      <h1>No pudimos verificar tu sesión.</h1>
+      <p className="auth-error" role="alert">{mfaState.message}</p>
+      <button className="outline-button" onClick={() => setMfaState({ status: "checking" })}>Volver a comprobar</button>
+      <button className="text-button" onClick={() => void signOut()}>Cerrar sesión</button>
+    </AuthShell>;
   }
 
   if (businessLoading) {
