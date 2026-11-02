@@ -491,3 +491,6 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
   .topbar-caption { max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .topbar-action { padding: 5px 3px; }
 }
+
+.connected-pill { display: inline-flex; align-items: center; max-width: 190px; padding: 5px 9px; border: 1px solid #c9ddcf; border-radius: 999px; background: #eff6f1; color: #356b4f; font-size: 9px; font-weight: 700; letter-spacing: .05em; }
+.account-preferences { flex-wrap: wrap; }
