@@ -114,7 +114,7 @@ export function SupportPage({ businessId }: { businessId?: string }) {
       </div>
       <div className="support-conversation">
         {selected ? <>
-          <div className="support-section-heading"><div><span className="eyebrow">{selected.category}</span><h2>{selected.subject}</h2></div><span className="planned-pill">{selected.status === "open" ? "ABIERTA" : selected.status === "answered" ? "RESPONDIDA" : selected.status === "resolved" ? "RESUELTA" : "CERRADA"}</span></div>
+          <div className="support-section-heading"><div><span className="eyebrow">{selected.category}</span><h2>{selected.subject}</h2><small className="support-ticket-reference">Folio de soporte: {selected.ticket_id}</small></div><span className="planned-pill">{selected.status === "open" ? "ABIERTA" : selected.status === "answered" ? "RESPONDIDA" : selected.status === "resolved" ? "RESUELTA" : "CERRADA"}</span></div>
           <div className="support-message-list" aria-live="polite">
             {messages.length === 0 ? <p>Cargando conversación…</p> : messages.map((message) =>
               <article className={message.sender_type === "customer" ? "support-message customer" : "support-message team"} key={message.message_id}>
