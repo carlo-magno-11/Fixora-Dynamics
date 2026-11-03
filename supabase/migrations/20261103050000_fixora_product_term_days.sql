@@ -5,11 +5,102 @@ ALTER TABLE fixora_private.fixora_products
 ALTER TABLE fixora_private.fixora_products
   ADD COLUMN term_days smallint;
 
+ALTER TABLE fixora_private.fixora_licenses
+  ADD COLUMN term_months smallint,
+  ADD COLUMN term_days smallint;
+
+UPDATE fixora_private.fixora_licenses AS license
+SET term_months = product.term_months,
+    term_days = product.term_days
+FROM fixora_private.fixora_products AS product
+WHERE product.product_sku = license.product_sku;
+
+ALTER TABLE fixora_private.fixora_licenses
+  ADD CONSTRAINT fixora_license_term_days_range_check
+    CHECK (term_days IS NULL OR term_days BETWEEN 1 AND 3650),
+  ADD CONSTRAINT fixora_license_exactly_one_term_check
+    CHECK ((term_months IS NOT NULL) <> (term_days IS NOT NULL));
+
 ALTER TABLE fixora_private.fixora_products
   ADD CONSTRAINT fixora_product_term_days_range_check
     CHECK (term_days IS NULL OR term_days BETWEEN 1 AND 3650),
   ADD CONSTRAINT fixora_product_exactly_one_term_check
     CHECK ((term_months IS NOT NULL) <> (term_days IS NOT NULL));
+
+create or replace function fixora_private.issue_license_for_verified_purchase(
+  p_purchase_order_id uuid,
+  p_user_id uuid default null
+)
+returns uuid
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_order fixora_private.fixora_purchase_orders%rowtype;
+  v_product fixora_private.fixora_products%rowtype;
+  v_license_id uuid;
+begin
+  select * into v_order
+  from fixora_private.fixora_purchase_orders
+  where id = p_purchase_order_id
+  for update;
+
+  if not found then
+    raise exception 'Purchase order not found' using errcode = 'P0002';
+  end if;
+
+  if v_order.payment_status <> 'approved'
+    or v_order.refund_status <> 'none'
+    or v_order.verified_at is null
+    or v_order.verification_method is null then
+    raise exception 'Purchase is not eligible for license issuance' using errcode = '23514';
+  end if;
+
+  select * into v_product
+  from fixora_private.fixora_products
+  where product_sku = v_order.product_sku
+    and is_active = true;
+
+  if not found then
+    raise exception 'Product is not active' using errcode = '23514';
+  end if;
+
+  select id into v_license_id
+  from fixora_private.fixora_licenses
+  where purchase_order_id = p_purchase_order_id;
+
+  if v_license_id is not null then
+    return v_license_id;
+  end if;
+
+  insert into fixora_private.fixora_licenses (
+    purchase_order_id, user_id, product_sku, status, max_active_devices,
+    term_months, term_days
+  )
+  values (
+    v_order.id, p_user_id, v_product.product_sku, 'pending', v_product.max_active_devices,
+    v_product.term_months, v_product.term_days
+  )
+  returning id into v_license_id;
+
+  insert into fixora_private.fixora_license_entitlements (
+    license_id, feature_key, enabled, retained_after_expiry
+  )
+  select v_license_id, feature_key, true, feature_key = any(v_product.retained_entitlements)
+  from unnest(v_product.entitlements) as feature_key;
+
+  insert into fixora_private.fixora_license_events (
+    license_id, actor_user_id, event_type, metadata
+  )
+  values (
+    v_license_id, p_user_id, 'license_issued',
+    jsonb_build_object('purchase_order_id', v_order.id, 'product_sku', v_product.product_sku)
+  );
+
+  return v_license_id;
+end;
+$$;
 
 CREATE OR REPLACE FUNCTION fixora_private.redeem_activation_code(p_code_hash bytea, p_user_id uuid, p_device_key_hash bytea, p_device_label text)
  RETURNS TABLE(license_id uuid, activated_at timestamp with time zone, expires_at timestamp with time zone, device_id uuid, active_device_count integer, max_active_devices smallint)
@@ -21,7 +112,6 @@ declare
   v_code fixora_private.fixora_activation_code_hashes%rowtype;
   v_license fixora_private.fixora_licenses%rowtype;
   v_order fixora_private.fixora_purchase_orders%rowtype;
-  v_product fixora_private.fixora_products%rowtype;
   v_device_id uuid;
   v_now timestamptz := pg_catalog.clock_timestamp();
   v_count integer;
@@ -111,10 +201,6 @@ begin
     raise exception 'Purchase is no longer eligible' using errcode = '23514';
   end if;
 
-  select * into v_product
-  from fixora_private.fixora_products
-  where product_sku = v_license.product_sku;
-
   if v_license.status in ('suspended', 'revoked', 'expired') then
     raise exception 'License is not active' using errcode = '23514';
   end if;
@@ -146,9 +232,9 @@ begin
   if v_license.status = 'pending' then
     v_license.activated_at := v_now;
     v_license.expires_at := CASE
-      WHEN v_product.term_days IS NOT NULL
-        THEN v_now + pg_catalog.make_interval(secs => v_product.term_days::double precision * 86400)
-      ELSE v_now + pg_catalog.make_interval(months => v_product.term_months)
+      WHEN v_license.term_days IS NOT NULL
+        THEN v_now + pg_catalog.make_interval(secs => v_license.term_days::double precision * 86400)
+      ELSE v_now + pg_catalog.make_interval(months => v_license.term_months)
     END;
     v_license.status := 'active';
 
