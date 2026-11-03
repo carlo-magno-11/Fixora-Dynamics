@@ -587,3 +587,14 @@ tr { border-color: var(--line); }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
 }
+
+
+/* Vector icon rhythm */
+.nav-icon { display: block; flex: 0 0 18px; height: 18px; }
+.tile-symbol svg { display: block; width: 20px; height: 20px; }
+.sidebar-note-logo { display: block; margin-bottom: 3px; }
+.mobile-nav button > span > svg { display: block; }
+.mobile-more-menu > button { display: flex; align-items: center; gap: 10px; }
+.mobile-menu-icon { display: inline-flex; flex: 0 0 20px; align-items: center; justify-content: center; color: #A9684A; }
+.mobile-more-heading button { display: grid; place-items: center; }
+.mobile-more-heading button svg { display: block; }
