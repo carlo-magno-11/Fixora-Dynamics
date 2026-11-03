@@ -46,13 +46,13 @@ describe("summarizeExpenses", () => {
   });
 
   it("rejects a zero or invalid expected quantity", () => {
-    for (const expectedUnits of [0, -1, Number.NaN, Number.POSITIVE_INFINITY]) {
+    for (const expectedUnits of [0, -1, 1.5, Number.NaN, Number.POSITIVE_INFINITY, Number.MAX_SAFE_INTEGER + 1]) {
       expect(() => summarizeExpenses({
         fixedExpenses: [],
         variableExpenses: [],
         expectedUnits,
         period: "month",
-      })).toThrow("Las unidades estimadas deben ser mayores que cero.");
+      })).toThrow("Las unidades estimadas deben ser un entero positivo dentro del rango permitido.");
     }
   });
 
