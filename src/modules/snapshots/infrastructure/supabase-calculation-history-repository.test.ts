@@ -12,7 +12,7 @@ const row: SnapshotRow = {
   name: "Jabón artesanal",
   currency_code: "MXN",
   schema_version: 1,
-  formula_version: "pricing-v1",
+  formula_version: "pricing.v1",
   pricing_input: {
     materials: 85,
     laborMinutes: 90,
@@ -46,7 +46,7 @@ describe("Supabase calculation history mapping", () => {
       createdAt: row.created_at,
       currency: "MXN",
       snapshotVersion: 1,
-      formulaVersion: "pricing-v1",
+      formulaVersion: "pricing.v1",
     });
   });
 
