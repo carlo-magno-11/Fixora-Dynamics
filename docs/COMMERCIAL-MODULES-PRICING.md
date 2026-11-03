@@ -103,9 +103,10 @@ La interfaz puede ocultar o mostrar vistas previas, pero solo el servidor/RLS pu
 1. General + un kit piloto (recomiendo Comercio y reventa por ser el módulo con datos y fórmulas más reutilizables).
 2. Medir vistas de precio, conversión, activaciones, uso del kit, renovaciones, devoluciones y tickets de soporte.
 3. Corregir fricciones y validar fórmulas con casos de prueba.
-4. Lanzar Alimentos y repostería.
-5. Lanzar Servicios y belleza.
-6. Lanzar Digital y Manufactura cuando estén validados.
+4. Lanzar Servicios y belleza.
+5. Lanzar Alimentos y repostería.
+6. Lanzar Taller y manufactura ligera.
+7. Lanzar Productos digitales y creativos cuando estén validados.
 
 No construir los cinco kits a la vez. Cada uno necesita especificación de datos, fórmulas, ejemplos, pruebas y documentación propias.
 
