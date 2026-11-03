@@ -24,7 +24,7 @@ trap cleanup EXIT
 
 request_rate_limit() {
   local number="$1"
-  psql -qAt "$database_url" -v ON_ERROR_STOP=1 -c "SET ROLE service_role; SELECT allowed FROM public.fixora_server_consume_rate_limit(pg_catalog.decode('$bucket_hash', 'hex'), 3, 60);" >"$tmp_dir/$number"
+  psql -qAt -v ON_ERROR_STOP=1 "$database_url" -c "SET ROLE service_role; SELECT allowed FROM public.fixora_server_consume_rate_limit(pg_catalog.decode('$bucket_hash', 'hex'), 3, 60);" >"$tmp_dir/$number"
 }
 
 pids=()
