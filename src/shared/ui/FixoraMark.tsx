@@ -35,9 +35,9 @@ export function FixoraMark({ size = 36, variant = "default", ...props }: FixoraM
         fill={detail}
       />
       <path d="m18.2 24.2 3.1 1.4-1.1 2.1-3.2-1.1 1.2-2.4Z" fill={variant === "inverse" ? "#E8E2D3" : "#173B3B"}/>
-      <path d="m29.8 24.2-3.1 1.4 1.1 2.1 3.2-1.1-1.2-2.4Z" fill="#173B3B"/>
+      <path d="m29.8 24.2-3.1 1.4 1.1 2.1 3.2-1.1-1.2-2.4Z" fill={detail}/>
       <path d="m20.4 32.1 3.6-2.3 3.6 2.3-3.6 3.1-3.6-3.1Z" fill="#C47A56"/>
-      <path d="M24 35.2v3.1" stroke="#E8E2D3" strokeWidth="1.4" strokeLinecap="round"/>
+      <path d="M24 35.2v3.1" stroke={detail} strokeWidth="1.4" strokeLinecap="round"/>
       <path d="M8.2 13.3 4.8 18l3.4 1.8M39.8 13.3l3.4 4.7-3.4 1.8" stroke="#C47A56" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   );
