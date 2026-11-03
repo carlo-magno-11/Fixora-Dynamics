@@ -47,6 +47,7 @@ Estado al 3 de noviembre de 2026. Este documento separa evidencia existente de t
 - [x] Activación de licencia requiere cuenta autenticada, correo confirmado y código de un solo uso.
 - [x] Soporte de duración exacta por días, con snapshot de término en la licencia y preservación de licencias anuales; código y migración en PR #13.
 - [x] CI #1218 y Database tests #774 SUCCESS en el commit `1e51c55`: reconstrucción local, pgTAP, mutaciones negativas RLS y concurrencia de dispositivos.
+- [x] La cuenta muestra todas las licencias por separado y explica los derechos conocidos; `kits.access` se presenta como exploración del catálogo, no como permiso para ejecutar kits.
 - [ ] Resolver licencia por usuario vs negocio y herencia a miembros; la regla de dispositivos ya está confirmada: tres activos por licencia, no global por cuenta.
 - [ ] Reemplazar permiso genérico kits.access para autorización de ejecución por entitlements exactos por kit.
 - [ ] Probar General solo, kit solo, bundle, add-on, General vencido, kit vencido, reembolso, contracargo, disputa y revocación.
