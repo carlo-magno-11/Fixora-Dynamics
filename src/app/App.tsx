@@ -393,7 +393,7 @@ export function App({
         <button type="button" aria-current={view === "history" ? "page" : undefined} onClick={() => { setView("history"); setMobileMoreOpen(false); }}><span>◷</span><small>Historial</small></button>
         <button type="button" aria-expanded={mobileMoreOpen} aria-controls="mobile-more-menu" aria-current={!mobilePrimaryViews.includes(view) ? "page" : undefined} onClick={() => setMobileMoreOpen((open) => !open)}><span>☰</span><small>{mobileMoreOpen ? "Cerrar" : "Más"}</small></button>
       </nav>
-      {mobileMoreOpen && <div className="mobile-more-menu" id="mobile-more-menu" aria-label="Más secciones">
+      {mobileMoreOpen && <nav className="mobile-more-menu" id="mobile-more-menu" aria-label="Más secciones">
         <div className="mobile-more-heading"><strong>Más herramientas y recursos</strong><button type="button" aria-label="Cerrar menú" onClick={() => setMobileMoreOpen(false)}>×</button></div>
         <button type="button" onClick={() => { setView("breakEven"); setMobileMoreOpen(false); }}>◒　Punto de equilibrio</button>
         <button type="button" onClick={() => { setView("catalog"); setMobileMoreOpen(false); }}>◇　Catálogo</button>
@@ -405,7 +405,7 @@ export function App({
         <button type="button" onClick={() => { setView("about"); setMobileMoreOpen(false); }}>✳　Nuestra familia</button>
         <button type="button" onClick={() => { setView("terms"); setMobileMoreOpen(false); }}>§　Términos</button>
         <button type="button" onClick={() => { setView("privacy"); setMobileMoreOpen(false); }}>⌑　Privacidad</button>
-      </div>}
+      </nav>}
 
       <div className="app-layout">
         <aside className="sidebar" aria-label="Navegación principal">
