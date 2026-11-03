@@ -29,6 +29,9 @@ Estado al 3 de noviembre de 2026. Este documento separa evidencia existente de t
 ## 2. Seguridad y administración
 - [x] PR #8 reportó 14 check runs exitosos en SHA 3649d026659a6c6f5337b1139f86fa161c6c2b84 el 3-11-2026: CodeQL, Gitleaks, Trivy, OSV-Scanner, zizmor, validación y pruebas de base.
 - [x] Rate limit server-side agregado en rama PR #8 con tests Deno, pgTAP y prueba de concurrencia.
+- [ ] **No desplegado en el proyecto de pruebas al 3-11-2026:** el último migration registrado es 20261102234809; falta 20261103030100_fixora_server_rate_limits. La función admin-support-inbox tampoco aparece entre las ocho Edge Functions activas. CI de PR #8 verde no significa que estos cambios estén aplicados/desplegados.
+- [x] Supabase Security Advisor en el proyecto de pruebas: cero hallazgos el 3-11-2026.
+- [ ] Revisar 11 avisos informativos de rendimiento (10 índices sin uso y estrategia de conexiones Auth); la mayoría puede deberse a tablas aún vacías, no borrar índices sin medir.
 - [ ] Revisar cambios manualmente y probar endpoints con usuario anónimo, autenticado AAL1, admin sin permiso y admin AAL2.
 - [ ] Completar MFA real y recuperación de cuenta en staging.
 - [ ] Definir bootstrap de platform_owner fuera de banda, auditado y sin registro público.
