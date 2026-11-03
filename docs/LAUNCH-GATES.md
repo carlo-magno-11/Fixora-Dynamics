@@ -32,6 +32,8 @@ Estado al 3 de noviembre de 2026. Este documento separa evidencia existente de t
 - [ ] **No desplegado en el proyecto de pruebas al 3-11-2026:** el último migration registrado es 20261102234809; falta 20261103030100_fixora_server_rate_limits. La función admin-support-inbox tampoco aparece entre las ocho Edge Functions activas. CI de PR #8 verde no significa que estos cambios estén aplicados/desplegados.
 - [x] Supabase Security Advisor en el proyecto de pruebas: cero hallazgos el 3-11-2026.
 - [ ] Revisar 11 avisos informativos de rendimiento (10 índices sin uso y estrategia de conexiones Auth); la mayoría puede deberse a tablas aún vacías, no borrar índices sin medir.
+- [x] El proyecto de pruebas registra tres migraciones baseline heredadas de EYESITE en su historial, pero el inventario actual del esquema public muestra solo tablas Fixora; no se debe resetear ni borrar el proyecto por esos nombres históricos.
+- [x] En el inventario de tablas, los datos operativos Fixora están en cero filas; fixora_products contiene un SKU y la matriz de permisos admin 18 filas. No se observaron órdenes, licencias, tickets ni negocios de clientes.
 - [ ] Revisar cambios manualmente y probar endpoints con usuario anónimo, autenticado AAL1, admin sin permiso y admin AAL2.
 - [ ] Completar MFA real y recuperación de cuenta en staging.
 - [ ] Definir bootstrap de platform_owner fuera de banda, auditado y sin registro público.
