@@ -36,6 +36,7 @@ export function CloudHistoryPage({ businessId, formatMoney, onOpenCalculation, o
   const requestId = useRef(0);
   const [records, setRecords] = useState<SavedCalculation[]>([]);
   const [loadedBusinessId, setLoadedBusinessId] = useState<string | null>(null);
+  const [loadFailed, setLoadFailed] = useState(false);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [cursor, setCursor] = useState<SnapshotCursor | null>(null);
@@ -51,6 +52,7 @@ export function CloudHistoryPage({ businessId, formatMoney, onOpenCalculation, o
     setHasMore(false);
     setRecords([]);
     setLoadedBusinessId(null);
+    setLoadFailed(false);
     onRecordsLoaded([]);
     setInvalidCount(0);
     setErrorMessage("");
@@ -59,6 +61,7 @@ export function CloudHistoryPage({ businessId, formatMoney, onOpenCalculation, o
       if (currentRequest !== requestId.current) return;
       setRecords(page.records);
       setLoadedBusinessId(businessId);
+      setLoadFailed(false);
       setCursor(page.cursor);
       setHasMore(page.hasMore);
       setInvalidCount(page.invalidCount);
@@ -67,6 +70,7 @@ export function CloudHistoryPage({ businessId, formatMoney, onOpenCalculation, o
       if (currentRequest !== requestId.current) return;
       setRecords([]);
       setLoadedBusinessId(businessId);
+      setLoadFailed(true);
       onRecordsLoaded([]);
       setErrorMessage(error instanceof Error ? error.message : "No fue posible cargar el historial.");
     } finally {
@@ -109,7 +113,7 @@ export function CloudHistoryPage({ businessId, formatMoney, onOpenCalculation, o
       <div className="history-actions"><span>Historial del negocio seleccionado</span><button className="outline-button" type="button" disabled={loading || loadingMore} onClick={() => void loadFirstPage()}>{loading ? "Actualizando…" : "Actualizar historial"}</button></div>
       {errorMessage && <p className="error-state" role="alert">{errorMessage}</p>}
       {invalidCount > 0 && <div className="guide-callout" role="alert"><strong>Algunos registros no se pudieron interpretar.</strong><p>{invalidCount} registros no coinciden con el esquema de cálculo actual. No se modificaron ni eliminaron.</p></div>}
-      {loading || loadedBusinessId !== businessId ? <p className="local-storage-note">Cargando historial del negocio seleccionado…</p> : records.length === 0 ? (
+      {loading || loadedBusinessId !== businessId ? <p className="local-storage-note">Cargando historial del negocio seleccionado…</p> : loadFailed ? <div className="empty-state"><h2>No pudimos cargar el historial</h2><p>No asumimos que el historial esté vacío. Intenta consultar de nuevo.</p><button className="outline-button" type="button" onClick={() => void loadFirstPage()}>Volver a intentar</button></div> : records.length === 0 ? (
         <div className="empty-state"><span>◷</span><h2>Aún no hay cálculos guardados</h2><p>Cuando guardes un análisis, aparecerá aquí para que puedas consultarlo desde este negocio.</p></div>
       ) : (
         <>
