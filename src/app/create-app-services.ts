@@ -10,6 +10,8 @@ import { createCloudExpensesApplicationService } from "../modules/expenses/appli
 import { createSupabaseExpensesRepository } from "../modules/expenses/infrastructure/supabase-expenses-repository";
 import { createCloudCalculationHistoryApplicationService } from "../modules/snapshots/application/cloud-calculation-history-service";
 import { createSupabaseCalculationHistoryRepository } from "../modules/snapshots/infrastructure/supabase-calculation-history-repository";
+import { createCloudCalculatorDraftApplicationService } from "../modules/drafts/application/cloud-calculator-draft-service";
+import { createSupabaseCalculatorDraftRepository } from "../modules/drafts/infrastructure/supabase-calculator-draft-repository";
 import { getSupabaseClient } from "../shared/infrastructure/supabase/client";
 import type { KeyValueStorageSource } from "../shared/infrastructure/key-value-storage";
 
@@ -42,6 +44,9 @@ export function createAppServices(runtime: AppRuntime) {
     ),
     cloudHistoryService: createCloudCalculationHistoryApplicationService(
       createSupabaseCalculationHistoryRepository(supabase),
+    ),
+    cloudCalculatorDraftService: createCloudCalculatorDraftApplicationService(
+      createSupabaseCalculatorDraftRepository(supabase),
     ),
   };
 }
