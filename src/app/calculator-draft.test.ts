@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { CALCULATOR_DRAFT_KEY, readCalculatorDraft, saveCalculatorDraft } from "./calculator-draft";
+import { CALCULATOR_DRAFT_KEY, createCalculatorDraftStorage, readCalculatorDraft, saveCalculatorDraft } from "./calculator-draft";
 import type { KeyValueStorage } from "../shared/infrastructure/key-value-storage";
 
 const input = {
@@ -17,6 +17,17 @@ function memoryStorage(initial: Record<string, string> = {}): KeyValueStorage {
 }
 
 describe("calculator draft", () => {
+  it("isolates the same local draft key between businesses and preserves each draft", () => {
+    const backing = memoryStorage();
+    const firstBusiness = createCalculatorDraftStorage(backing, "business-1");
+    const secondBusiness = createCalculatorDraftStorage(backing, "business-2");
+    saveCalculatorDraft(firstBusiness, { name: "Negocio uno", currency: "MXN", input, breakEvenInput });
+    saveCalculatorDraft(secondBusiness, { name: "Negocio dos", currency: "USD", input, breakEvenInput });
+    expect(readCalculatorDraft(firstBusiness)?.name).toBe("Negocio uno");
+    expect(readCalculatorDraft(secondBusiness)?.name).toBe("Negocio dos");
+  });
+
+
   it("saves and restores a versioned draft", () => {
     const storage = memoryStorage();
     expect(saveCalculatorDraft(storage, { name: "Mi producto", currency: "MXN", input, breakEvenInput }, () => new Date("2026-11-02T18:00:00.000Z"))).toBe(true);
