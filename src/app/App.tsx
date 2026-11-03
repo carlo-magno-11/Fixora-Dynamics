@@ -707,7 +707,7 @@ export function App({
               </div>
 
               {draftStatus && <p className="draft-status" role="status">{draftStatus}</p>}
-              {authMode === "cloud" && localBackupDraft && !cloudDraftNeedsChoice && (
+              {authMode === "cloud" && localBackupDraft && !cloudDraftNeedsChoice && !cloudDraftNeedsReload && (
                 <div className="history-actions">
                   <span>Hay una copia local anterior disponible en este dispositivo.</span>
                   <button className="outline-button" type="button" disabled={cloudDraftSaving} onClick={() => void restoreLocalBackup()}>Restaurar copia local anterior</button>
