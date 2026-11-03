@@ -255,4 +255,6 @@ Calcula coste del lote puesto en almacén, coste de adquisición por unidad vend
 
 - La cuenta ahora conserva y presenta todas las licencias devueltas por el RPC, mostrando el límite de dispositivos por licencia; no colapsa el resultado al primer registro.
 
+- También se añadió `src/modules/retail/domain/retail-inventory.ts` y su suite de pruebas: reconstruye el saldo por secuencia inmutable, separa unidades vendibles de devoluciones en cuarentena y rechaza ventas, ajustes o disposiciones que producirían saldos negativos.
+
 Este avance es únicamente lógica de dominio. Todavía no incluye interfaz, movimientos persistidos de inventario, tablas, RPC, RLS, entitlement `kit.retail`, SKU comercial ni activación de ventas. Esos elementos se implementarán después de validar el dominio y cerrar las decisiones de titularidad y autorización.
