@@ -2,7 +2,7 @@
 
 Fecha: 3 de noviembre de 2026  
 Rama de referencia: `integration/fixora-mainline-20261103`  
-Estado: adaptadores cloud extraídos y conectados en la rama central; CI #1353 aprobó TypeScript, 195 pruebas, build web y Edge Functions. Security, CodeQL y Database tests de este HEAD aún deben cerrar. No equivale a una validación E2E en staging.
+Estado: repositorios cloud y sincronización de borradores implementados en la rama central. En HEAD `1594a01`, TypeScript y Vitest pasan; build está en curso y Database tests debe validar la nueva migración de borradores. No equivale a una validación E2E en staging.
 
 ## 1. Estado real observado
 
@@ -14,7 +14,7 @@ La aplicación ya tiene rutas cloud para los datos operativos principales. La au
 - `CloudExpensesPage` lee gastos/configuración y guarda el conjunto mediante `fixora_save_expenses`, que aplica control de versión optimista y una transacción.
 - `App.tsx` inserta los snapshots de cálculo en `fixora_calculation_snapshots` en modo cloud. `CloudHistoryPage` lee el historial del negocio y valida los registros antes de mostrarlos.
 - El historial cloud ya admite paginación por cursor de fecha + UUID, orden estable y lotes de 100. El cambio quedó en el commit `0ab526ed35a2378fb61d1af1bf6448ec5cc51b76`; sus controles CI/Security/Database/CodeQL deben considerarse pendientes hasta que GitHub confirme el resultado final de cada workflow.
-- Los borradores del calculador siguen guardándose en `localStorage` incluso en modo cloud. La UI informa que son locales y no están sincronizados. No existe aún un flujo de migración local → cloud.
+- Los borradores del calculador ahora tienen persistencia cloud privada por usuario + negocio en `fixora_calculator_drafts`, con RPC de control de versión y RLS de lectura propia. La UI conserva el almacenamiento local, pide elegir cuando detecta dos versiones, ofrece sincronización explícita del borrador local y permite conservar/restaurar una copia local previa. La migración está incluida en la rama; falta que pgTAP confirme sus políticas, permisos y concurrencia en el entorno local de CI.
 - Catálogo, gastos e historial ahora pasan por repositorios Supabase tipados y servicios de aplicación. Los componentes UI reciben contratos de aplicación; la composición de dependencias se concentra en `src/app/create-app-services.ts`. Las pruebas de arquitectura impiden que UI importe infraestructura directamente.
 - Los repositorios tienen pruebas unitarias de mapeo/validación y los servicios cloud tienen pruebas de delegación y reglas de dominio. El CI #1353 confirmó 195 pruebas Vitest, TypeScript y build web.
 - No hay evidencia de E2E en staging con dos cuentas, dos negocios y dos dispositivos.
@@ -121,10 +121,14 @@ No forzar una conversión de todos los contratos locales a Promise si no aporta 
 
 ### G4 — borrador y transición local → cloud
 
-- Definir persistencia de borradores cloud con política de privacidad por usuario/negocio.
-- Detectar registros locales legacy y ofrecer importación explícita al negocio seleccionado.
-- Mostrar conteo, preview, conflictos y confirmación.
-- Importar mediante operaciones idempotentes; conservar copia local hasta verificar el resultado remoto.
+**Estado:** implementación en la rama; pgTAP y E2E pendientes.
+
+- Tabla privada por negocio + usuario, con lectura propia, tamaño máximo y sin escritura directa desde el cliente.
+- RPC SECURITY INVOKER con helper SECURITY DEFINER de search_path vacío, grants mínimos y control optimista de versión.
+- La UI detecta borrador local/cloud, solicita elección explícita y no mezcla versiones.
+- La copia local se conserva; cuando se elige cloud, la copia previa se respalda por ámbito de usuario/negocio y puede restaurarse.
+- La aplicación reinicia e hidrata estado al cambiar cuenta/negocio y descarta respuestas asíncronas obsoletas para no mezclar datos.
+- Pendiente: pgTAP completo, conflicto real con dos dispositivos y pruebas de desconexión/reintento.
 - Nunca mezclar datos de dos cuentas o negocios por compartir navegador.
 
 ### G5 — staging y salida
@@ -139,7 +143,7 @@ No forzar una conversión de todos los contratos locales a Promise si no aporta 
 
 General cloud sólo puede marcarse completo cuando:
 - catálogo, gastos y snapshots/historial usan repositorios Supabase tipados en modo cloud;
-- borradores y migración local-cloud tienen un comportamiento explícito, seguro y recuperable;
+- borradores cloud privados pasan pruebas RLS/pgTAP, conflictos reales y recuperación local-cloud explícita;
 - local y cloud no se mezclan ni se confunden en los mensajes;
 - RLS y RPC pasan pruebas positivas y negativas entre usuarios/negocios;
 - concurrencia y reintentos no duplican ni pisan datos;
