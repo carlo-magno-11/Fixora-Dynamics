@@ -57,7 +57,7 @@ La migración base ya define en el esquema privado:
 
 No crear product_catalog, product_components, license_grants, license_activations ni tablas de administración paralelas. La primera implementación debe extender el catálogo fixora_products y las funciones existentes con SKUs nuevos y claves de entitlement específicas. La tabla fixora_licenses tiene actualmente una relación única con purchase_order_id; para la primera versión, cada paquete bundle debe ser un SKU de producto único con la unión exacta de entitlements incluidos. Una compra add-on crea una licencia de SKU de complemento con solo el entitlement de ese kit. La autorización efectiva se calcula agregando las licencias vigentes del titular y aplicando el requisito de General.
 
-La compra y la licencia existentes se vinculan al user_id. El alcance final (licencia por cuenta o por business_id y cómo se comparte con business_memberships) debe decidirse antes de permitir múltiples negocios o colaboradores. No ampliar silenciosamente la licencia a todos los negocios o miembros.
+La compra y la licencia existentes se vinculan al user_id. La licencia actual dura 12 meses desde la primera activación y el límite de tres dispositivos está definido en fixora_products/fixora_licenses por licencia. Antes de vender add-ons, debe decidirse el alcance de la licencia (cuenta o business_id), cómo se comparte con business_memberships y si el máximo de tres instalaciones es por licencia o por cuenta. Recomendación: tres instalaciones únicas por cuenta, compartidas por General y todos los kits. Si se elige este límite global, la implementación debe contar dispositivos distintos entre todas las licencias del titular bajo un bloqueo transaccional por usuario/cuenta; bloquear solo una fila de licencia no evita carreras entre dos compras concurrentes. No ampliar silenciosamente la licencia a todos los negocios o miembros.
 
 ## 5. Contrato de autorización para abrir un módulo
 
@@ -119,7 +119,8 @@ Controles obligatorios:
 Fase A — lectura y reconciliación:
 1. Inspeccionar todas las migraciones y RPC actuales de compras, licencias, dispositivos, negocios y roles.
 2. Comparar PR #8 con PR #2 y la rama de gastos; resolver divergencia sin reset/force-push ni sobrescribir el trabajo concurrente.
-3. Crear matriz SKU → componentes → derechos → duración → pruebas.
+3. Crear matriz SKU → entitlements exactos → vigencia desde primera activación → límite de dispositivos → pruebas.
+4. Resolver antes del SQL si los tres dispositivos se comparten entre todas las licencias del titular. No lanzar add-ons con una cuota accidental de tres dispositivos por SKU.
 
 Fase B — diseño de pruebas antes del SQL:
 1. Tests unitarios del resolver de entitlements.
@@ -149,7 +150,8 @@ Fase D — validación:
 - General sin kit no puede acceder a datos ni cálculos del kit.
 - Kit A no concede Kit B.
 - Vencido/suspendido/revocado se bloquea en servidor, no solo en UI.
-- Bundle crea exactamente General + kit adquirido; compra add-on crea solo kit.
+- Bundle crea exactamente los entitlements de General + kit adquirido en el SKU bundle; compra add-on crea solo el entitlement de kit.
+- Los tres dispositivos máximos se aplican conforme a una política explícita y no se multiplican por comprar más kits.
 - Repetir un webhook/pedido no duplica licencias.
 - Ningún usuario puede autoasignarse roles ni invitar a un platform_owner.
 - Admin AAL1, suspendido o sin permiso recibe 401/403 en llamada directa.
