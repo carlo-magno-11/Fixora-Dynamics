@@ -22,6 +22,7 @@ import { getSupabaseClient } from "../shared/infrastructure/supabase/client";
 import type { Database, Json } from "../shared/infrastructure/supabase/database.types";
 
 type View = "essentials" | "calculator" | "breakEven" | "expenses" | "catalog" | "kits" | "history" | "guide" | "account" | "support" | "admin" | "about" | "terms" | "privacy";
+const mobilePrimaryViews: View[] = ["essentials", "calculator", "expenses", "history"];
 type BusinessType = "general" | "retail" | "food" | "services_beauty" | "digital_products" | "workshop";
 type CurrencyCode = "MXN" | "USD";
 const BUSINESS_TYPE_KEY = "fixora.business-type.v1";
@@ -135,6 +136,7 @@ export function App({
   const [input, setInput] = useState<PricingInput>(initial);
   const [currency, setCurrency] = useState<CurrencyCode>(initialCurrency ?? "MXN");
   const [view, setView] = useState<View>("essentials");
+  const [mobileMoreOpen, setMobileMoreOpen] = useState(false);
   const [businessType, setBusinessType] = useState<BusinessType>(() => initialBusinessType ?? readBusinessType(storage));
   const [profileMessage, setProfileMessage] = useState("");
   const [licenseAccess, setLicenseAccess] = useState<LicenseAccess | null>(null);
@@ -365,6 +367,27 @@ export function App({
           <button className="avatar avatar-button" title={userEmail ?? "Cuenta"} aria-label="Abrir mi cuenta" onClick={() => setView("account")}>{userEmail?.trim().slice(0, 1).toUpperCase() ?? "U"}</button>
         </div>
       </header>
+
+      <nav className="mobile-nav" aria-label="Navegación principal">
+        <button type="button" aria-current={view === "essentials" ? "page" : undefined} onClick={() => { setView("essentials"); setMobileMoreOpen(false); }}><span>✳</span><small>Inicio</small></button>
+        <button type="button" aria-current={view === "calculator" ? "page" : undefined} onClick={() => { setView("calculator"); setMobileMoreOpen(false); }}><span>⌗</span><small>Calcular</small></button>
+        <button type="button" aria-current={view === "expenses" ? "page" : undefined} onClick={() => { setView("expenses"); setMobileMoreOpen(false); }}><span>＋</span><small>Gastos</small></button>
+        <button type="button" aria-current={view === "history" ? "page" : undefined} onClick={() => { setView("history"); setMobileMoreOpen(false); }}><span>◷</span><small>Historial</small></button>
+        <button type="button" aria-expanded={mobileMoreOpen} aria-controls="mobile-more-menu" aria-current={!mobilePrimaryViews.includes(view) ? "page" : undefined} onClick={() => setMobileMoreOpen((open) => !open)}><span>☰</span><small>{mobileMoreOpen ? "Cerrar" : "Más"}</small></button>
+      </nav>
+      {mobileMoreOpen && <div className="mobile-more-menu" id="mobile-more-menu" aria-label="Más secciones">
+        <div className="mobile-more-heading"><strong>Más herramientas y recursos</strong><button type="button" aria-label="Cerrar menú" onClick={() => setMobileMoreOpen(false)}>×</button></div>
+        <button type="button" onClick={() => { setView("breakEven"); setMobileMoreOpen(false); }}>◒　Punto de equilibrio</button>
+        <button type="button" onClick={() => { setView("catalog"); setMobileMoreOpen(false); }}>◇　Catálogo</button>
+        <button type="button" onClick={() => { setView("kits"); setMobileMoreOpen(false); }}>✳　Kits por negocio</button>
+        <button type="button" onClick={() => { setView("account"); setMobileMoreOpen(false); }}>◉　Mi cuenta</button>
+        {authMode === "cloud" && <button type="button" onClick={() => { setView("support"); setMobileMoreOpen(false); }}>?　Soporte</button>}
+        {authMode === "cloud" && <button type="button" onClick={() => { setView("admin"); setMobileMoreOpen(false); }}>⌘　Administración</button>}
+        <button type="button" onClick={() => { setView("guide"); setMobileMoreOpen(false); }}>⌘　Guía de uso</button>
+        <button type="button" onClick={() => { setView("about"); setMobileMoreOpen(false); }}>✳　Nuestra familia</button>
+        <button type="button" onClick={() => { setView("terms"); setMobileMoreOpen(false); }}>§　Términos</button>
+        <button type="button" onClick={() => { setView("privacy"); setMobileMoreOpen(false); }}>⌑　Privacidad</button>
+      </div>}
 
       <div className="app-layout">
         <aside className="sidebar" aria-label="Navegación principal">
