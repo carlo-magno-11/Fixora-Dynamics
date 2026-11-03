@@ -31,11 +31,11 @@ SET LOCAL request.jwt.claim.sub = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1';
 SELECT public.fixora_create_business('Fixora Draft A', 'general', 'MXN', 'America/Merida');
 
 SELECT results_eq(
-  $SELECT public.fixora_save_calculator_draft(
+  $$SELECT public.fixora_save_calculator_draft(
       (SELECT id FROM public.fixora_businesses WHERE name = 'Fixora Draft A'),
       '{"version":1,"name":"Draft A","currency":"MXN"}'::jsonb,
       0
-    )$,
+    )$$,
   ARRAY[1::bigint],
   'Owner can create their private calculator draft through the RPC'
 );
