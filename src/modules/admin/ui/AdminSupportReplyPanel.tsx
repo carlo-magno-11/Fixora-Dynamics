@@ -30,6 +30,7 @@ export function AdminSupportReplyPanel() {
   const [tickets, setTickets] = useState<SupportTicket[]>([]);
   const [inboxLoading, setInboxLoading] = useState(true);
   const [inboxError, setInboxError] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
 
   const loadInbox = useCallback(async () => {
     if (!supabase) {
@@ -39,14 +40,15 @@ export function AdminSupportReplyPanel() {
     }
     setInboxLoading(true);
     setInboxError("");
-    const { data, error: invokeError } = await supabase.functions.invoke("admin-support-inbox", { method: "GET" });
+    const functionName = statusFilter === "all" ? "admin-support-inbox" : `admin-support-inbox?status=${statusFilter}`;
+    const { data, error: invokeError } = await supabase.functions.invoke(functionName, { method: "GET" });
     if (invokeError || !data || !Array.isArray(data.tickets)) {
       setInboxError("No fue posible cargar la bandeja. Comprueba tu permiso AAL2 y la conexión.");
     } else {
       setTickets(data.tickets as SupportTicket[]);
     }
     setInboxLoading(false);
-  }, [supabase]);
+  }, [statusFilter, supabase]);
 
   useEffect(() => { void loadInbox(); }, [loadInbox]);
 
@@ -65,6 +67,16 @@ export function AdminSupportReplyPanel() {
   return <section className="admin-operation-panel">
     <div className="admin-audit-heading">
       <div><h3>Bandeja de soporte</h3><p>Últimas 50 solicitudes, ordenadas por actividad reciente.</p></div>
+      <label className="admin-support-filter" htmlFor="admin-support-status-filter">Estado
+        <select id="admin-support-status-filter" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
+          <option value="all">Todos</option>
+          <option value="open">Abiertas</option>
+          <option value="pending">Pendientes</option>
+          <option value="answered">Respondidas</option>
+          <option value="resolved">Resueltas</option>
+          <option value="closed">Cerradas</option>
+        </select>
+      </label>
       <button className="outline-button" type="button" onClick={() => void loadInbox()} disabled={inboxLoading}>{inboxLoading ? "Actualizando…" : "Actualizar"}</button>
     </div>
     {inboxError && <p className="admin-error" role="alert">{inboxError}</p>}
