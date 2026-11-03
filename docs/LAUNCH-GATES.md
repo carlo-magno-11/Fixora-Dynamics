@@ -9,6 +9,14 @@ Estado al 3 de noviembre de 2026. Este documento separa evidencia existente de t
 - **Pendiente:** falta evidencia o implementación.
 - **Bloqueado:** no debe activarse hasta resolver una dependencia o decisión.
 
+## 0. Integración de ramas
+- [ ] La rama foundation/bootstrap-20261029 está 530 commits por delante y 4 por detrás de main en la comparación del 3-11-2026; no retargetear ni fusionar automáticamente.
+- [ ] PR #2 parte de foundation; PR #6 y #7 son ramas hermanas basadas en PR #2.
+- [ ] PR #8 está apilado sobre PR #6 y diverge de PR #7 (64 commits ahead, 5 behind en la comparación del 3-11-2026).
+- [ ] PR #9 parte de PR #7; PR #10 parte de PR #9; PR #11 parte de PR #10; PR #12 parte de PR #11.
+- [ ] Antes de cualquier merge: definir orden de integración, actualizar ramas con estrategia explícita, revisar conflictos, volver a ejecutar CI/DB tests y confirmar que no se pierdan cambios de la otra IA.
+- [ ] No declarar un release integrado mientras los PRs sigan siendo una cadena de drafts sin merge a la rama de release.
+
 ## 1. Base de aplicación
 - [x] Fundamento web y autenticación cloud presentes en PR #2.
 - [x] Cambios de edición numérica presentes en PR #7.
