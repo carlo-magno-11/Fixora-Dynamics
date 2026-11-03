@@ -2,7 +2,7 @@
 
 Fecha: 3 de noviembre de 2026  
 Rama de referencia: `integration/fixora-mainline-20261103`  
-Estado: revisión estática del código y CI; no equivale a una validación E2E en staging.
+Estado: adaptadores cloud extraídos y conectados en la rama central; CI #1299 aprobó TypeScript, 195 pruebas, build web y Edge Functions. Security, CodeQL y Database tests de este HEAD aún deben cerrar. No equivale a una validación E2E en staging.
 
 ## 1. Estado real observado
 
@@ -15,7 +15,8 @@ La aplicación ya tiene rutas cloud para los datos operativos principales. La au
 - `App.tsx` inserta los snapshots de cálculo en `fixora_calculation_snapshots` en modo cloud. `CloudHistoryPage` lee el historial del negocio y valida los registros antes de mostrarlos.
 - El historial cloud ya admite paginación por cursor de fecha + UUID, orden estable y lotes de 100. El cambio quedó en el commit `0ab526ed35a2378fb61d1af1bf6448ec5cc51b76`; sus controles CI/Security/Database/CodeQL deben considerarse pendientes hasta que GitHub confirme el resultado final de cada workflow.
 - Los borradores del calculador siguen guardándose en `localStorage` incluso en modo cloud. La UI informa que son locales y no están sincronizados. No existe aún un flujo de migración local → cloud.
-- Las páginas cloud consultan Supabase directamente desde componentes UI; falta extraer adaptadores/repositorios reutilizables y probarlos de forma aislada.
+- Catálogo, gastos e historial ahora pasan por repositorios Supabase tipados y servicios de aplicación. Los componentes UI reciben contratos de aplicación; la composición de dependencias se concentra en `src/app/create-app-services.ts`. Las pruebas de arquitectura impiden que UI importe infraestructura directamente.
+- Los repositorios tienen pruebas unitarias de mapeo/validación y los servicios cloud tienen pruebas de delegación y reglas de dominio. El CI #1299 confirmó 195 pruebas Vitest, TypeScript y build web.
 - No hay evidencia de E2E en staging con dos cuentas, dos negocios y dos dispositivos.
 
 **Conclusión:** catálogo, gastos y snapshots/historial ya tienen un camino cloud implementado en la UI y respaldado por tablas/RLS/RPC. No se debe anunciar sincronización integral entre dispositivos: el borrador sigue siendo local, la migración de datos no existe y faltan pruebas E2E operativas. No se debe hacer dual-write silencioso ni borrar los datos locales durante la transición.
@@ -78,30 +79,45 @@ No forzar una conversión de todos los contratos locales a Promise si no aporta 
 
 ## 5. Plan de implementación incremental
 
-### G0 — extracción y contratos probables
+### G0 — extracción y contratos
 
-- Extraer los mapeos y consultas de las páginas cloud a repositorios Supabase tipados, sin alterar el comportamiento visible.
-- Mantener los adaptadores browser para modo local.
-- Añadir pruebas unitarias para mapeos, validación de snapshots, errores de conflicto y paginación.
-- Mantener los DTOs explícitos y limitar columnas seleccionadas.
+<badge>Implementado en rama; CI parcial aprobado</badge>
+
+- Repositorios Supabase tipados creados para catálogo, gastos e historial.
+- Servicios de aplicación creados para cada módulo; UI no importa infraestructura.
+- Composición de repositorios cloud centralizada en `src/app/create-app-services.ts`.
+- Pruebas de mapeo/validación y servicios; 195 pruebas Vitest aprobadas en CI #1299.
+- DTOs y columnas seleccionadas explícitamente; errores de permiso/conflicto traducidos a mensajes controlados.
+- Pendiente: confirmar Security, CodeQL y Database tests en el mismo HEAD.
 
 ### G1 — catálogo cloud
 
-- Añadir repositorio Supabase y conectarlo a la UI existente.
-- Probar lectura/alta/edición/archivo, SKU duplicado, permisos de viewer y aislamiento de dos negocios.
-- Añadir manejo de errores recuperable y recarga explícita.
+<badge>Implementación conectada; E2E pendiente</badge>
+
+- Repositorio Supabase y servicio de aplicación conectados a la UI.
+- Operaciones de lectura, alta, edición y archivado usan el contrato cloud.
+- El archivado exige respuesta de fila confirmada; SKU duplicado y permisos se traducen a errores controlados.
+- La UI permite recargar el catálogo.
+- Pendiente: pruebas reales de viewer/editor, SKU duplicado bajo concurrencia y aislamiento de dos negocios en staging.
 
 ### G2 — gastos cloud
 
-- Extraer repositorio sobre `fixora_save_expenses`.
-- Añadir pruebas de concurrencia, IDs cruzados, duplicados, límites, importes inválidos y rollback.
-- Confirmar que un error de red o conflicto nunca muestra un falso mensaje de guardado.
+<badge>Implementación conectada; E2E pendiente</badge>
+
+- Repositorio Supabase y servicio de aplicación conectados a `fixora_save_expenses`.
+- Mapeo de configuración valida periodo, unidades y versión segura.
+- La UI permite recargar y conserva el control optimista de concurrencia.
+- Pendiente: pruebas de RPC para IDs cruzados, duplicados, límites, importes inválidos, rollback y dos escritores simultáneos.
 
 ### G3 — snapshots/historial cloud
 
-- Extraer repositorio de snapshots y mantener historial inmutable.
-- Probar cursor estable, registros con timestamps iguales, páginas vacías, invalidación de payloads y cambio de negocio durante carga.
-- Asegurar que el CSV comunica el alcance real de la exportación.
+<badge>Implementación conectada; E2E pendiente</badge>
+
+- Repositorio y servicio de aplicación gestionan inserción y lectura de snapshots; la UI ya no escribe directamente en Supabase.
+- El servidor genera ID y timestamp respetando los grants de inserción actuales.
+- Paginación estable por `created_at + id`, validación de snapshots y recarga manual.
+- El CSV muestra el número de registros cargados y aclara que exporta sólo lo cargado si quedan páginas pendientes.
+- Pendiente: pruebas DB de timestamps iguales, páginas vacías, carga de negocio cambiante, payloads inválidos y aislamiento RLS.
 
 ### G4 — borrador y transición local → cloud
 
