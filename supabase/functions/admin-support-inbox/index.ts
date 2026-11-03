@@ -2,6 +2,7 @@ import { withSupabase } from "npm:@supabase/server@1.9.2";
 import { userAuthConfig } from "../_shared/auth.ts";
 import { getAal2Actor, hasAdminPermission } from "../_shared/admin.ts";
 import { jsonResponse } from "../_shared/http.ts";
+import { enforceRateLimit } from "../_shared/rate-limit.ts";
 
 const allowedStatuses = new Set(["open", "pending", "answered", "resolved", "closed"]);
 
@@ -11,6 +12,8 @@ export default {
 
     const actorId = getAal2Actor(ctx.jwtClaims);
     if (!actorId) return jsonResponse({ error: "AAL2 administrator authentication is required." }, 403);
+    const rateLimit = await enforceRateLimit(ctx.supabaseAdmin, actorId, "admin.support.inbox", 30, 60);
+    if (rateLimit) return rateLimit;
 
     try {
       if (!await hasAdminPermission(ctx.supabaseAdmin, actorId, "support.read")) {
