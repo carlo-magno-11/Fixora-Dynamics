@@ -3,7 +3,7 @@ BEGIN;
 
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 
-SELECT plan(16);
+SELECT plan(18);
 
 SELECT ok(
   to_regprocedure('public.fixora_save_expenses(uuid,numeric,text,bigint,jsonb,jsonb)') IS NOT NULL,
@@ -23,6 +23,26 @@ SELECT ok(
 SELECT ok(
   NOT (SELECT prosecdef FROM pg_catalog.pg_proc WHERE oid = 'public.fixora_save_expenses(uuid,numeric,text,bigint,jsonb,jsonb)'::regprocedure),
   'Expense save RPC is SECURITY INVOKER'
+);
+
+SELECT ok(
+  EXISTS (
+    SELECT 1 FROM pg_catalog.pg_constraint
+    WHERE conrelid = 'public.fixora_expense_settings'::regclass
+      AND conname = 'fixora_expense_settings_expected_units_safe_integer_check'
+      AND convalidated
+  ),
+  'Expected unit settings have a validated safe-integer constraint'
+);
+
+SELECT ok(
+  EXISTS (
+    SELECT 1 FROM pg_catalog.pg_trigger
+    WHERE tgrelid = 'public.fixora_expense_settings'::regclass
+      AND tgname = 'fixora_expense_settings_validate_units'
+      AND NOT tgisinternal
+  ),
+  'Expected unit settings are validated on direct writes'
 );
 
 INSERT INTO auth.users (id, email, raw_user_meta_data)
