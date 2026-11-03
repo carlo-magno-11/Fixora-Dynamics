@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { CALCULATOR_DRAFT_KEY, createCalculatorDraftStorage, readCalculatorDraft, saveCalculatorDraft } from "./calculator-draft";
+import { CALCULATOR_DRAFT_KEY, createCalculatorDraftStorage, readCalculatorDraft, readCalculatorDraftWithLegacyFallback, saveCalculatorDraft } from "./calculator-draft";
 import type { KeyValueStorage } from "../shared/infrastructure/key-value-storage";
 
 const input = {
@@ -17,6 +17,15 @@ function memoryStorage(initial: Record<string, string> = {}): KeyValueStorage {
 }
 
 describe("calculator draft", () => {
+  it("recovers a legacy draft only when the caller confirms the legacy scope belongs to this business", () => {
+    const legacyStorage = memoryStorage();
+    const businessStorage = createCalculatorDraftStorage(legacyStorage, "business-1");
+    saveCalculatorDraft(legacyStorage, { name: "Borrador anterior", currency: "MXN", input, breakEvenInput });
+    expect(readCalculatorDraftWithLegacyFallback(businessStorage, legacyStorage, true)?.name).toBe("Borrador anterior");
+    expect(readCalculatorDraftWithLegacyFallback(businessStorage, legacyStorage, false)).toBeNull();
+  });
+
+
   it("isolates the same local draft key between businesses and preserves each draft", () => {
     const backing = memoryStorage();
     const firstBusiness = createCalculatorDraftStorage(backing, "business-1");
