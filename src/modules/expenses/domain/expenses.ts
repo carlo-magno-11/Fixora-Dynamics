@@ -46,8 +46,8 @@ export function summarizeExpenses(input: ExpenseSummaryInput): ExpenseSummary {
   if (!["week", "month", "quarter", "year"].includes(input.period)) {
     throw new Error("Selecciona un periodo válido.");
   }
-  if (!Number.isFinite(input.expectedUnits) || input.expectedUnits <= 0) {
-    throw new Error("Las unidades estimadas deben ser mayores que cero.");
+  if (!Number.isSafeInteger(input.expectedUnits) || input.expectedUnits <= 0) {
+    throw new Error("Las unidades estimadas deben ser un entero positivo dentro del rango permitido.");
   }
 
   for (const expense of input.fixedExpenses) {
