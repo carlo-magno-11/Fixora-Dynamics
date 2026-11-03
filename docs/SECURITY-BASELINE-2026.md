@@ -77,10 +77,27 @@ La primera pasada encontró cinco coincidencias `generic-api-key` en el historia
 
 Se añadieron únicamente sus cinco fingerprints históricos exactos a `.gitleaksignore`. No se excluyeron carpetas, reglas completas ni patrones globales. Cualquier nuevo secreto con fingerprint distinto continúa bloqueando CI. La ejecución posterior debe confirmar que el escaneo ya queda limpio.
 
+### Rate limiting de Edge Functions — implementado en esta rama, pendiente CI de base
+
+Se añadió un contador fijo por ventana, atómico en PostgreSQL, con clave SHA-256 de `scope + actor UUID`. No se almacenan UUID ni IP en claro en la tabla de contadores. La tabla vive en `fixora_private`, con RLS + FORCE RLS y sin grants de lectura directos; el RPC público es SECURITY INVOKER y solo `service_role` puede ejecutarlo. Si el RPC falla, la operación devuelve 503 (fail closed); al exceder el límite devuelve 429 y `Retry-After`.
+
+Límites iniciales (deben ajustarse con métricas reales, sin debilitarlos a ciegas):
+- Activación de licencia: 10 por hora y usuario.
+- Consola administrativa: 30 por minuto y usuario.
+- Crear invitaciones: 3 por hora y administrador AAL2.
+- Aceptar invitación: 5 por hora y usuario AAL2.
+- Reemitir código: 5 por hora y administrador AAL2.
+- Revocar dispositivo: 10 por minuto y administrador AAL2.
+- Verificar compra: 5 por hora y administrador AAL2.
+- Responder soporte: 10 por minuto y administrador AAL2.
+- Consultar bandeja de soporte: 30 por minuto y administrador AAL2.
+
+Hay pruebas Deno de allow/deny/fail-closed, pgTAP de permisos/ventanas y un test concurrente con 12 llamadas simultáneas (espera 3 permitidas y 9 rechazadas). Esto limita por identidad autenticada, no por IP; el rate limiting de Auth y una capa perimetral/WAF siguen siendo necesarios para abuso distribuido o creación masiva de cuentas. Aún falta probar MFA/AAL2 con cuentas reales.
+
 ### Hallazgos que siguen abiertos
 
 1. **Bucket heredado público:** existe `eyesite-media` con `public=true`, sin límite de tamaño ni MIME allowlist y con cero objetos. No se encontraron políticas de `storage.objects`. Al estar vacío no se observó fuga de archivos, pero cualquier objeto futuro podría ser descargable públicamente. No se cambió desde SQL: los metadatos de Storage deben administrarse por Storage API/Dashboard. Antes de lanzamiento, confirmar que no lo usa Fixora y hacerlo privado o eliminarlo mediante Storage API.
-2. **Rate limiting de negocio:** no se encontraron funciones de rate limit en las funciones SQL de Fixora. Supabase Auth dispone de límites propios, pero no se verificó la configuración efectiva del Dashboard y eso no reemplaza límites de activación, invitaciones, soporte y operaciones administrativas.
+2. **Rate limiting de negocio:** la rama añade límites server-side para las nueve Edge Functions sensibles, pero la migración y prueba concurrente aún deben pasar CI. Los límites de Supabase Auth y la protección por IP/WAF siguen sin verificarse en el Dashboard.
 3. **Exposición PostgREST remota:** el archivo versionado excluye `fixora_private`, pero la consulta SQL no pudo leer el valor efectivo de `pgrst.db_schemas`. Confirmar en Dashboard > API Settings que solo se expongan los esquemas necesarios.
 4. **Identidad de prueba:** Auth tiene cero usuarios y hay cero membresías administrativas. No se puede afirmar que MFA/AAL2 real esté validado hasta provisionar cuentas de prueba.
 5. **DAST:** no existe una URL de staging HTTPS confirmada. ZAP debe permanecer desactivado hasta definir `FIXORA_STAGING_URL` apuntando exclusivamente a staging.
