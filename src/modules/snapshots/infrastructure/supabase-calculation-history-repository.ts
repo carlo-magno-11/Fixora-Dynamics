@@ -97,9 +97,7 @@ export function createSupabaseCalculationHistoryRepository(
       const { data, error } = await client
         .from("fixora_calculation_snapshots")
         .insert({
-          id: snapshot.id,
           business_id: businessId,
-          created_at: snapshot.createdAt,
           name: snapshot.name,
           currency_code: snapshot.currency,
           schema_version: snapshot.schemaVersion,
