@@ -86,7 +86,7 @@ describe("calculateRetailInventoryBalance", () => {
   it("rejects duplicate identifiers and ledger sequences", () => {
     expect(() => calculateRetailInventoryBalance("SKU-001", [
       movement("same", 1, "purchase_receipt", 1),
-      movement("same", 2, "purchase_receipt", 1),
+      movement(" same ", 2, "purchase_receipt", 1),
     ])).toThrow("Cada movimiento debe tener un identificador único.");
 
     expect(() => calculateRetailInventoryBalance("SKU-001", [
