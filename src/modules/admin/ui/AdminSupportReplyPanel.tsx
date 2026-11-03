@@ -4,7 +4,6 @@ import { getSupabaseClient } from "../../../shared/infrastructure/supabase/clien
 
 type SupportTicket = {
   id: string;
-  createdBy: string;
   subject: string;
   category: string;
   priority: string;
