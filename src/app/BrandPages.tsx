@@ -164,7 +164,7 @@ export function AccountPage({ locale, onOpenGuide, authMode = "local", userEmail
   userEmail?: string;
   businessName?: string;
   onSignOut?: () => void;
-  licenseAccess?: LicenseAccess | null;
+  licenseAccess?: LicenseAccess[];
   licenseLoading?: boolean;
   licenseError?: string;
   onLicenseActivated?: () => Promise<void>;
@@ -192,23 +192,27 @@ export function AccountPage({ locale, onOpenGuide, authMode = "local", userEmail
       {authMode === "cloud" && <MfaSettings />}
       {authMode === "cloud" && <AdminInviteAcceptancePanel />}
       {authMode === "cloud" && <section className="guide-callout account-license-panel" aria-live="polite">
-        <strong>Estado de tu licencia</strong>
-        {licenseLoading ? <p>Consultando la licencia vinculada a tu cuenta…</p>
+        <strong>Estado de tus licencias</strong>
+        {licenseLoading ? <p>Consultando las licencias vinculadas a tu cuenta…</p>
           : licenseError ? <p role="alert">{licenseError}</p>
-          : licenseAccess ? <>
-            <p><b>{licenseAccess.product_sku}</b> · Estado: <b>{licenseAccess.status === "active" ? "Activa" : licenseAccess.status === "expired" ? "Vencida" : licenseAccess.status === "pending" ? "Pendiente" : licenseAccess.status}</b></p>
-            <p>Vigencia hasta: <b>{licenseAccess.expires_at ? new Date(licenseAccess.expires_at).toLocaleDateString("es-MX", { dateStyle: "long" }) : "Pendiente de activación"}</b></p>
-            <p>Dispositivos activos: <b>{licenseAccess.active_device_count} de {licenseAccess.max_active_devices}</b></p>
-            <p>Funciones habilitadas: {licenseAccess.available_entitlements.length ? licenseAccess.available_entitlements.join(", ") : "Ninguna disponible en este momento."}</p>
-          </>
-          : <p>Aún no hay una licencia vinculada a esta cuenta. La activación y la validación de compras se habilitarán cuando se complete la configuración segura del servicio.</p>}
+          : licenseAccess && licenseAccess.length > 0 ? <div className="account-license-list">
+            {licenseAccess.map((license) => (
+              <article className="account-license-item" key={license.license_id}>
+                <p><b>{license.product_sku}</b> · Estado: <b>{license.status === "active" ? "Activa" : license.status === "expired" ? "Vencida" : license.status === "pending" ? "Pendiente" : license.status}</b></p>
+                <p>Vigencia hasta: <b>{license.expires_at ? new Date(license.expires_at).toLocaleDateString("es-MX", { dateStyle: "long" }) : "Pendiente de activación"}</b></p>
+                <p>Dispositivos activos: <b>{license.active_device_count} de {license.max_active_devices}</b></p>
+                <p>Funciones habilitadas: {license.available_entitlements.length ? license.available_entitlements.join(", ") : "Ninguna disponible en este momento."}</p>
+              </article>
+            ))}
+          </div>
+          : <p>Aún no hay licencias vinculadas a esta cuenta. La activación y la validación de compras se habilitarán cuando se complete la configuración segura del servicio.</p>}
       </section>}
       {authMode === "cloud" && <LicenseActivationPanel onActivated={onLicenseActivated} />}
       <div className="account-summary-grid">
         {sections.map((section) => (
           <article className="account-section-card" key={section.title}>
             <span className="account-section-icon">{section.icon}</span>
-            <div><h2>{section.title}</h2><p>{section.detail}</p><span className="account-card-status">{authMode === "cloud" && (section.title === copy.profile || section.title === copy.business || (section.title === copy.license && Boolean(licenseAccess)) || (section.title === copy.devices && Boolean(licenseAccess))) ? "CONECTADO" : copy.pending}</span></div>
+            <div><h2>{section.title}</h2><p>{section.detail}</p><span className="account-card-status">{authMode === "cloud" && (section.title === copy.profile || section.title === copy.business || (section.title === copy.license && Boolean(licenseAccess?.length)) || (section.title === copy.devices && Boolean(licenseAccess?.length))) ? "CONECTADO" : copy.pending}</span></div>
           </article>
         ))}
       </div>
