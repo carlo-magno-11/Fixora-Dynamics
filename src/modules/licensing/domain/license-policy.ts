@@ -1,5 +1,10 @@
 export const LICENSE_TERM_YEARS = 1;
 export const MAX_ACTIVE_DEVICES = 3;
+export const DEFAULT_LICENSE_TERM = { unit: "months", value: 12 } as const;
+
+export type LicenseTerm =
+  | { unit: "days"; value: number }
+  | { unit: "months"; value: number };
 
 export type LicenseStatus = "pending" | "active" | "suspended" | "revoked";
 export type LicenseCapability =
@@ -13,6 +18,7 @@ export interface LicenseRecord {
   status: LicenseStatus;
   activatedAt: string | null;
   expiresAt: string | null;
+  term?: LicenseTerm;
 }
 
 export type EffectiveLicenseState = "pending" | "active" | "expired" | "suspended" | "revoked";
@@ -25,11 +31,36 @@ function parseInstant(value: string, field: string): Date {
   return parsed;
 }
 
-export function calculateLicenseExpiry(activatedAt: string): string {
+function validateTerm(term: LicenseTerm): void {
+  if (!Number.isInteger(term.value)) {
+    throw new RangeError("La duración de la licencia debe ser un entero.");
+  }
+  if (term.unit === "days" && (term.value < 1 || term.value > 3650)) {
+    throw new RangeError("La duración en días debe estar entre 1 y 3650.");
+  }
+  if (term.unit === "months" && (term.value < 1 || term.value > 60)) {
+    throw new RangeError("La duración en meses debe estar entre 1 y 60.");
+  }
+}
+
+export function calculateLicenseExpiry(
+  activatedAt: string,
+  term: LicenseTerm = DEFAULT_LICENSE_TERM,
+): string {
   const date = parseInstant(activatedAt, "de activación");
+  validateTerm(term);
+
+  if (term.unit === "days") {
+    const expiry = date.getTime() + term.value * 86_400_000;
+    if (!Number.isFinite(expiry) || !Number.isFinite(new Date(expiry).getTime())) {
+      throw new RangeError("La fecha de vencimiento está fuera del rango permitido.");
+    }
+    return new Date(expiry).toISOString();
+  }
+
   const originalDay = date.getUTCDate();
   date.setUTCDate(1);
-  date.setUTCFullYear(date.getUTCFullYear() + LICENSE_TERM_YEARS);
+  date.setUTCMonth(date.getUTCMonth() + term.value);
   const lastDayOfTargetMonth = new Date(Date.UTC(
     date.getUTCFullYear(),
     date.getUTCMonth() + 1,
@@ -55,9 +86,9 @@ export function getEffectiveLicenseState(
   if (expiry.getTime() <= activated.getTime()) {
     throw new RangeError("El vencimiento debe ser posterior a la activación.");
   }
-  const expectedExpiry = Date.parse(calculateLicenseExpiry(license.activatedAt));
+  const expectedExpiry = Date.parse(calculateLicenseExpiry(license.activatedAt, license.term));
   if (expiry.getTime() !== expectedExpiry) {
-    throw new RangeError("El vencimiento debe corresponder a un año calendario desde la activación.");
+    throw new RangeError("El vencimiento no corresponde a la duración del producto.");
   }
   if (current.getTime() < activated.getTime()) {
     return "pending";
