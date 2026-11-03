@@ -553,6 +553,10 @@ export function App({
   }
 
   async function saveCalculation() {
+    if (draftHydratedScope !== calculatorDraftScope) {
+      setSavedMessage("Espera a que Fixora termine de cargar los datos del negocio seleccionado.");
+      return;
+    }
     if (authMode !== "cloud" && historyNeedsRecovery) {
       setSavedMessage("Revisa o reinicia el historial antes de guardar un cálculo nuevo.");
       return;
