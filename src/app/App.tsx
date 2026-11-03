@@ -17,7 +17,7 @@ import type { PricingFeeBasis, PricingInput } from "../modules/pricing/domain/pr
 import { AboutPage, AccountPage, GuidePage } from "./BrandPages";
 import { LegalPage } from "./LegalPages";
 import { createAppServices } from "./create-app-services";
-import { readCalculatorDraft, saveCalculatorDraft } from "./calculator-draft";
+import { parseCalculatorDraftValue, readCalculatorDraft, saveCalculatorDraft } from "./calculator-draft";
 import type { CalculatorDraft } from "../modules/drafts/domain/calculator-draft";
 import { calculationsToCsv } from "../modules/snapshots/domain/calculation-export";
 import type { SavedCalculation } from "../modules/snapshots/domain/saved-calculation";
@@ -166,6 +166,14 @@ export function App({
   const [cloudDraftReady, setCloudDraftReady] = useState(authMode !== "cloud");
   const [cloudDraftVersion, setCloudDraftVersion] = useState(0);
   const [cloudDraftSaving, setCloudDraftSaving] = useState(false);
+  const [localBackupDraft, setLocalBackupDraft] = useState<CalculatorDraft | null>(() => {
+    try {
+      const raw = storage.getItem("fixora.calculator-draft.local-backup.v1");
+      return raw ? parseCalculatorDraftValue(JSON.parse(raw) as unknown) : null;
+    } catch {
+      return null;
+    }
+  });
   const [cloudDraftNeedsReload, setCloudDraftNeedsReload] = useState(false);
   const [cloudDraftReloadToken, setCloudDraftReloadToken] = useState(0);
   const lastCloudDraftFingerprint = useRef("");
@@ -302,6 +310,7 @@ export function App({
     if (local) {
       try {
         storage.setItem("fixora.calculator-draft.local-backup.v1", JSON.stringify(local));
+        setLocalBackupDraft(local);
       } catch {
         setDraftStatus("No se pudo guardar una copia de seguridad local. No se cambió el borrador activo.");
         return;
@@ -312,6 +321,25 @@ export function App({
     setCloudDraftNeedsChoice(false);
     setCloudDraftReady(true);
     setDraftStatus("Elegiste el borrador cloud. La copia local anterior se conserva como respaldo en este dispositivo.");
+  }
+
+  async function restoreLocalBackup() {
+    if (!businessId || !localBackupDraft) return;
+    setCloudDraftSaving(true);
+    try {
+      const nextVersion = await cloudCalculatorDraftService.save(businessId, localBackupDraft, cloudDraftVersion);
+      applyCalculatorDraft(localBackupDraft);
+      setCloudDraftVersion(nextVersion);
+      lastCloudDraftFingerprint.current = calculatorDraftFingerprint(localBackupDraft);
+      setCloudDraftReady(true);
+      setCloudDraftNeedsReload(false);
+      setDraftStatus("La copia local anterior se restauró y sincronizó con la nube. El respaldo original se conserva.");
+    } catch (error) {
+      setCloudDraftNeedsReload(true);
+      setDraftStatus(error instanceof Error ? error.message : "No fue posible restaurar la copia local anterior.");
+    } finally {
+      setCloudDraftSaving(false);
+    }
   }
 
   async function chooseLocalDraft() {
@@ -679,6 +707,12 @@ export function App({
               </div>
 
               {draftStatus && <p className="draft-status" role="status">{draftStatus}</p>}
+              {authMode === "cloud" && localBackupDraft && !cloudDraftNeedsChoice && (
+                <div className="history-actions">
+                  <span>Hay una copia local anterior disponible en este dispositivo.</span>
+                  <button className="outline-button" type="button" disabled={cloudDraftSaving} onClick={() => void restoreLocalBackup()}>Restaurar copia local anterior</button>
+                </div>
+              )}
               {authMode === "cloud" && cloudDraftNeedsReload && (
                 <div className="guide-callout" role="status">
                   <strong>Es necesario volver a consultar el borrador cloud.</strong>
