@@ -606,3 +606,18 @@ Durante la revisión final detecté que el camino idempotente de un código ya r
 - Se confirmó que `authenticated` tiene USAGE sobre `fixora_private`; revocarlo rompe el RPC público de creación de negocio. No se cambió ese grant. Antes de producción hay que confirmar que el esquema no esté expuesto por PostgREST.
 - El bucket heredado `eyesite-media` sigue público y vacío; no se borró porque no hay acción Storage API en el conector actual.
 - El proyecto oficial EYESITE `xhvpvpvtkdgnnxdwdrkn` permanece intacto.
+
+
+## 2026-11-03 — Integridad remota y reconciliación de migraciones Fixora
+
+- Proyecto: `eyesite-security-test` (`dclaebknyalimmtgppeg`), exclusivamente para Fixora. El proyecto oficial EYESITE `xhvpvpvtkdgnnxdwdrkn` quedó fuera de alcance.
+- Se aplicaron en Supabase remoto seis migraciones aditivas del esquema Fixora: unidades enteras, rate limits server-side, duración por días, retención de rate limits, borradores privados y política explícita de denegación de acceso cliente a los buckets.
+- Versiones registradas: `20261103234930`, `20261103235325`, `20261103235337`, `20261103235349`, `20261103235357`, `20261103235603`.
+- Se alinearon los nombres de los archivos SQL versionados con las versiones reales de Supabase para evitar una segunda ejecución accidental.
+- Preflight: SKU General anual conservaba 12 meses; 0 licencias y 0 pedidos. No se alteraron licencias existentes.
+- Postflight: RLS activo en tablas públicas Fixora; `fixora_private` no expuesto; borradores limitados por usuario/negocio; tabla de rate limits sin grants de cliente y con política deny; RPC de rate limit/purga sólo para `service_role`.
+- Security Advisor: 0 hallazgos después de añadir la política explícita de denegación. Performance Advisor: 12 avisos INFO de índices sin uso y uno de configuración de conexiones Auth; no se borraron índices.
+- Ocho Edge Functions activas con `verify_jwt=true`; no se desplegó ni reemplazó ninguna función. `admin-support-inbox` sigue pendiente. No se tocó Storage ni objetos heredados de EYESITE.
+- Documento de evidencia: `docs/EXECUTION-STATUS-20261103.md`.
+- CI del HEAD consultado durante esta intervención: CI #1526 y Security #338 en ejecución; Database tests #1080 y CodeQL #186 pendientes. No se declaran verdes hasta revisar sus conclusiones.
+- Próxima etapa: terminar Auth y persistencia General con E2E multiusuario/multinegocio/multidispositivo, importación local→cloud y recuperación; después completar el vertical slice Retail.
