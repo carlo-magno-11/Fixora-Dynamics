@@ -36,6 +36,8 @@ Para meses, conservar el algoritmo anual existente que clampa el día al último
 
 La función de política debe recibir el plazo guardado en el snapshot confiable de la licencia; no deducirlo del SKU ni de una variable del cliente. Cambiar el catálogo después de emitir una licencia no debe alterar lo comprado.
 
+Los SKU publicados deben tratarse como versiones comerciales inmutables: no cambiar duración ni entitlements de un SKU que ya tenga órdenes. Para modificar condiciones, crear un SKU nuevo y desactivar el anterior para nuevas ventas. La emisión bloquea la fila de producto mientras toma el snapshot. En el futuro checkout propio, la orden también deberá guardar un snapshot de SKU, duración, entitlements, precio y moneda al crear el pedido; la licencia se emitirá desde ese snapshot verificado.
+
 ## SQL transaccional
 
 En la activación:
