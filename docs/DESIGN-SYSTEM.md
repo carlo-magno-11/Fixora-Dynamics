@@ -69,3 +69,18 @@ No usar cobre como fondo extenso. No usar gradientes multicolor, neón ni sombra
 ## Límites de producto
 
 Fixora Essentials calcula costes, precios y punto de equilibrio y organiza gastos, catálogo e historial. No presentar cifras estimadas como ventas, ingresos, flujo de caja, contabilidad fiscal ni rentabilidad real si el usuario no ha registrado esos datos. No añadir gráficos decorativos ni cifras ficticias para que el dashboard parezca más completo.
+
+
+## Paleta predeterminada y personalización
+
+La paleta inicial de Fixora utiliza cinco colores configurables desde **Mi cuenta → Personaliza tus colores**:
+
+| Rol | Color | HEX |
+|---|---|---|
+| Principal / borgoña | Borgoña | #6E0D25 |
+| Texto / carbón | Carbón | #0F0F0F |
+| Acento | Oro cálido | #DCAB6B |
+| Secundario | Cacao | #774E24 |
+| Navegación / verde profundo | Verde profundo | #16302B |
+
+Cada color se puede ajustar por separado con el selector nativo del dispositivo. La selección se guarda localmente por correo de cuenta en el navegador y se puede restablecer a la paleta predeterminada. No se sincroniza entre dispositivos ni cambia el logotipo vectorial o los materiales externos de marca. El tema es una preferencia visual y no interviene en cálculos ni permisos.

@@ -155,6 +155,34 @@ export function App({
   const [historyNeedsRecovery, setHistoryNeedsRecovery] = useState(historyLoadState.needsRecovery);
   const [savedMessage, setSavedMessage] = useState("");
 
+  useEffect(() => {
+    const key = `fixora.theme.v1:${userEmail?.trim().toLowerCase() || "local"}`;
+    try {
+      const raw = window.localStorage.getItem(key);
+      if (!raw) return;
+      const saved = JSON.parse(raw) as Record<string, unknown>;
+      const colors = {
+        "--fixora-deep": saved.burgundy,
+        "--fixora-forest": saved.forest,
+        "--fixora-jade": saved.forest,
+        "--fixora-copper": saved.gold,
+        "--ink": saved.charcoal,
+        "--ink-soft": saved.cocoa,
+        "--petrol": saved.forest,
+        "--gold": saved.gold,
+        "--red": saved.burgundy,
+      };
+      Object.entries(colors).forEach(([name, value]) => {
+        if (typeof value === "string" && /^#[0-9a-fA-F]{6}$/.test(value)) {
+          document.documentElement.style.setProperty(name, value);
+        }
+      });
+    } catch {
+      // Invalid or unavailable preferences leave the default brand palette active.
+    }
+  }, [userEmail]);
+
+
   const breakEvenCalculation = useMemo(() => {
     try {
       return { result: calculateBreakEven(breakEvenInput), error: null };
