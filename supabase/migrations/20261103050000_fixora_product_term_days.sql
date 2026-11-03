@@ -62,7 +62,8 @@ begin
   select * into v_product
   from fixora_private.fixora_products
   where product_sku = v_order.product_sku
-    and is_active = true;
+    and is_active = true
+  for share;
 
   if not found then
     raise exception 'Product is not active' using errcode = '23514';
