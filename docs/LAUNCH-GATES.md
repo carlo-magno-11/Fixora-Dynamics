@@ -10,12 +10,12 @@ Estado al 3 de noviembre de 2026. Este documento separa evidencia existente de t
 - **Bloqueado:** no debe activarse hasta resolver una dependencia o decisión.
 
 ## 0. Integración de ramas
-- [ ] La rama foundation/bootstrap-20261029 está 530 commits por delante y 4 por detrás de main en la comparación del 3-11-2026; no retargetear ni fusionar automáticamente.
-- [ ] PR #2 parte de foundation; PR #6 y #7 son ramas hermanas basadas en PR #2.
-- [ ] PR #8 está apilado sobre PR #6 y diverge de PR #7 (64 commits ahead, 5 behind en la comparación del 3-11-2026).
-- [ ] PR #9 parte de PR #7; PR #10 parte de PR #9; PR #11 parte de PR #10; PR #12 parte de PR #11.
-- [ ] Antes de cualquier merge: definir orden de integración, actualizar ramas con estrategia explícita, revisar conflictos, volver a ejecutar CI/DB tests y confirmar que no se pierdan cambios de la otra IA.
-- [ ] No declarar un release integrado mientras los PRs sigan siendo una cadena de drafts sin merge a la rama de release.
+- [x] Rama única de trabajo creada: `integration/fixora-mainline-20261103`, desde el head validado de PR #13.
+- [x] La cadena principal de Essentials, Auth/cloud, edición numérica, marca, paleta, documentación comercial, guías y duración por días está incluida en esa rama.
+- [ ] La bandeja de soporte de PR #6 (variante R4) y seguridad de PR #8 siguen en una línea separada. PR #8 depende de R4; GitHub reportó conflicto al comparar su head con la rama única. Se restauró su base original y no se fusionó.
+- [ ] Integrar soporte R4 y seguridad mediante checkout local, revisión de diffs y resolución manual; no usar merge/rebase/cherry-pick ciego ni sobrescribir el trabajo de la otra IA.
+- [ ] Ejecutar CI y DB tests completos después de resolver los conflictos y comprobar el orden de migraciones.
+- [ ] No declarar release integrado mientras los PRs continúen en borrador y no exista una rama de release validada.
 
 ## 1. Base de aplicación
 - [x] Fundamento web y autenticación cloud presentes en PR #2.
@@ -44,8 +44,9 @@ Estado al 3 de noviembre de 2026. Este documento separa evidencia existente de t
 ## 3. Licencias y derechos comerciales
 - [x] Esquema de productos, órdenes, licencias, entitlements, dispositivos y eventos existe en migraciones.
 - [x] Activación de licencia requiere cuenta autenticada, correo confirmado y código de un solo uso.
-- [ ] Añadir duración exacta por días sin romper términos mensuales/anuales existentes.
-- [ ] Resolver licencia por usuario vs negocio; el límite confirmado es de tres dispositivos activos por licencia, no global por cuenta.
+- [x] Soporte de duración exacta por días, con snapshot de término en la licencia y preservación de licencias anuales; código y migración en PR #13.
+- [x] CI #1218 y Database tests #774 SUCCESS en el commit `1e51c55`: reconstrucción local, pgTAP, mutaciones negativas RLS y concurrencia de dispositivos.
+- [ ] Resolver licencia por usuario vs negocio y herencia a miembros; la regla de dispositivos ya está confirmada: tres activos por licencia, no global por cuenta.
 - [ ] Reemplazar permiso genérico kits.access para autorización de ejecución por entitlements exactos por kit.
 - [ ] Probar General solo, kit solo, bundle, add-on, General vencido, kit vencido, reembolso, contracargo, disputa y revocación.
 - [ ] Verificar que cada licencia respeta un máximo de tres dispositivos activos; cualquier cambio a cuota global por cuenta requiere una nueva decisión comercial explícita.
@@ -53,8 +54,8 @@ Estado al 3 de noviembre de 2026. Este documento separa evidencia existente de t
 
 ## 4. Pagos
 - [x] Flujo de verificación manual Etsy existe para SKU General anual.
-- [ ] Agregar SKU del pase 30 días y duración por días.
-- [ ] Ampliar precio y moneda con snapshot inmutable por orden.
+- [x] Capacidad técnica para duración exacta de 30 días está en la rama; no se ha sembrado ni habilitado el SKU comercial.
+- [ ] Crear el SKU del pase de $249 MXN solo después de snapshot inmutable de precio/moneda/duración/entitlements y de ampliar allowlist y verificación Etsy.
 - [ ] Mercado Pago sandbox y webhook firmado.
 - [ ] Idempotencia, importe/moneda, replay, refund y chargeback.
 - [ ] Términos, privacidad, política de reembolso, IVA y obligaciones de facturación revisadas.
@@ -63,6 +64,7 @@ Estado al 3 de noviembre de 2026. Este documento separa evidencia existente de t
 ## 5. Guías y producto
 - [x] Centro de ayuda General existe en la aplicación.
 - [x] Borrador de guía General y cinco guías especializadas documentado en PR #12.
+- [x] Plan de implementación de kits especializado documentado en `docs/KIT-MODULES-IMPLEMENTATION-PLAN.md`; Comercio y reventa queda como piloto.
 - [ ] Sincronizar guía General con mensajes reales y fórmulas probadas.
 - [ ] Implementar kit Comercio y reventa, tests, entitlements y ayuda contextual.
 - [ ] Crear capturas reales y PDF de la versión aprobada.
