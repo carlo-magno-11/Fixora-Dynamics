@@ -138,6 +138,7 @@ export function App({
       : window.localStorage,
     [storageScope],
   );
+  const calculatorDraftScope = `${storageScope ?? "default"}:${businessId ?? "none"}`;
   const appServices = useMemo(
     () => createAppServices({
       storage,
@@ -167,9 +168,11 @@ export function App({
   const [cloudDraftVersion, setCloudDraftVersion] = useState(0);
   const [cloudDraftSaving, setCloudDraftSaving] = useState(false);
   const [localBackupDraft, setLocalBackupDraft] = useState<CalculatorDraft | null>(null);
+  const [localBackupDraftScope, setLocalBackupDraftScope] = useState(calculatorDraftScope);
 
   useEffect(() => {
     setLocalBackupDraft(null);
+    setLocalBackupDraftScope(calculatorDraftScope);
     if (!businessId) return;
     try {
       const raw = storage.getItem(`fixora.calculator-draft.local-backup.v1:${businessId}`);
@@ -177,7 +180,7 @@ export function App({
     } catch {
       setLocalBackupDraft(null);
     }
-  }, [businessId, storage]);
+  }, [businessId, calculatorDraftScope, storage]);
   const [cloudDraftNeedsReload, setCloudDraftNeedsReload] = useState(false);
   const [cloudDraftReloadToken, setCloudDraftReloadToken] = useState(0);
   const lastCloudDraftFingerprint = useRef("");
@@ -315,6 +318,7 @@ export function App({
       try {
         storage.setItem(`fixora.calculator-draft.local-backup.v1:${businessId}`, JSON.stringify(local));
         setLocalBackupDraft(local);
+        setLocalBackupDraftScope(calculatorDraftScope);
       } catch {
         setDraftStatus("No se pudo guardar una copia de seguridad local. No se cambió el borrador activo.");
         return;
@@ -328,7 +332,7 @@ export function App({
   }
 
   async function restoreLocalBackup() {
-    if (!businessId || !localBackupDraft) return;
+    if (!businessId || !localBackupDraft || localBackupDraftScope !== calculatorDraftScope) return;
     setCloudDraftSaving(true);
     try {
       const nextVersion = await cloudCalculatorDraftService.save(businessId, localBackupDraft, cloudDraftVersion);
@@ -711,7 +715,7 @@ export function App({
               </div>
 
               {draftStatus && <p className="draft-status" role="status">{draftStatus}</p>}
-              {authMode === "cloud" && localBackupDraft && !cloudDraftNeedsChoice && !cloudDraftNeedsReload && (
+              {authMode === "cloud" && localBackupDraft && localBackupDraftScope === calculatorDraftScope && !cloudDraftNeedsChoice && !cloudDraftNeedsReload && (
                 <div className="history-actions">
                   <span>Hay una copia local anterior disponible en este dispositivo.</span>
                   <button className="outline-button" type="button" disabled={cloudDraftSaving} onClick={() => void restoreLocalBackup()}>Restaurar copia local anterior</button>
