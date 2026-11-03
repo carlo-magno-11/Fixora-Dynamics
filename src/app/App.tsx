@@ -17,7 +17,7 @@ import type { PricingFeeBasis, PricingInput } from "../modules/pricing/domain/pr
 import { AboutPage, AccountPage, GuidePage } from "./BrandPages";
 import { LegalPage } from "./LegalPages";
 import { createAppServices } from "./create-app-services";
-import { createCalculatorDraftStorage, parseCalculatorDraftValue, readCalculatorDraft, saveCalculatorDraft } from "./calculator-draft";
+import { createCalculatorDraftStorage, parseCalculatorDraftValue, readCalculatorDraft, readCalculatorDraftWithLegacyFallback, saveCalculatorDraft } from "./calculator-draft";
 import type { CalculatorDraft } from "../modules/drafts/domain/calculator-draft";
 import { calculationsToCsv } from "../modules/snapshots/domain/calculation-export";
 import type { SavedCalculation } from "../modules/snapshots/domain/saved-calculation";
@@ -153,9 +153,10 @@ export function App({
     [storage],
   );
   const { historyRepository, snapshotService, catalogService, expensesService, cloudCatalogService, cloudExpensesService, cloudHistoryService, cloudCalculatorDraftService } = appServices;
-  const [restoredDraft] = useState(() => (
-    readCalculatorDraft(calculatorDraftStorage)
-    ?? (canRecoverLegacyBusinessDraft ? readCalculatorDraft(storage) : null)
+  const [restoredDraft] = useState(() => readCalculatorDraftWithLegacyFallback(
+    calculatorDraftStorage,
+    storage,
+    canRecoverLegacyBusinessDraft,
   ));
   const [input, setInput] = useState<PricingInput>(() => restoredDraft?.input ?? initial);
   const [currency, setCurrency] = useState<CurrencyCode>(() => restoredDraft?.currency ?? initialCurrency ?? "MXN");
@@ -262,8 +263,11 @@ export function App({
     if (previousDraftScope.current === calculatorDraftScope) return;
     previousDraftScope.current = calculatorDraftScope;
     setDraftHydratedScope("");
-    const draft = readCalculatorDraft(calculatorDraftStorage)
-      ?? (canRecoverLegacyBusinessDraft ? readCalculatorDraft(storage) : null);
+    const draft = readCalculatorDraftWithLegacyFallback(
+      calculatorDraftStorage,
+      storage,
+      canRecoverLegacyBusinessDraft,
+    );
     setInput(draft?.input ?? initial);
     setCurrency(draft?.currency ?? initialCurrency ?? "MXN");
     setBreakEvenInput(draft?.breakEvenInput ?? initialBreakEven);
