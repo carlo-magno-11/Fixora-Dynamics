@@ -139,6 +139,7 @@ export function App({
     [storageScope],
   );
   const calculatorDraftScope = `${storageScope ?? "default"}:${businessId ?? "none"}`;
+  const canRecoverLegacyBusinessDraft = Boolean(businessId && storageScope?.endsWith(`:${businessId}`));
   const calculatorDraftStorage = useMemo(
     () => createCalculatorDraftStorage(storage, businessId),
     [businessId, storage],
@@ -154,7 +155,7 @@ export function App({
   const { historyRepository, snapshotService, catalogService, expensesService, cloudCatalogService, cloudExpensesService, cloudHistoryService, cloudCalculatorDraftService } = appServices;
   const [restoredDraft] = useState(() => (
     readCalculatorDraft(calculatorDraftStorage)
-    ?? (businessId ? readCalculatorDraft(storage) : null)
+    ?? (canRecoverLegacyBusinessDraft ? readCalculatorDraft(storage) : null)
   ));
   const [input, setInput] = useState<PricingInput>(() => restoredDraft?.input ?? initial);
   const [currency, setCurrency] = useState<CurrencyCode>(() => restoredDraft?.currency ?? initialCurrency ?? "MXN");
@@ -262,7 +263,7 @@ export function App({
     previousDraftScope.current = calculatorDraftScope;
     setDraftHydratedScope("");
     const draft = readCalculatorDraft(calculatorDraftStorage)
-      ?? (businessId ? readCalculatorDraft(storage) : null);
+      ?? (canRecoverLegacyBusinessDraft ? readCalculatorDraft(storage) : null);
     setInput(draft?.input ?? initial);
     setCurrency(draft?.currency ?? initialCurrency ?? "MXN");
     setBreakEvenInput(draft?.breakEvenInput ?? initialBreakEven);
@@ -289,7 +290,7 @@ export function App({
     lastCloudDraftFingerprint.current = "";
     setDraftStatus(draft ? "Se recuperó el borrador local de este usuario y negocio." : "");
     setDraftHydratedScope(calculatorDraftScope);
-  }, [authMode, businessId, calculatorDraftScope, calculatorDraftStorage, historyRepository, initialBusinessType, initialCurrency, storage]);
+  }, [authMode, businessId, calculatorDraftScope, calculatorDraftStorage, canRecoverLegacyBusinessDraft, historyRepository, initialBusinessType, initialCurrency, storage]);
 
   useEffect(() => {
     if (draftHydratedScope !== calculatorDraftScope) return;
