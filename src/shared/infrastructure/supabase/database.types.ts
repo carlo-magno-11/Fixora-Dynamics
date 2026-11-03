@@ -132,6 +132,41 @@ export type Database = {
           },
         ]
       }
+      fixora_calculator_drafts: {
+        Row: {
+          business_id: string
+          created_at: string
+          draft: Json
+          updated_at: string
+          user_id: string
+          version: number
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          draft: Json
+          updated_at?: string
+          user_id?: string
+          version?: number
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          draft?: Json
+          updated_at?: string
+          user_id?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fixora_calculator_drafts_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "fixora_businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fixora_catalog_items: {
         Row: {
           business_id: string
@@ -402,6 +437,14 @@ export type Database = {
           p_timezone?: string
         }
         Returns: string
+      }
+      fixora_save_calculator_draft: {
+        Args: {
+          p_business_id: string
+          p_draft: Json
+          p_expected_version: number
+        }
+        Returns: number
       }
       fixora_save_expenses: {
         Args: {
