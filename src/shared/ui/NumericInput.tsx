@@ -45,7 +45,7 @@ export function NumericInput({
         setRawValue(nextValue);
         if (nextValue.trim() !== "" && Number.isFinite(Number(nextValue))) {
           const parsed = Number(nextValue);
-          if (parsed >= min) onValueChange(parsed);
+          if (parsed >= min) onValueChange(step === 1 ? Math.floor(parsed) : parsed);
         }
       }}
       onBlur={() => {
