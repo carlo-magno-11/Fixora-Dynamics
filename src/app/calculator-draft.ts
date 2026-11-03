@@ -47,51 +47,53 @@ function isCatalogSnapshot(value: unknown): value is CatalogItemSnapshot {
     && value.referenceCost >= 0;
 }
 
+export function parseCalculatorDraftValue(value: unknown): CalculatorDraft | null {
+  if (!isRecord(value) || value.version !== 1
+    || typeof value.savedAt !== "string" || !Number.isFinite(Date.parse(value.savedAt))
+    || typeof value.name !== "string"
+    || (value.currency !== "MXN" && value.currency !== "USD")) return null;
+  const input = value.input;
+  const breakEvenInput = value.breakEvenInput;
+  if (!hasFiniteFields(input, pricingFields) || !hasFiniteFields(breakEvenInput, breakEvenFields)) return null;
+  const feeBasis = (input as Record<string, unknown>).variableFeeBasis;
+  if (
+    feeBasis !== undefined &&
+    feeBasis !== "discounted_price" &&
+    feeBasis !== "pre_discount"
+  ) return null;
+  if (value.selectedCatalogItem !== undefined && !isCatalogSnapshot(value.selectedCatalogItem)) return null;
+  return {
+    version: 1,
+    savedAt: value.savedAt,
+    name: value.name.slice(0, 80),
+    currency: value.currency,
+    input: {
+      materials: input.materials,
+      laborMinutes: input.laborMinutes,
+      hourlyRate: input.hourlyRate,
+      directExpenses: input.directExpenses,
+      wasteRate: input.wasteRate,
+      fixedExpensesPerUnit: input.fixedExpensesPerUnit,
+      variableFeeRate: input.variableFeeRate,
+      targetMarginRate: input.targetMarginRate,
+      discountRate: input.discountRate,
+      ...(feeBasis !== undefined
+        ? { variableFeeBasis: feeBasis as PricingFeeBasis }
+        : {}),
+    },
+    breakEvenInput: {
+      fixedCosts: breakEvenInput.fixedCosts,
+      sellingPrice: breakEvenInput.sellingPrice,
+      variableCostPerUnit: breakEvenInput.variableCostPerUnit,
+    },
+    ...(value.selectedCatalogItem ? { selectedCatalogItem: value.selectedCatalogItem } : {}),
+  };
+}
+
 export function readCalculatorDraft(storage: KeyValueStorage): CalculatorDraft | null {
   try {
     const raw = storage.getItem(CALCULATOR_DRAFT_KEY);
-    if (!raw) return null;
-    const value: unknown = JSON.parse(raw);
-    if (!isRecord(value) || value.version !== 1
-      || typeof value.savedAt !== "string" || !Number.isFinite(Date.parse(value.savedAt))
-      || typeof value.name !== "string"
-      || (value.currency !== "MXN" && value.currency !== "USD")) return null;
-    const input = value.input;
-    const breakEvenInput = value.breakEvenInput;
-    if (!hasFiniteFields(input, pricingFields) || !hasFiniteFields(breakEvenInput, breakEvenFields)) return null;
-    const feeBasis = (input as Record<string, unknown>).variableFeeBasis;
-    if (
-      feeBasis !== undefined &&
-      feeBasis !== "discounted_price" &&
-      feeBasis !== "pre_discount"
-    ) return null;
-    if (value.selectedCatalogItem !== undefined && !isCatalogSnapshot(value.selectedCatalogItem)) return null;
-    return {
-      version: 1,
-      savedAt: value.savedAt,
-      name: value.name.slice(0, 80),
-      currency: value.currency,
-      input: {
-        materials: input.materials,
-        laborMinutes: input.laborMinutes,
-        hourlyRate: input.hourlyRate,
-        directExpenses: input.directExpenses,
-        wasteRate: input.wasteRate,
-        fixedExpensesPerUnit: input.fixedExpensesPerUnit,
-        variableFeeRate: input.variableFeeRate,
-        targetMarginRate: input.targetMarginRate,
-        discountRate: input.discountRate,
-        ...(feeBasis !== undefined
-          ? { variableFeeBasis: feeBasis as PricingFeeBasis }
-          : {}),
-      },
-      breakEvenInput: {
-        fixedCosts: breakEvenInput.fixedCosts,
-        sellingPrice: breakEvenInput.sellingPrice,
-        variableCostPerUnit: breakEvenInput.variableCostPerUnit,
-      },
-      ...(value.selectedCatalogItem ? { selectedCatalogItem: value.selectedCatalogItem } : {}),
-    };
+    return raw ? parseCalculatorDraftValue(JSON.parse(raw) as unknown) : null;
   } catch {
     return null;
   }
