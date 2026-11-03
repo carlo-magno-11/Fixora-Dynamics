@@ -11,6 +11,8 @@ export function CloudCatalogPage({ businessId, currency, formatMoney, onUseInCal
   onUseInCalculator: (item: CatalogItem) => void;
 }) {
   const requestId = useRef(0);
+  const activeBusinessId = useRef(businessId);
+  activeBusinessId.current = businessId;
   const [items, setItems] = useState<CatalogItem[]>([]);
   const [loadedBusinessId, setLoadedBusinessId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -83,10 +85,12 @@ export function CloudCatalogPage({ businessId, currency, formatMoney, onUseInCal
     try {
       if (editingId) {
         const updated = await service.update(businessId, editingId, draft, items);
+        if (activeBusinessId.current !== businessId) return;
         setItems((current) => current.map((item) => item.id === editingId ? updated : item));
         setMessage("Cambios guardados en el catálogo cloud.");
       } else {
         const created = await service.create(businessId, draft, items);
+        if (activeBusinessId.current !== businessId) return;
         setItems((current) => [created, ...current]);
         setMessage("Elemento añadido al catálogo cloud.");
       }
@@ -105,6 +109,7 @@ export function CloudCatalogPage({ businessId, currency, formatMoney, onUseInCal
     setErrorMessage("");
     try {
       await service.archive(businessId, item.id);
+      if (activeBusinessId.current !== businessId) return;
       setItems((current) => current.filter((entry) => entry.id !== item.id));
       setMessage("Elemento archivado. No se eliminó del historial del negocio.");
       if (editingId === item.id) resetForm();
