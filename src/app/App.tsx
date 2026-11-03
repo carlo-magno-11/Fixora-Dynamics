@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { calculatePrice } from "../modules/pricing/domain/pricing";
 import { FixoraMark } from "../shared/ui/FixoraMark";
+import { FixoraIcon } from "../shared/ui/FixoraIcon";
 import { ExpensesPage } from "../modules/expenses/ui/ExpensesPage";
 import { CloudExpensesPage } from "../modules/expenses/ui/CloudExpensesPage";
 import { CatalogPage } from "../modules/catalog/ui/CatalogPage";
@@ -388,65 +389,65 @@ export function App({
       </header>
 
       <nav className="mobile-nav" aria-label="Navegación principal">
-        <button type="button" aria-current={view === "essentials" ? "page" : undefined} onClick={() => { setView("essentials"); setMobileMoreOpen(false); }}><span>✳</span><small>Inicio</small></button>
-        <button type="button" aria-current={view === "calculator" ? "page" : undefined} onClick={() => { setView("calculator"); setMobileMoreOpen(false); }}><span>⌗</span><small>Calcular</small></button>
-        <button type="button" aria-current={view === "expenses" ? "page" : undefined} onClick={() => { setView("expenses"); setMobileMoreOpen(false); }}><span>＋</span><small>Gastos</small></button>
-        <button type="button" aria-current={view === "history" ? "page" : undefined} onClick={() => { setView("history"); setMobileMoreOpen(false); }}><span>◷</span><small>Historial</small></button>
-        <button type="button" aria-expanded={mobileMoreOpen} aria-controls="mobile-more-menu" aria-current={!mobilePrimaryViews.includes(view) ? "page" : undefined} onClick={() => setMobileMoreOpen((open) => !open)}><span>☰</span><small>{mobileMoreOpen ? "Cerrar" : "Más"}</small></button>
+        <button type="button" aria-current={view === "essentials" ? "page" : undefined} onClick={() => { setView("essentials"); setMobileMoreOpen(false); }}><span><FixoraIcon name="home" size={19} /></span><small>Inicio</small></button>
+        <button type="button" aria-current={view === "calculator" ? "page" : undefined} onClick={() => { setView("calculator"); setMobileMoreOpen(false); }}><span><FixoraIcon name="calculator" size={19} /></span><small>Calcular</small></button>
+        <button type="button" aria-current={view === "expenses" ? "page" : undefined} onClick={() => { setView("expenses"); setMobileMoreOpen(false); }}><span><FixoraIcon name="receipt" size={19} /></span><small>Gastos</small></button>
+        <button type="button" aria-current={view === "history" ? "page" : undefined} onClick={() => { setView("history"); setMobileMoreOpen(false); }}><span><FixoraIcon name="clock" size={19} /></span><small>Historial</small></button>
+        <button type="button" aria-expanded={mobileMoreOpen} aria-controls="mobile-more-menu" aria-current={!mobilePrimaryViews.includes(view) ? "page" : undefined} onClick={() => setMobileMoreOpen((open) => !open)}><span><FixoraIcon name={mobileMoreOpen ? "close" : "menu"} size={19} /></span><small>{mobileMoreOpen ? "Cerrar" : "Más"}</small></button>
       </nav>
       {mobileMoreOpen && <nav className="mobile-more-menu" id="mobile-more-menu" aria-label="Más secciones">
-        <div className="mobile-more-heading"><strong>Más herramientas y recursos</strong><button type="button" aria-label="Cerrar menú" onClick={() => setMobileMoreOpen(false)}>×</button></div>
-        <button type="button" onClick={() => { setView("breakEven"); setMobileMoreOpen(false); }}>◒　Punto de equilibrio</button>
-        <button type="button" onClick={() => { setView("catalog"); setMobileMoreOpen(false); }}>◇　Catálogo</button>
-        <button type="button" onClick={() => { setView("kits"); setMobileMoreOpen(false); }}>✳　Kits por negocio</button>
-        <button type="button" onClick={() => { setView("account"); setMobileMoreOpen(false); }}>◉　Mi cuenta</button>
-        {authMode === "cloud" && <button type="button" onClick={() => { setView("support"); setMobileMoreOpen(false); }}>?　Soporte</button>}
-        {authMode === "cloud" && <button type="button" onClick={() => { setView("admin"); setMobileMoreOpen(false); }}>⌘　Administración</button>}
-        <button type="button" onClick={() => { setView("guide"); setMobileMoreOpen(false); }}>⌘　Guía de uso</button>
-        <button type="button" onClick={() => { setView("about"); setMobileMoreOpen(false); }}>✳　Nuestra familia</button>
-        <button type="button" onClick={() => { setView("terms"); setMobileMoreOpen(false); }}>§　Términos</button>
-        <button type="button" onClick={() => { setView("privacy"); setMobileMoreOpen(false); }}>⌑　Privacidad</button>
+        <div className="mobile-more-heading"><strong>Más herramientas y recursos</strong><button type="button" aria-label="Cerrar menú" onClick={() => setMobileMoreOpen(false)}><FixoraIcon name="close" size={18} /></button></div>
+        <button type="button" onClick={() => { setView("breakEven"); setMobileMoreOpen(false); }}><span className="mobile-menu-icon"><FixoraIcon name="scale" /></span>Punto de equilibrio</button>
+        <button type="button" onClick={() => { setView("catalog"); setMobileMoreOpen(false); }}><span className="mobile-menu-icon"><FixoraIcon name="package" /></span>Catálogo</button>
+        <button type="button" onClick={() => { setView("kits"); setMobileMoreOpen(false); }}><span className="mobile-menu-icon"><FixoraIcon name="layers" /></span>Kits por negocio</button>
+        <button type="button" onClick={() => { setView("account"); setMobileMoreOpen(false); }}><span className="mobile-menu-icon"><FixoraIcon name="user" /></span>Mi cuenta</button>
+        {authMode === "cloud" && <button type="button" onClick={() => { setView("support"); setMobileMoreOpen(false); }}><span className="mobile-menu-icon"><FixoraIcon name="support" /></span>Soporte</button>}
+        {authMode === "cloud" && <button type="button" onClick={() => { setView("admin"); setMobileMoreOpen(false); }}><span className="mobile-menu-icon"><FixoraIcon name="shield" /></span>Administración</button>}
+        <button type="button" onClick={() => { setView("guide"); setMobileMoreOpen(false); }}><span className="mobile-menu-icon"><FixoraIcon name="book" /></span>Guía de uso</button>
+        <button type="button" onClick={() => { setView("about"); setMobileMoreOpen(false); }}><span className="mobile-menu-icon"><FixoraIcon name="grid" /></span>Nuestra familia</button>
+        <button type="button" onClick={() => { setView("terms"); setMobileMoreOpen(false); }}><span className="mobile-menu-icon"><FixoraIcon name="file" /></span>Términos</button>
+        <button type="button" onClick={() => { setView("privacy"); setMobileMoreOpen(false); }}><span className="mobile-menu-icon"><FixoraIcon name="lock" /></span>Privacidad</button>
       </nav>}
 
       <div className="app-layout">
         <aside className="sidebar" aria-label="Navegación principal">
           <p className="nav-label">TU ESPACIO</p>
           <button className={view === "essentials" ? "nav-item active" : "nav-item"} aria-current={view === "essentials" ? "page" : undefined} onClick={() => setView("essentials")}>
-            <span className="nav-icon">✳</span> Fixora Essentials
+            <FixoraIcon className="nav-icon" name="grid" /> Fixora Essentials
           </button>
           <button className={view === "calculator" ? "nav-item active" : "nav-item"} aria-current={view === "calculator" ? "page" : undefined} onClick={() => setView("calculator")}>
-            <span className="nav-icon">⌗</span> Calculadora
+            <FixoraIcon className="nav-icon" name="calculator" /> Calculadora
           </button>
           <button className={view === "breakEven" ? "nav-item active" : "nav-item"} aria-current={view === "breakEven" ? "page" : undefined} onClick={() => setView("breakEven")}>
-            <span className="nav-icon">◒</span> Punto de equilibrio
+            <FixoraIcon className="nav-icon" name="scale" /> Punto de equilibrio
           </button>
           <button className={view === "expenses" ? "nav-item active" : "nav-item"} aria-current={view === "expenses" ? "page" : undefined} onClick={() => setView("expenses")}>
-            <span className="nav-icon">＋</span> Control de gastos
+            <FixoraIcon className="nav-icon" name="receipt" /> Control de gastos
           </button>
           <button className={view === "catalog" ? "nav-item active" : "nav-item"} aria-current={view === "catalog" ? "page" : undefined} onClick={() => setView("catalog")}>
-            <span className="nav-icon">◇</span> Catálogo
+            <FixoraIcon className="nav-icon" name="package" /> Catálogo
           </button>
           <button className={view === "kits" ? "nav-item active" : "nav-item"} aria-current={view === "kits" ? "page" : undefined} onClick={() => setView("kits")}>
-            <span className="nav-icon">◇</span> Kits por negocio
+            <FixoraIcon className="nav-icon" name="layers" /> Kits por negocio
           </button>
           <p className="nav-label nav-label-spaced">MIS REGISTROS</p>
           <button className={view === "history" ? "nav-item active" : "nav-item"} aria-current={view === "history" ? "page" : undefined} onClick={() => setView("history")}>
-            <span className="nav-icon">◷</span> Mis cálculos
+            <FixoraIcon className="nav-icon" name="clock" /> Mis cálculos
             <span className="nav-count">{history.length}</span>
           </button>
           <p className="nav-label nav-label-spaced">TU CUENTA</p>
-          <button className={view === "account" ? "nav-item active" : "nav-item"} aria-current={view === "account" ? "page" : undefined} onClick={() => setView("account")}><span className="nav-icon">◉</span> Mi cuenta</button>
-          {authMode === "cloud" && <button className={view === "support" ? "nav-item active" : "nav-item"} aria-current={view === "support" ? "page" : undefined} onClick={() => setView("support")}><span className="nav-icon">?</span> Soporte</button>}
-          {authMode === "cloud" && <button className={view === "admin" ? "nav-item active" : "nav-item"} aria-current={view === "admin" ? "page" : undefined} onClick={() => setView("admin")}><span className="nav-icon">⌘</span> Administración</button>}
-          <button className={view === "about" ? "nav-item active" : "nav-item"} aria-current={view === "about" ? "page" : undefined} onClick={() => setView("about")}><span className="nav-icon">✳</span> Nuestra familia</button>
+          <button className={view === "account" ? "nav-item active" : "nav-item"} aria-current={view === "account" ? "page" : undefined} onClick={() => setView("account")}><FixoraIcon className="nav-icon" name="user" /> Mi cuenta</button>
+          {authMode === "cloud" && <button className={view === "support" ? "nav-item active" : "nav-item"} aria-current={view === "support" ? "page" : undefined} onClick={() => setView("support")}><FixoraIcon className="nav-icon" name="support" /> Soporte</button>}
+          {authMode === "cloud" && <button className={view === "admin" ? "nav-item active" : "nav-item"} aria-current={view === "admin" ? "page" : undefined} onClick={() => setView("admin")}><FixoraIcon className="nav-icon" name="shield" /> Administración</button>}
+          <button className={view === "about" ? "nav-item active" : "nav-item"} aria-current={view === "about" ? "page" : undefined} onClick={() => setView("about")}><FixoraIcon className="nav-icon" name="grid" /> Nuestra familia</button>
           <p className="nav-label nav-label-spaced">RECURSOS</p>
           <button className={view === "guide" ? "nav-item active" : "nav-item"} aria-current={view === "guide" ? "page" : undefined} onClick={() => setView("guide")}>
-            <span className="nav-icon">⌘</span> Guía de uso
+            <FixoraIcon className="nav-icon" name="book" /> Guía de uso
           </button>
-          <button className={view === "terms" ? "nav-item active" : "nav-item"} aria-current={view === "terms" ? "page" : undefined} onClick={() => setView("terms")}><span className="nav-icon">§</span> Términos</button>
-          <button className={view === "privacy" ? "nav-item active" : "nav-item"} aria-current={view === "privacy" ? "page" : undefined} onClick={() => setView("privacy")}><span className="nav-icon">⌑</span> Privacidad</button>
+          <button className={view === "terms" ? "nav-item active" : "nav-item"} aria-current={view === "terms" ? "page" : undefined} onClick={() => setView("terms")}><FixoraIcon className="nav-icon" name="file" /> Términos</button>
+          <button className={view === "privacy" ? "nav-item active" : "nav-item"} aria-current={view === "privacy" ? "page" : undefined} onClick={() => setView("privacy")}><FixoraIcon className="nav-icon" name="lock" /> Privacidad</button>
           <div className="sidebar-note">
-            <span className="sidebar-note-mark">✳</span>
+            <FixoraMark className="sidebar-note-logo" size={28} />
             <strong>Decisiones con claridad.</strong>
             <p>Conoce tus números antes de fijar un precio.</p>
           </div>
@@ -470,12 +471,12 @@ export function App({
               </section>
               <div className="essentials-section-title"><div><p className="eyebrow">HERRAMIENTAS ESENCIALES</p><h2>Lo que puedes hacer desde hoy.</h2></div><span className="profile-chip">{businessTypes.find((item) => item.id === businessType)?.subtitle ?? "Perfil general"}</span></div>
               <div className="essentials-grid">
-                <article className="essential-tile"><span className="tile-index">01 / COSTES</span><div className="tile-symbol">⌗</div><h3>Costear productos y servicios</h3><p>Integra materiales, tiempo de trabajo, merma y otros costes directos en un coste unitario.</p><button onClick={() => setView("calculator")}>Calcular ahora <span>→</span></button></article>
-                <article className="essential-tile"><span className="tile-index">02 / PRECIOS</span><div className="tile-symbol">◇</div><h3>Definir un precio sostenible</h3><p>Considera comisiones, descuentos y margen objetivo antes de publicar o cotizar.</p><button onClick={() => setView("calculator")}>Definir precio <span>→</span></button></article>
-                <article className="essential-tile"><span className="tile-index">03 / CONTROL</span><div className="tile-symbol">◷</div><h3>Conservar tus análisis</h3><p>Guarda cálculos, vuelve a abrirlos y compara tus decisiones de precio.</p><button onClick={() => setView("history")}>Ver mis cálculos <span>→</span></button></article>
-                <article className="essential-tile"><span className="tile-index">04 / EQUILIBRIO</span><div className="tile-symbol">◒</div><h3>Conocer tu punto de equilibrio</h3><p>Calcula cuántas unidades necesitas vender para cubrir los costes fijos del periodo.</p><button onClick={() => setView("breakEven")}>Calcular equilibrio <span>→</span></button></article>
-                <article className="essential-tile"><span className="tile-index">05 / GASTOS</span><div className="tile-symbol">＋</div><h3>Organizar tus gastos</h3><p>Separa los gastos fijos del periodo de los costes variables por unidad.</p><button onClick={() => setView("expenses")}>Controlar gastos <span>→</span></button></article>
-                <article className="essential-tile"><span className="tile-index">06 / CATÁLOGO</span><div className="tile-symbol">◇</div><h3>Crear tu catálogo</h3><p>Registra productos y servicios con unidades y costes de referencia.</p><button onClick={() => setView("catalog")}>Abrir catálogo <span>→</span></button></article>
+                <article className="essential-tile"><span className="tile-index">01 / COSTES</span><div className="tile-symbol"><FixoraIcon name="calculator" size={20} /></div><h3>Costear productos y servicios</h3><p>Integra materiales, tiempo de trabajo, merma y otros costes directos en un coste unitario.</p><button onClick={() => setView("calculator")}>Calcular ahora <span>→</span></button></article>
+                <article className="essential-tile"><span className="tile-index">02 / PRECIOS</span><div className="tile-symbol"><FixoraIcon name="receipt" size={20} /></div><h3>Definir un precio sostenible</h3><p>Considera comisiones, descuentos y margen objetivo antes de publicar o cotizar.</p><button onClick={() => setView("calculator")}>Definir precio <span>→</span></button></article>
+                <article className="essential-tile"><span className="tile-index">03 / CONTROL</span><div className="tile-symbol"><FixoraIcon name="clock" size={20} /></div><h3>Conservar tus análisis</h3><p>Guarda cálculos, vuelve a abrirlos y compara tus decisiones de precio.</p><button onClick={() => setView("history")}>Ver mis cálculos <span>→</span></button></article>
+                <article className="essential-tile"><span className="tile-index">04 / EQUILIBRIO</span><div className="tile-symbol"><FixoraIcon name="scale" size={20} /></div><h3>Conocer tu punto de equilibrio</h3><p>Calcula cuántas unidades necesitas vender para cubrir los costes fijos del periodo.</p><button onClick={() => setView("breakEven")}>Calcular equilibrio <span>→</span></button></article>
+                <article className="essential-tile"><span className="tile-index">05 / GASTOS</span><div className="tile-symbol"><FixoraIcon name="plus" size={20} /></div><h3>Organizar tus gastos</h3><p>Separa los gastos fijos del periodo de los costes variables por unidad.</p><button onClick={() => setView("expenses")}>Controlar gastos <span>→</span></button></article>
+                <article className="essential-tile"><span className="tile-index">06 / CATÁLOGO</span><div className="tile-symbol"><FixoraIcon name="receipt" size={20} /></div><h3>Crear tu catálogo</h3><p>Registra productos y servicios con unidades y costes de referencia.</p><button onClick={() => setView("catalog")}>Abrir catálogo <span>→</span></button></article>
               </div>
               <section className="business-profile-panel"><div><p className="eyebrow">CONFIGURA TU EXPERIENCIA</p><h2>¿A qué te dedicas?</h2><p>Tu elección orientará las plantillas y herramientas especializadas que añadiremos. No cambia ni sustituye el motor de cálculo general.</p></div><div className="business-profile-actions"><strong>{businessTypes.find((item) => item.id === businessType)?.title}</strong><button className="outline-button" onClick={() => setView("kits")}>Ver opciones de emprendimiento</button></div></section>
               {profileMessage && <p className="profile-message" role="status">{profileMessage}</p>}
