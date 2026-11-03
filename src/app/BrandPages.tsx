@@ -158,6 +158,23 @@ export function AboutPage({ locale }: PageProps) {
   );
 }
 
+const entitlementLabels: Record<string, string> = {
+  "account.read": "Acceso a cuenta",
+  "history.read": "Historial de cálculos",
+  "data.export": "Exportación de datos",
+  "premium.tools": "Herramientas avanzadas de Essentials",
+  "kits.access": "Catálogo de kits (exploración; no habilita su uso)",
+  "kit.retail": "Kit Comercio y reventa",
+  "kit.services_beauty": "Kit Servicios y belleza",
+  "kit.food": "Kit Alimentos y repostería",
+  "kit.workshop": "Kit Taller y manufactura",
+  "kit.digital_products": "Kit Productos digitales y creativos",
+};
+
+function formatEntitlements(entitlements: string[]): string {
+  return entitlements.map((key) => entitlementLabels[key] ?? key).join(", ");
+}
+
 export function AccountPage({ locale, onOpenGuide, authMode = "local", userEmail, businessName, onSignOut, licenseAccess, licenseLoading = false, licenseError, onLicenseActivated }: PageProps & {
   onOpenGuide: () => void;
   authMode?: "cloud" | "local";
@@ -201,7 +218,7 @@ export function AccountPage({ locale, onOpenGuide, authMode = "local", userEmail
                 <p><b>{license.product_sku}</b> · Estado: <b>{license.status === "active" ? "Activa" : license.status === "expired" ? "Vencida" : license.status === "pending" ? "Pendiente" : license.status}</b></p>
                 <p>Vigencia hasta: <b>{license.expires_at ? new Date(license.expires_at).toLocaleDateString("es-MX", { dateStyle: "long" }) : "Pendiente de activación"}</b></p>
                 <p>Dispositivos activos: <b>{license.active_device_count} de {license.max_active_devices}</b></p>
-                <p>Funciones habilitadas: {license.available_entitlements.length ? license.available_entitlements.join(", ") : "Ninguna disponible en este momento."}</p>
+                <p>Derechos disponibles o conservados: {license.available_entitlements.length ? formatEntitlements(license.available_entitlements) : "Ninguno disponible en este momento."}</p>
               </article>
             ))}
           </div>
