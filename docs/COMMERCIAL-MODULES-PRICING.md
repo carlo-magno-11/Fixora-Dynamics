@@ -117,5 +117,5 @@ No construir los cinco kits a la vez. Cada uno necesita especificación de datos
 - Tratamiento fiscal/IVA y política de reembolso.
 - Confirmar si la licencia anual es compra única de 12 meses (sin auto-renovación); esta propuesta asume que sí.
 - Confirmar si un derecho se aplica a toda la cuenta o a un negocio concreto. Recomendación: cuenta propietaria con negocios de esa cuenta, sujeto a un límite comercial explícito.
-- Revisar si el límite actual de dispositivos aplica a la licencia General y a los kits o a una sola activación de cuenta.
+- Aplicar el máximo confirmado de tres dispositivos activos por licencia. Si General y un add-on se emiten como licencias separadas, cada licencia conserva su propio límite; no existe una cuota global por cuenta.
 - Validar precios con clientes reales antes de publicarlos.
