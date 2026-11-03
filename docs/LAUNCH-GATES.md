@@ -116,3 +116,12 @@ Conclusión: la política de 30 días, los entitlements específicos por kit y l
 - La interfaz aún presenta kits como planificación/catálogo. Retail tiene dominio probado, pero carece de UI, persistencia transaccional, RLS y entitlement ejecutable.
 - El proyecto remoto sigue sin usuarios Auth ni membresías admin (0/0); no se puede probar AAL2 real. El bucket heredado `eyesite-media` continúa público, vacío y sin políticas de objetos; no se tocó.
 - Próxima puerta General: completar persistencia cloud del catálogo, gastos, snapshots e historial con RLS y sincronización idempotente; definir exportación/backup y recuperación; después ejecutar E2E con dos usuarios, negocio propio y ajeno, desconexión/reintento y cambio de dispositivo.
+
+
+## Retención de rate limiting — nuevo trabajo en rama, 2026-11-03
+
+- Se añadió la migración local `20261103070000_fixora_rate_limit_retention.sql` con índice por `window_started_at` y función privada para purgar sólo ventanas anteriores a 24 horas.
+- Se añadió `supabase/tests/fixora_rate_limit_retention.test.sql` para comprobar índice, `SECURITY DEFINER`/search_path, permisos y conservación de buckets activos.
+- **Pendiente de CI:** no se declara aprobada la migración ni la suite nueva hasta que GitHub ejecute reconstrucción local y pgTAP sobre el HEAD actual.
+- **Pendiente de operación:** la función aún no tiene un scheduler configurado. No se ejecutará manualmente en remoto ni se habilitará `pg_cron` hasta verificar disponibilidad/configuración y acordar la frecuencia en el proyecto de pruebas.
+- No se aplicó esta migración a Supabase remoto.
