@@ -15,7 +15,7 @@ Estado al 3 de noviembre de 2026. Este documento separa evidencia existente de t
 - [x] La variante R4 de soporte y la línea de seguridad de PR #8 se integraron en la rama central mediante merge revisado el 3-11-2026 (commit `248d67f`).
 - [x] PR #8 no compartía rutas modificadas con PR #14; su head tenía CI, Security, CodeQL y Database tests exitosos antes del merge.
 - [x] HEAD de código `9ceaaa85` validado: CI #1501 SUCCESS (TypeScript, 201 pruebas Vitest, build web, Deno check y 14 pruebas Deno); Database tests #1055 SUCCESS (reconstrucción completa, pgTAP, pruebas negativas RLS y concurrencia); CodeQL #161 SUCCESS.
-- [ ] Security #313 está pendiente de ejecución/completado; no declararlo aprobado hasta que GitHub confirme su conclusión.
+- [x] Security #317 terminó SUCCESS en el commit documental `b525370`; cada nuevo HEAD debe volver a validar Security.
 - [ ] Tras cualquier cambio posterior al HEAD `9ceaaa85`, volver a verificar los workflows del nuevo HEAD.
 - [ ] No declarar release integrado mientras los PRs continúen en borrador y no exista una rama de release validada.
 
@@ -37,9 +37,9 @@ Estado al 3 de noviembre de 2026. Este documento separa evidencia existente de t
 ## 2. Seguridad y administración
 - [x] PR #8 reportó CI #1174, Security #82, CodeQL #21 y Database tests #730 exitosos en SHA `3649d026` antes del merge del 3-11-2026.
 - [x] Rate limit server-side agregado en rama PR #8 con tests Deno, pgTAP y prueba de concurrencia.
-- [ ] **No desplegado en el proyecto remoto de pruebas:** el último migration registrado sigue siendo `20261102234809`; falta `20261103030100_fixora_server_rate_limits`. `admin-support-inbox` tampoco aparece entre las ocho Edge Functions activas. El merge de PR #8 y sus checks no aplican migraciones ni despliegan funciones.
+- [x] En el proyecto remoto Fixora se aplicaron las migraciones de unidades enteras, rate limits server-side, duración por días, retención y borradores privados; el registro remoto quedó alineado con los archivos versionados en la rama. `admin-support-inbox` continúa sin desplegarse; las ocho Edge Functions existentes permanecen separadas de estas migraciones.
 - [x] Supabase Security Advisor en el proyecto de pruebas: cero hallazgos el 3-11-2026.
-- [ ] Revisar 11 avisos informativos de rendimiento (10 índices sin uso y estrategia de conexiones Auth); la mayoría puede deberse a tablas aún vacías, no borrar índices sin medir.
+- [ ] Revisar avisos INFO de rendimiento (índices sin uso y estrategia de conexiones Auth); la mayoría puede deberse a tablas aún vacías, no borrar índices sin medir.
 - [x] El proyecto de pruebas registra tres migraciones baseline heredadas de EYESITE en su historial, pero el inventario actual del esquema public muestra solo tablas Fixora; no se debe resetear ni borrar el proyecto por esos nombres históricos.
 - [x] En el inventario de tablas, los datos operativos Fixora están en cero filas; fixora_products contiene un SKU y la matriz de permisos admin 18 filas. No se observaron órdenes, licencias, tickets ni negocios de clientes.
 - [ ] Revisar cambios manualmente y probar endpoints con usuario anónimo, autenticado AAL1, admin sin permiso y admin AAL2.
@@ -105,12 +105,12 @@ Consulta de solo lectura al proyecto de pruebas `eyesite-security-test` (`dclaeb
 
 - El catálogo de productos está en `fixora_private.fixora_products`, no en `public`. El SKU activo único sigue siendo `FIXORA-ESSENTIALS-ANNUAL`, con `term_months=12`, `max_active_devices=3` y entitlement genérico `kits.access`.
 - No hay pedidos, licencias, negocios, membresías administrativas ni tickets operativos. Hay 18 asignaciones de permisos de rol y 0 usuarios Auth; por tanto, aún no se puede ejecutar una prueba de MFA/AAL2 con cuentas reales.
-- La función remota `fixora_private.redeem_activation_code` calcula el vencimiento usando `make_interval(months => v_product.term_months)`; todavía no admite duración en días.
+- La función remota `fixora_private.redeem_activation_code` ya admite términos exactos en días o meses; el SKU General conserva 12 meses y no hay licencias emitidas.
 - La misma función cuenta dispositivos filtrando por `license_id`; el límite de tres sigue siendo por licencia, no global por cuenta.
 - `public.fixora_get_license_access` devuelve los entitlements activos tal como fueron emitidos; el catálogo actual aún incluye `kits.access`, por lo que no existe aislamiento comercial completo por kit.
 - El bucket heredado `eyesite-media` continúa público y vacío (0 objetos). No se modificó: su eliminación o privatización requiere confirmar primero que ningún flujo Fixora lo usa y hacerlo por Storage API/Dashboard.
 - Security Advisor: 0 hallazgos. Performance Advisor: 10 avisos de índices sin uso y 1 aviso informativo de asignación de conexiones Auth; no se eliminaron índices.
-- La migración de rate limiting `20261103030100` y la Edge Function `admin-support-inbox` siguen ausentes del proyecto remoto. Las ocho funciones desplegadas mantienen `verify_jwt=true`.
+- Las migraciones remotas de rate limiting, retención, duración por días y borradores privados ya están aplicadas. La Edge Function `admin-support-inbox` sigue ausente; las ocho funciones desplegadas mantienen `verify_jwt=true`.
 
 Conclusión: la política de 30 días, los entitlements específicos por kit y la aplicación remota del límite de tres dispositivos por licencia siguen siendo requisitos de implementación, no funciones activas. No se ejecutó SQL de escritura, migración, despliegue ni cambio de Storage.
 
@@ -143,5 +143,5 @@ Conclusión: la política de 30 días, los entitlements específicos por kit y l
 - Almacenamiento local de borradores: namespace por cuenta y negocio; la prueba unitaria verifica que dos negocios no comparten la misma clave.
 - UI: se está cerrando una revisión adicional para que cambios de negocio no muestren datos anteriores, las respuestas asíncronas obsoletas no actualicen la vista y los fallos de lectura no se interpreten como colecciones vacías editables.
 - La migración de unidades estimadas se reconstruyó y pasó pgTAP en Database tests #1055; el tipo numérico conserva precisión para que la validación no acepte redondeos silenciosos.
-- CI #1501 / CodeQL #161 / Database tests #1055 son evidencia del HEAD `9ceaaa85`; Security #313 sigue pendiente. La suite Vitest registra 201 pruebas y la suite Deno 14.
-- No se aplicaron migraciones ni se desplegaron funciones en Supabase remoto. No hay staging multiusuario/multidispositivo validado.
+- CI #1505 / Security #317 / CodeQL #165 / Database tests #1059 fueron SUCCESS en el commit documental `b525370`. Los commits posteriores de alineación de migraciones requieren sus propias comprobaciones.
+- Se aplicaron exclusivamente migraciones del esquema Fixora en `eyesite-security-test`; no se desplegaron Edge Functions ni se modificó Storage. No hay staging multiusuario/multidispositivo validado.
