@@ -237,7 +237,8 @@ begin
     v_license.expires_at := CASE
       WHEN v_license.term_days IS NOT NULL
         THEN v_now + pg_catalog.make_interval(secs => v_license.term_days::double precision * 86400)
-      ELSE v_now + pg_catalog.make_interval(months => v_license.term_months)
+      ELSE ((v_now AT TIME ZONE 'UTC')
+        + pg_catalog.make_interval(months => v_license.term_months)) AT TIME ZONE 'UTC'
     END;
     v_license.status := 'active';
 
