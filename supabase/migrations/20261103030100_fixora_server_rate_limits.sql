@@ -34,6 +34,8 @@ DECLARE
 BEGIN
   IF p_bucket_hash IS NULL
     OR pg_catalog.octet_length(p_bucket_hash) <> 32
+    OR p_limit IS NULL
+    OR p_window_seconds IS NULL
     OR p_limit NOT BETWEEN 1 AND 1000
     OR p_window_seconds NOT BETWEEN 1 AND 86400 THEN
     RAISE EXCEPTION 'Invalid rate limit configuration'
