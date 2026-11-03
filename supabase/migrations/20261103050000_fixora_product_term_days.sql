@@ -42,7 +42,7 @@ declare
   v_order fixora_private.fixora_purchase_orders%rowtype;
   v_code text;
   v_code_hash bytea;
-  v_now timestamptz := pg_catalog.clock_timestamp();
+  v_now timestamptz;
   v_code_expires_at timestamptz;
 begin
   select * into v_license
@@ -54,7 +54,7 @@ begin
     raise exception 'License is not eligible for activation code' using errcode = '23514';
   end if;
 
-  if v_license.expires_at is not null and v_license.expires_at <= pg_catalog.now() then
+  if v_license.expires_at is not null and v_license.expires_at <= pg_catalog.clock_timestamp() then
     raise exception 'License has expired' using errcode = '23514';
   end if;
 
@@ -68,6 +68,7 @@ begin
     raise exception 'Purchase is no longer eligible' using errcode = '23514';
   end if;
 
+  v_now := pg_catalog.clock_timestamp();
   v_code_expires_at := v_now + pg_catalog.make_interval(secs => 2592000);
   v_code := pg_catalog.encode(extensions.gen_random_bytes(32), 'hex');
   v_code_hash := extensions.digest(pg_catalog.convert_to(v_code, 'UTF8'), 'sha256');
