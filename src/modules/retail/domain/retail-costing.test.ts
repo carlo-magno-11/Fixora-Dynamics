@@ -43,8 +43,8 @@ describe("calculateRetailCosting", () => {
 
   it("allocates the lot cost over saleable units, not purchased units", () => {
     const result = calculateRetailCosting({ ...base, saleableUnits: 18 });
-    expect(result.acquisitionCostPerSaleableUnit).toBe(127.78);
-    expect(result.variableCostBeforeFee).toBe(142.78);
+    expect(result.acquisitionCostPerSaleableUnit).toBe(127.77777778);
+    expect(result.variableCostBeforeFee).toBe(142.77777778);
     expect(result.contributionBeforeFixed).toBe(37.22);
   });
 
@@ -95,6 +95,23 @@ describe("calculateRetailCosting", () => {
     expect(result.netRevenue).toBe(0);
     expect(result.contributionMargin).toBeNull();
     expect(result.estimatedOperatingMargin).toBeNull();
+  });
+
+  it("preserves sub-cent acquisition costs for low-priced, high-volume goods", () => {
+    const result = calculateRetailCosting({
+      ...base,
+      purchaseCost: 0.01,
+      inboundFreight: 0,
+      otherInboundCosts: 0,
+      purchasedUnits: 1000,
+      saleableUnits: 1000,
+      sellingPrice: 0.05,
+      channelFeeRate: 0,
+      packagingPerUnit: 0,
+      otherVariableCostPerUnit: 0,
+    });
+    expect(result.acquisitionCostPerSaleableUnit).toBe(0.00001);
+    expect(result.variableCostBeforeFee).toBe(0.00001);
   });
 
   it("handles decimal amounts without binary floating point drift", () => {
