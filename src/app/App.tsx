@@ -17,7 +17,7 @@ import type { PricingFeeBasis, PricingInput } from "../modules/pricing/domain/pr
 import { AboutPage, AccountPage, GuidePage } from "./BrandPages";
 import { LegalPage } from "./LegalPages";
 import { createAppServices } from "./create-app-services";
-import { parseCalculatorDraftValue, readCalculatorDraft, saveCalculatorDraft } from "./calculator-draft";
+import { createCalculatorDraftStorage, parseCalculatorDraftValue, readCalculatorDraft, saveCalculatorDraft } from "./calculator-draft";
 import type { CalculatorDraft } from "../modules/drafts/domain/calculator-draft";
 import { calculationsToCsv } from "../modules/snapshots/domain/calculation-export";
 import type { SavedCalculation } from "../modules/snapshots/domain/saved-calculation";
@@ -140,7 +140,7 @@ export function App({
   );
   const calculatorDraftScope = `${storageScope ?? "default"}:${businessId ?? "none"}`;
   const calculatorDraftStorage = useMemo(
-    () => createNamespacedKeyValueStorage(storage, `business:${businessId ?? "none"}`),
+    () => createCalculatorDraftStorage(storage, businessId),
     [businessId, storage],
   );
   const appServices = useMemo(
