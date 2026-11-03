@@ -13,7 +13,7 @@ import type { CatalogItem } from "../modules/catalog/domain/catalog";
 import type { CatalogItemSnapshot } from "../modules/snapshots/domain/calculation-snapshot";
 import { calculateBreakEven } from "../modules/break-even/domain/break-even";
 import type { BreakEvenInput } from "../modules/break-even/domain/break-even";
-import type { PricingInput } from "../modules/pricing/domain/pricing";
+import type { PricingFeeBasis, PricingInput } from "../modules/pricing/domain/pricing";
 import { AboutPage, AccountPage, GuidePage } from "./BrandPages";
 import { LegalPage } from "./LegalPages";
 import { createAppServices } from "./create-app-services";
@@ -589,10 +589,23 @@ export function App({
                     </div>
                     <div className="field-grid">
                       <Field label="Comisiones del canal" value={input.variableFeeRate * 100} suffix="%" onChange={(v) => update("variableFeeRate", v, true)} />
+                      <label className="currency-select">
+                        <span>BASE DE COMISIÓN</span>
+                        <select
+                          value={input.variableFeeBasis ?? "discounted_price"}
+                          onChange={(event) => setInput((current) => ({
+                            ...current,
+                            variableFeeBasis: event.target.value as PricingFeeBasis,
+                          }))}
+                        >
+                          <option value="discounted_price">Precio con descuento</option>
+                          <option value="pre_discount">Precio original</option>
+                        </select>
+                      </label>
                       <Field label="Descuento al cliente" value={input.discountRate * 100} suffix="%" onChange={(v) => update("discountRate", v, true)} />
                       <Field label="Margen de ganancia deseado" value={input.targetMarginRate * 100} suffix="%" onChange={(v) => update("targetMarginRate", v, true)} />
                     </div>
-                    <p className="field-hint">El margen se calcula sobre el ingreso después de comisión. Configura aquí las tasas reales de tu canal.</p>
+                    <p className="field-hint">Elige la base que realmente usa tu canal: precio original o precio con descuento. El margen se calcula sobre el ingreso neto después de comisión; revisa las condiciones de tu plataforma.</p>
                   </section>
                 </div>
 
