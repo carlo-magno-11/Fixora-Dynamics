@@ -101,6 +101,7 @@ export function CloudHistoryPage({ businessId, formatMoney, onOpenCalculation, o
       <p className="eyebrow">TU ACTIVIDAD <span> / </span> 02 · NUBE</p>
       <h1>Mis cálculos.</h1>
       <p className="page-lead">Consulta y recupera los análisis guardados en el negocio seleccionado. Cada registro conserva los valores y la versión de fórmula con que fue creado.</p>
+      <div className="history-actions"><span>Historial del negocio seleccionado</span><button className="outline-button" type="button" disabled={loading || loadingMore} onClick={() => void loadFirstPage()}>{loading ? "Actualizando…" : "Actualizar historial"}</button></div>
       {errorMessage && <p className="error-state" role="alert">{errorMessage}</p>}
       {invalidCount > 0 && <div className="guide-callout" role="alert"><strong>Algunos registros no se pudieron interpretar.</strong><p>{invalidCount} registros no coinciden con el esquema de cálculo actual. No se modificaron ni eliminaron.</p></div>}
       {loading ? <p className="local-storage-note">Cargando historial…</p> : records.length === 0 ? (
