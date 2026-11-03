@@ -45,10 +45,10 @@ Estado al 3 de noviembre de 2026. Este documento separa evidencia existente de t
 - [x] Esquema de productos, órdenes, licencias, entitlements, dispositivos y eventos existe en migraciones.
 - [x] Activación de licencia requiere cuenta autenticada, correo confirmado y código de un solo uso.
 - [ ] Añadir duración exacta por días sin romper términos mensuales/anuales existentes.
-- [ ] Resolver licencia por usuario vs negocio y cuota global de dispositivos.
+- [ ] Resolver licencia por usuario vs negocio; el límite confirmado es de tres dispositivos activos por licencia, no global por cuenta.
 - [ ] Reemplazar permiso genérico kits.access para autorización de ejecución por entitlements exactos por kit.
 - [ ] Probar General solo, kit solo, bundle, add-on, General vencido, kit vencido, reembolso, contracargo, disputa y revocación.
-- [ ] Verificar que la cuota de dispositivos no se multiplica al comprar más de un SKU.
+- [ ] Verificar que cada licencia respeta un máximo de tres dispositivos activos; cualquier cambio a cuota global por cuenta requiere una nueva decisión comercial explícita.
 - [ ] Verificar activación y reintento concurrente en backend.
 
 ## 4. Pagos
@@ -100,4 +100,4 @@ Consulta de solo lectura al proyecto de pruebas `eyesite-security-test` (`dclaeb
 - Security Advisor: 0 hallazgos. Performance Advisor: 10 avisos de índices sin uso y 1 aviso informativo de asignación de conexiones Auth; no se eliminaron índices.
 - La migración de rate limiting `20261103030100` y la Edge Function `admin-support-inbox` siguen ausentes del proyecto remoto. Las ocho funciones desplegadas mantienen `verify_jwt=true`.
 
-Conclusión: la política de 30 días, los entitlements específicos por kit y la cuota global de dispositivos siguen siendo requisitos de implementación, no funciones activas. No se ejecutó SQL de escritura, migración, despliegue ni cambio de Storage.
+Conclusión: la política de 30 días, los entitlements específicos por kit y la aplicación remota del límite de tres dispositivos por licencia siguen siendo requisitos de implementación, no funciones activas. No se ejecutó SQL de escritura, migración, despliegue ni cambio de Storage.
