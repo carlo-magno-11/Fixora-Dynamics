@@ -562,6 +562,7 @@ export function App({
       return;
     }
     if (!calculation.result) return;
+    const saveScope = calculatorDraftScope;
     try {
       const snapshot = snapshotService.create({
         name: name.trim() || "Cálculo sin nombre",
@@ -583,6 +584,7 @@ export function App({
       if (authMode === "cloud") {
         if (!businessId) throw new Error("No hay un negocio cloud seleccionado.");
         const cloudRecord = await cloudHistoryService.saveSnapshot(businessId, snapshot);
+        if (currentDraftScope.current !== saveScope) return;
         setHistory((current) => [cloudRecord, ...current].slice(0, 100));
         setSavedMessage("Cálculo guardado en Supabase para este negocio.");
         return;
@@ -590,7 +592,9 @@ export function App({
       setHistory((current) => [record, ...current].slice(0, 100));
       setSavedMessage("Cálculo guardado en este dispositivo.");
     } catch (error) {
-      setSavedMessage(error instanceof Error ? error.message : "No fue posible guardar el cálculo. Revisa la moneda y los datos del catálogo.");
+      if (currentDraftScope.current === saveScope) {
+        setSavedMessage(error instanceof Error ? error.message : "No fue posible guardar el cálculo. Revisa la moneda y los datos del catálogo.");
+      }
     }
   }
 
