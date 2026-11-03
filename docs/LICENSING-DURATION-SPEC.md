@@ -14,7 +14,7 @@ Añadir Fixora Inicio de 30 días sin alterar licencias anuales existentes ni co
 - La expiración es exclusiva: el acceso está activo si now < expires_at y vencido cuando now >= expires_at.
 - El backend calcula y persiste expires_at; el cliente nunca puede enviar ni cambiarlo.
 - Reintentos de activación idempotentes no reinician activated_at ni extienden expires_at.
-- El código de activación tiene vencimiento independiente de 30 días desde emisión; no confundir ese plazo con la vigencia de la licencia.
+- El código de activación tiene vencimiento independiente de exactamente 30 × 24 horas (720 horas) desde emisión; no confundir ese plazo con la vigencia de la licencia. El timestamp de emisión se captura una sola vez y se reutiliza para el vencimiento y el evento de auditoría.
 
 ## Modelo recomendado
 
