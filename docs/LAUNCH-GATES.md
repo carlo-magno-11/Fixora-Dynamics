@@ -139,5 +139,6 @@ Conclusión: la política de 30 días, los entitlements específicos por kit y l
 - Borradores cloud: persistencia privada por usuario + negocio; RPC versionada, RLS y pgTAP exitoso en CI #979.
 - Almacenamiento local de borradores: namespace por cuenta y negocio; la prueba unitaria verifica que dos negocios no comparten la misma clave.
 - UI: se está cerrando una revisión adicional para que cambios de negocio no muestren datos anteriores, las respuestas asíncronas obsoletas no actualicen la vista y los fallos de lectura no se interpreten como colecciones vacías editables.
+- Se añadió migración para impedir cantidades estimadas fraccionarias o fuera del rango entero seguro; pgTAP cubre constraint, trigger, RPC y escritura directa. La validación de esta migración está en curso.
 - CI #1425 / Security #237 / CodeQL #94 / Database tests #979 son evidencia del commit `dcc8e63`. El HEAD posterior `908e5cd` incorpora cambios adicionales y requiere nueva validación.
 - No se aplicaron migraciones ni se desplegaron funciones en Supabase remoto. No hay staging multiusuario/multidispositivo validado.
