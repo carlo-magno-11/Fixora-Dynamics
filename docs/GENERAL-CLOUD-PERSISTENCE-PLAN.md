@@ -2,7 +2,7 @@
 
 Fecha: 3 de noviembre de 2026  
 Rama de referencia: `integration/fixora-mainline-20261103`  
-Estado: adaptadores cloud extraídos y conectados en la rama central; CI #1299 aprobó TypeScript, 195 pruebas, build web y Edge Functions. Security, CodeQL y Database tests de este HEAD aún deben cerrar. No equivale a una validación E2E en staging.
+Estado: adaptadores cloud extraídos y conectados en la rama central; CI #1353 aprobó TypeScript, 195 pruebas, build web y Edge Functions. Security, CodeQL y Database tests de este HEAD aún deben cerrar. No equivale a una validación E2E en staging.
 
 ## 1. Estado real observado
 
@@ -16,7 +16,7 @@ La aplicación ya tiene rutas cloud para los datos operativos principales. La au
 - El historial cloud ya admite paginación por cursor de fecha + UUID, orden estable y lotes de 100. El cambio quedó en el commit `0ab526ed35a2378fb61d1af1bf6448ec5cc51b76`; sus controles CI/Security/Database/CodeQL deben considerarse pendientes hasta que GitHub confirme el resultado final de cada workflow.
 - Los borradores del calculador siguen guardándose en `localStorage` incluso en modo cloud. La UI informa que son locales y no están sincronizados. No existe aún un flujo de migración local → cloud.
 - Catálogo, gastos e historial ahora pasan por repositorios Supabase tipados y servicios de aplicación. Los componentes UI reciben contratos de aplicación; la composición de dependencias se concentra en `src/app/create-app-services.ts`. Las pruebas de arquitectura impiden que UI importe infraestructura directamente.
-- Los repositorios tienen pruebas unitarias de mapeo/validación y los servicios cloud tienen pruebas de delegación y reglas de dominio. El CI #1299 confirmó 195 pruebas Vitest, TypeScript y build web.
+- Los repositorios tienen pruebas unitarias de mapeo/validación y los servicios cloud tienen pruebas de delegación y reglas de dominio. El CI #1353 confirmó 195 pruebas Vitest, TypeScript y build web.
 - No hay evidencia de E2E en staging con dos cuentas, dos negocios y dos dispositivos.
 
 **Conclusión:** catálogo, gastos y snapshots/historial ya tienen un camino cloud implementado en la UI y respaldado por tablas/RLS/RPC. No se debe anunciar sincronización integral entre dispositivos: el borrador sigue siendo local, la migración de datos no existe y faltan pruebas E2E operativas. No se debe hacer dual-write silencioso ni borrar los datos locales durante la transición.
@@ -81,18 +81,18 @@ No forzar una conversión de todos los contratos locales a Promise si no aporta 
 
 ### G0 — extracción y contratos
 
-<badge>Implementado en rama; CI parcial aprobado</badge>
+**Estado:** implementado en la rama; CI parcial aprobado.
 
 - Repositorios Supabase tipados creados para catálogo, gastos e historial.
 - Servicios de aplicación creados para cada módulo; UI no importa infraestructura.
 - Composición de repositorios cloud centralizada en `src/app/create-app-services.ts`.
-- Pruebas de mapeo/validación y servicios; 195 pruebas Vitest aprobadas en CI #1299.
+- Pruebas de mapeo/validación y servicios; 195 pruebas Vitest aprobadas en CI #1353.
 - DTOs y columnas seleccionadas explícitamente; errores de permiso/conflicto traducidos a mensajes controlados.
 - Pendiente: confirmar Security, CodeQL y Database tests en el mismo HEAD.
 
 ### G1 — catálogo cloud
 
-<badge>Implementación conectada; E2E pendiente</badge>
+**Estado:** implementación conectada; E2E pendiente.
 
 - Repositorio Supabase y servicio de aplicación conectados a la UI.
 - Operaciones de lectura, alta, edición y archivado usan el contrato cloud.
@@ -102,7 +102,7 @@ No forzar una conversión de todos los contratos locales a Promise si no aporta 
 
 ### G2 — gastos cloud
 
-<badge>Implementación conectada; E2E pendiente</badge>
+**Estado:** implementación conectada; E2E pendiente.
 
 - Repositorio Supabase y servicio de aplicación conectados a `fixora_save_expenses`.
 - Mapeo de configuración valida periodo, unidades y versión segura.
@@ -111,7 +111,7 @@ No forzar una conversión de todos los contratos locales a Promise si no aporta 
 
 ### G3 — snapshots/historial cloud
 
-<badge>Implementación conectada; E2E pendiente</badge>
+**Estado:** implementación conectada; E2E pendiente.
 
 - Repositorio y servicio de aplicación gestionan inserción y lectura de snapshots; la UI ya no escribe directamente en Supabase.
 - El servidor genera ID y timestamp respetando los grants de inserción actuales.
