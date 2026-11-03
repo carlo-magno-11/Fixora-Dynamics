@@ -25,6 +25,7 @@ export function CloudExpensesPage({ businessId, currency, formatMoney, service }
   activeBusinessId.current = businessId;
   const saveRequestId = useRef(0);
   const [loadedBusinessId, setLoadedBusinessId] = useState<string | null>(null);
+  const [loadFailed, setLoadFailed] = useState(false);
   const [fixed, setFixed] = useState<FixedExpense[]>([]);
   const [variable, setVariable] = useState<VariableExpense[]>([]);
   const [expectedUnits, setExpectedUnits] = useState(100);
@@ -47,7 +48,9 @@ export function CloudExpensesPage({ businessId, currency, formatMoney, service }
       setVersion(0);
     }
     setLoadedBusinessId(null);
+    setLoadFailed(false);
     setLoading(true);
+    setMessage("");
     setErrorMessage("");
     try {
       const state = await service.load(businessId);
@@ -58,6 +61,7 @@ export function CloudExpensesPage({ businessId, currency, formatMoney, service }
       setPeriod(state.period);
       setVersion(state.version);
       setLoadedBusinessId(businessId);
+      setLoadFailed(false);
       return true;
     } catch (error) {
       if (currentRequest !== requestId.current) return false;
@@ -66,6 +70,7 @@ export function CloudExpensesPage({ businessId, currency, formatMoney, service }
       setExpectedUnits(1);
       setVersion(0);
       setLoadedBusinessId(businessId);
+      setLoadFailed(true);
       setErrorMessage(error instanceof Error ? error.message : "No fue posible cargar los gastos.");
       return false;
     } finally {
@@ -119,7 +124,7 @@ export function CloudExpensesPage({ businessId, currency, formatMoney, service }
   }
 
   async function saveExpenses() {
-    if (loadedBusinessId !== businessId || loading || !summary.result) return;
+    if (loadedBusinessId !== businessId || loading || loadFailed || !summary.result) return;
     const currentSaveRequest = ++saveRequestId.current;
     const saveBusinessId = businessId;
     setSaving(true);
@@ -149,14 +154,14 @@ export function CloudExpensesPage({ businessId, currency, formatMoney, service }
     }
   }
 
-  if (loading || loadedBusinessId !== businessId) {
+  if (loading || loadedBusinessId !== businessId || loadFailed) {
     return (
       <div className="secondary-page expenses-page">
         <p className="eyebrow">FIXORA ESSENTIALS <span> / </span> 05 · NUBE</p>
         <h1>Gastos del negocio.</h1>
         <p className="page-lead">Cargando la información del negocio seleccionado para evitar mezclar datos entre negocios.</p>
         {errorMessage && <p className="error-state" role="alert">{errorMessage}</p>}
-        <p className="local-storage-note">Consultando gastos y configuración…</p>
+        {loadFailed ? <button className="outline-button" type="button" onClick={() => void loadData()}>Volver a intentar</button> : <p className="local-storage-note">Consultando gastos y configuración…</p>}
       </div>
     );
   }
