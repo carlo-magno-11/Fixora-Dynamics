@@ -10,6 +10,7 @@
 - Control de gastos fijos y variables, periodo de registro y asignación analítica.
 - Catálogo de productos y servicios con SKU opcional, moneda, coste de referencia, edición y archivo.
 - Historial de cálculos versionados, recuperación de snapshots y exportación CSV.
+- Borrador automático y restauración local de la calculadora, aislado por usuario/negocio y claramente separado de la sincronización cloud.
 - Guía práctica, perfiles de actividad, información de marca y cuenta.
 - Registro/inicio de sesión, confirmación de correo, recuperación de contraseña y MFA TOTP.
 - Negocios separados por usuario mediante RLS; catálogo, gastos e historial cloud.
