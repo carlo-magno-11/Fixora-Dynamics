@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { calculatePrice } from "../modules/pricing/domain/pricing";
+import { FixoraMark } from "../shared/ui/FixoraMark";
 import { ExpensesPage } from "../modules/expenses/ui/ExpensesPage";
 import { CloudExpensesPage } from "../modules/expenses/ui/CloudExpensesPage";
 import { CatalogPage } from "../modules/catalog/ui/CatalogPage";
@@ -374,7 +375,7 @@ export function App({
     <main className="app-shell">
       <header className="topbar">
         <a className="brand" href="/" aria-label="Fixora Dynamics, inicio">
-          <span className="brand-mark">F</span>
+          <FixoraMark className="brand-mark-svg" size={40} />
           <span className="brand-word">FIXORA <b>DYNAMICS</b></span>
         </a>
         <div className="topbar-right">
@@ -461,7 +462,7 @@ export function App({
                   <h1>Tu negocio, con números claros.</h1>
                   <p className="page-lead">Empieza por entender cuánto te cuesta producir, cuánto necesitas cobrar y qué deja cada venta. Después, adapta tu espacio al tipo de emprendimiento.</p>
                 </div>
-                <span className="essentials-seal">F<span>·</span>D</span>
+                <span className="essentials-seal" aria-label="Fixora Dynamics"><FixoraMark size={40} /></span>
               </div>
               <section className="essentials-welcome">
                 <div><span className="welcome-family">Bienvenido a la familia Fixora</span><span className="welcome-kicker">TU KIT DE ACCESO GENERAL</span><h2>Fixora Essentials</h2><p>La base común para cualquier emprendimiento: costes, precios y rentabilidad sin complicaciones.</p><button className="welcome-about-link" onClick={() => setView("about")}>Conoce quiénes somos <span>↗</span></button></div>
