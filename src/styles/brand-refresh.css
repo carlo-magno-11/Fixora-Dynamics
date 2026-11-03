@@ -2,24 +2,24 @@
    A calm, confident palette inspired by mineral green, warm paper and oxidized copper. */
 :root {
   color-scheme: light;
-  --ink: #203638;
-  --ink-soft: #344D4D;
-  --petrol: #1D6259;
-  --petrol-light: #E3ECE6;
-  --gold: #92583F;
-  --gold-light: #F1E1D6;
-  --paper: #FCFBF7;
-  --canvas: #F1F0E9;
-  --muted: #637168;
-  --line: #E1E3DA;
-  --green: #39745F;
-  --red: #A85F50;
-  --fixora-deep: #173B3B;
-  --fixora-forest: #214C48;
-  --fixora-jade: #2E6A60;
-  --fixora-copper: #B97856;
-  --fixora-sand: #E8E2D3;
-  --fixora-sage: #DCE8E0;
+  --ink: #0F0F0F;
+  --ink-soft: #774E24;
+  --petrol: #16302B;
+  --petrol-light: #E9E1D7;
+  --gold: #DCAB6B;
+  --gold-light: #F2E5D0;
+  --paper: #FCFAF6;
+  --canvas: #F2EEE8;
+  --muted: #74685D;
+  --line: #E5DDD2;
+  --green: #16302B;
+  --red: #6E0D25;
+  --fixora-deep: #6E0D25;
+  --fixora-forest: #16302B;
+  --fixora-jade: #16302B;
+  --fixora-copper: #DCAB6B;
+  --fixora-sand: #E8D8C4;
+  --fixora-sage: #E9E1D7;
   --fixora-shadow: 0 18px 48px rgba(28, 53, 49, .08);
   font-family: Inter, "Aptos", "Segoe UI", sans-serif;
   color: var(--ink);
@@ -39,7 +39,7 @@ body {
 button, input, select, textarea { font: inherit; }
 button { transition: background-color .18s ease, border-color .18s ease, color .18s ease, box-shadow .18s ease, transform .18s ease; }
 button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, a:focus-visible {
-  outline: 3px solid rgba(185, 120, 86, .42);
+  outline: 3px solid rgba(220, 171, 107, .48);
   outline-offset: 3px;
 }
 
