@@ -166,6 +166,8 @@ export function App({
   const [cloudDraftReady, setCloudDraftReady] = useState(authMode !== "cloud");
   const [cloudDraftVersion, setCloudDraftVersion] = useState(0);
   const [cloudDraftSaving, setCloudDraftSaving] = useState(false);
+  const [cloudDraftNeedsReload, setCloudDraftNeedsReload] = useState(false);
+  const [cloudDraftReloadToken, setCloudDraftReloadToken] = useState(0);
   const lastCloudDraftFingerprint = useRef("");
   const cloudDraftSaveInFlight = useRef(false);
   const [historyLoadState] = useState(() => historyRepository.loadState());
@@ -254,6 +256,7 @@ export function App({
     setCloudDraftReady(false);
     setCloudDraftNeedsChoice(false);
     setCloudDraftCandidate(null);
+    setCloudDraftNeedsReload(false);
     void cloudCalculatorDraftService.load(businessId).then((remote) => {
       if (!active) return;
       setCloudDraftVersion(remote.version);
@@ -285,12 +288,13 @@ export function App({
       setDraftStatus("Borrador cloud listo. Los cambios nuevos se sincronizarán automáticamente.");
     }).catch((error: unknown) => {
       if (!active) return;
+      setCloudDraftNeedsReload(true);
       setDraftStatus(error instanceof Error
         ? `No se pudo comprobar el borrador cloud: ${error.message} La copia local se conserva.`
         : "No se pudo comprobar el borrador cloud. La copia local se conserva.");
     });
     return () => { active = false; };
-  }, [authMode, businessId, cloudCalculatorDraftService, storage]);
+  }, [authMode, businessId, cloudCalculatorDraftService, cloudDraftReloadToken, storage]);
 
   async function chooseCloudDraft() {
     if (!cloudDraftCandidate) return;
@@ -326,6 +330,7 @@ export function App({
       setCloudDraftReady(true);
       setDraftStatus("El borrador local elegido se sincronizó con la nube. La copia del dispositivo se conserva.");
     } catch (error) {
+      setCloudDraftNeedsReload(true);
       setDraftStatus(error instanceof Error ? error.message : "No fue posible sincronizar el borrador local.");
     } finally {
       setCloudDraftSaving(false);
@@ -350,6 +355,7 @@ export function App({
         setDraftStatus(error instanceof Error ? error.message : "No fue posible sincronizar el borrador. La copia local se conserva.");
         if (error instanceof Error && error.message.includes("otro dispositivo")) {
           setCloudDraftReady(false);
+          setCloudDraftNeedsReload(true);
         }
       }).finally(() => {
         cloudDraftSaveInFlight.current = false;
@@ -673,6 +679,13 @@ export function App({
               </div>
 
               {draftStatus && <p className="draft-status" role="status">{draftStatus}</p>}
+              {authMode === "cloud" && cloudDraftNeedsReload && (
+                <div className="guide-callout" role="status">
+                  <strong>Es necesario volver a consultar el borrador cloud.</strong>
+                  <p>Puede haber una versión más reciente en otro dispositivo. Tus datos locales siguen conservados.</p>
+                  <button className="outline-button" type="button" disabled={cloudDraftSaving} onClick={() => setCloudDraftReloadToken((value) => value + 1)}>Recargar versión cloud</button>
+                </div>
+              )}
               {authMode === "cloud" && cloudDraftNeedsChoice && (
                 <div className="guide-callout" role="group" aria-label="Elegir borrador para sincronizar">
                   <strong>Elige qué versión conservar</strong>
