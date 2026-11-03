@@ -10,7 +10,7 @@ const baseRow: ExpenseRow = {
   business_id: "business-1",
   expense_type: "fixed",
   name: "Renta",
-  amount: "1200.50",
+  amount: 1200.5,
   is_active: true,
   created_by: "user-1",
   created_at: "2026-11-03T12:00:00.000Z",
@@ -31,7 +31,7 @@ describe("Supabase expenses repository mapping", () => {
   it("separates fixed and variable rows and normalizes numeric values", () => {
     expect(mapExpenseRows([
       baseRow,
-      { ...baseRow, id: "expense-2", expense_type: "variable", name: "Empaque", amount: "2.25" },
+      { ...baseRow, id: "expense-2", expense_type: "variable", name: "Empaque", amount: 2.25 },
     ])).toEqual({
       fixed: [{ id: "expense-1", name: "Renta", amount: 1200.5 }],
       variable: [{ id: "expense-2", name: "Empaque", costPerUnit: 2.25 }],
