@@ -20,7 +20,7 @@ export function AboutPage({ locale }: PageProps) {
           <h1>{copy.aboutTitle}</h1>
           <p className="page-lead">{copy.aboutBody}</p>
         </div>
-        <div className="brand-hero-mark"><FixoraMark size={104} /><small>FIXORA DYNAMICS</small></div>
+        <div className="brand-hero-mark"><FixoraMark size={104} variant="inverse" /><small>FIXORA DYNAMICS</small></div>
       </section>
       <section className="brand-product-card">
         <span className="eyebrow">NUESTRO PRIMER PRODUCTO</span>
