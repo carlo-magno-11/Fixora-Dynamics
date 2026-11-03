@@ -15,6 +15,7 @@ import type { PricingInput } from "../modules/pricing/domain/pricing";
 import { AboutPage, AccountPage, GuidePage } from "./BrandPages";
 import { LegalPage } from "./LegalPages";
 import { createAppServices } from "./create-app-services";
+import { readCalculatorDraft, saveCalculatorDraft } from "./calculator-draft";
 import { calculationsToCsv } from "../modules/snapshots/domain/calculation-export";
 import type { SavedCalculation } from "../modules/snapshots/domain/saved-calculation";
 import { createNamespacedKeyValueStorage, type KeyValueStorage } from "../shared/infrastructure/key-value-storage";
@@ -133,8 +134,9 @@ export function App({
     [storage],
   );
   const { historyRepository, snapshotService, catalogService, expensesService } = appServices;
-  const [input, setInput] = useState<PricingInput>(initial);
-  const [currency, setCurrency] = useState<CurrencyCode>(initialCurrency ?? "MXN");
+  const [restoredDraft] = useState(() => readCalculatorDraft(storage));
+  const [input, setInput] = useState<PricingInput>(() => restoredDraft?.input ?? initial);
+  const [currency, setCurrency] = useState<CurrencyCode>(() => restoredDraft?.currency ?? initialCurrency ?? "MXN");
   const [view, setView] = useState<View>("essentials");
   const [mobileMoreOpen, setMobileMoreOpen] = useState(false);
   const [businessType, setBusinessType] = useState<BusinessType>(() => initialBusinessType ?? readBusinessType(storage));
@@ -142,9 +144,10 @@ export function App({
   const [licenseAccess, setLicenseAccess] = useState<LicenseAccess | null>(null);
   const [licenseLoading, setLicenseLoading] = useState(false);
   const [licenseError, setLicenseError] = useState("");
-  const [breakEvenInput, setBreakEvenInput] = useState<BreakEvenInput>(initialBreakEven);
-  const [name, setName] = useState("Mi primer producto");
-  const [selectedCatalogItem, setSelectedCatalogItem] = useState<CatalogItemSnapshot | undefined>();
+  const [breakEvenInput, setBreakEvenInput] = useState<BreakEvenInput>(() => restoredDraft?.breakEvenInput ?? initialBreakEven);
+  const [name, setName] = useState(() => restoredDraft?.name ?? "Mi primer producto");
+  const [selectedCatalogItem, setSelectedCatalogItem] = useState<CatalogItemSnapshot | undefined>(() => restoredDraft?.selectedCatalogItem);
+  const [draftStatus, setDraftStatus] = useState(() => restoredDraft ? "Se recuperó el borrador de esta cuenta y negocio." : "");
   const [historyLoadState] = useState(() => historyRepository.loadState());
   const [history, setHistory] = useState<SavedCalculation[]>(historyLoadState.records);
   const [historyNeedsRecovery, setHistoryNeedsRecovery] = useState(historyLoadState.needsRecovery);
@@ -168,6 +171,21 @@ export function App({
       };
     }
   }, [input]);
+
+  useEffect(() => {
+    const saved = saveCalculatorDraft(storage, {
+      name,
+      currency,
+      input,
+      breakEvenInput,
+      selectedCatalogItem,
+    });
+    setDraftStatus(saved
+      ? authMode === "cloud"
+        ? "Borrador local guardado en este dispositivo; todavía no está sincronizado con la nube."
+        : "Borrador guardado en este navegador."
+      : "No se pudo guardar el borrador local. Evita cerrar esta pestaña hasta guardar tu cálculo.");
+  }, [authMode, breakEvenInput, currency, input, name, selectedCatalogItem, storage]);
 
   useEffect(() => {
     try {
@@ -498,6 +516,8 @@ export function App({
                   </select>
                 </label>
               </div>
+
+              {draftStatus && <p className="draft-status" role="status">{draftStatus}</p>}
 
               <div className="product-name-row">
                 <div className="product-name-field">
