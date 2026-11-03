@@ -38,6 +38,11 @@ export function isSavedCalculation(value: unknown): value is SavedCalculation {
     "targetMarginRate", "discountRate",
   ];
   if (!inputKeys.every((key) => typeof input[key] === "number" && Number.isFinite(input[key]) && (input[key] as number) >= 0)) return false;
+  if (
+    input.variableFeeBasis !== undefined &&
+    input.variableFeeBasis !== "discounted_price" &&
+    input.variableFeeBasis !== "pre_discount"
+  ) return false;
 
   const rateKeys: (keyof PricingInput)[] = [
     "wasteRate", "variableFeeRate", "targetMarginRate", "discountRate",
