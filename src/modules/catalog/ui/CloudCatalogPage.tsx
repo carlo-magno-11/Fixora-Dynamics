@@ -13,6 +13,7 @@ export function CloudCatalogPage({ businessId, currency, formatMoney, onUseInCal
   const requestId = useRef(0);
   const activeBusinessId = useRef(businessId);
   activeBusinessId.current = businessId;
+  const saveRequestId = useRef(0);
   const [items, setItems] = useState<CatalogItem[]>([]);
   const [loadedBusinessId, setLoadedBusinessId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -29,6 +30,8 @@ export function CloudCatalogPage({ businessId, currency, formatMoney, onUseInCal
 
   const loadItems = useCallback(async () => {
     const currentRequest = ++requestId.current;
+    saveRequestId.current += 1;
+    setSaving(false);
     setLoading(true);
     setLoadedBusinessId(null);
     setItems([]);
@@ -78,6 +81,8 @@ export function CloudCatalogPage({ businessId, currency, formatMoney, onUseInCal
   async function saveItem(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (loadedBusinessId !== businessId || loading) return;
+    const currentSaveRequest = ++saveRequestId.current;
+    const saveBusinessId = businessId;
     setSaving(true);
     setMessage("");
     setErrorMessage("");
@@ -96,14 +101,18 @@ export function CloudCatalogPage({ businessId, currency, formatMoney, onUseInCal
       }
       resetForm();
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "No fue posible guardar el elemento.");
+      if (activeBusinessId.current === saveBusinessId && saveRequestId.current === currentSaveRequest) {
+        setErrorMessage(error instanceof Error ? error.message : "No fue posible guardar el elemento.");
+      }
     } finally {
-      setSaving(false);
+      if (activeBusinessId.current === saveBusinessId && saveRequestId.current === currentSaveRequest) setSaving(false);
     }
   }
 
   async function archiveItem(item: CatalogItem) {
     if (loadedBusinessId !== businessId || loading) return;
+    const currentSaveRequest = ++saveRequestId.current;
+    const saveBusinessId = businessId;
     setSaving(true);
     setMessage("");
     setErrorMessage("");
@@ -114,9 +123,11 @@ export function CloudCatalogPage({ businessId, currency, formatMoney, onUseInCal
       setMessage("Elemento archivado. No se eliminó del historial del negocio.");
       if (editingId === item.id) resetForm();
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "No fue posible archivar el elemento.");
+      if (activeBusinessId.current === saveBusinessId && saveRequestId.current === currentSaveRequest) {
+        setErrorMessage(error instanceof Error ? error.message : "No fue posible archivar el elemento.");
+      }
     } finally {
-      setSaving(false);
+      if (activeBusinessId.current === saveBusinessId && saveRequestId.current === currentSaveRequest) setSaving(false);
     }
   }
 
