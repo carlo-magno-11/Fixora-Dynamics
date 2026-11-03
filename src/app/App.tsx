@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { calculatePrice } from "../modules/pricing/domain/pricing";
 import { FixoraMark } from "../shared/ui/FixoraMark";
 import { FixoraIcon } from "../shared/ui/FixoraIcon";
@@ -18,6 +18,7 @@ import { AboutPage, AccountPage, GuidePage } from "./BrandPages";
 import { LegalPage } from "./LegalPages";
 import { createAppServices } from "./create-app-services";
 import { readCalculatorDraft, saveCalculatorDraft } from "./calculator-draft";
+import type { CalculatorDraft } from "../modules/drafts/domain/calculator-draft";
 import { calculationsToCsv } from "../modules/snapshots/domain/calculation-export";
 import type { SavedCalculation } from "../modules/snapshots/domain/saved-calculation";
 import { createNamespacedKeyValueStorage, type KeyValueStorage } from "../shared/infrastructure/key-value-storage";
@@ -46,6 +47,16 @@ function readBusinessType(storage: KeyValueStorage): BusinessType {
   }
 }
 const initialBreakEven: BreakEvenInput = { fixedCosts: 12000, sellingPrice: 250, variableCostPerUnit: 100 };
+
+function calculatorDraftFingerprint(draft: CalculatorDraft): string {
+  return JSON.stringify({
+    name: draft.name,
+    currency: draft.currency,
+    input: draft.input,
+    breakEvenInput: draft.breakEvenInput,
+    selectedCatalogItem: draft.selectedCatalogItem ?? null,
+  });
+}
 
 const initial: PricingInput = {
   materials: 85,
@@ -135,7 +146,7 @@ export function App({
     }),
     [storage],
   );
-  const { historyRepository, snapshotService, catalogService, expensesService, cloudCatalogService, cloudExpensesService, cloudHistoryService } = appServices;
+  const { historyRepository, snapshotService, catalogService, expensesService, cloudCatalogService, cloudExpensesService, cloudHistoryService, cloudCalculatorDraftService } = appServices;
   const [restoredDraft] = useState(() => readCalculatorDraft(storage));
   const [input, setInput] = useState<PricingInput>(() => restoredDraft?.input ?? initial);
   const [currency, setCurrency] = useState<CurrencyCode>(() => restoredDraft?.currency ?? initialCurrency ?? "MXN");
@@ -150,6 +161,13 @@ export function App({
   const [name, setName] = useState(() => restoredDraft?.name ?? "Mi primer producto");
   const [selectedCatalogItem, setSelectedCatalogItem] = useState<CatalogItemSnapshot | undefined>(() => restoredDraft?.selectedCatalogItem);
   const [draftStatus, setDraftStatus] = useState(() => restoredDraft ? "Se recuperó el borrador de esta cuenta y negocio." : "");
+  const [cloudDraftCandidate, setCloudDraftCandidate] = useState<CalculatorDraft | null>(null);
+  const [cloudDraftNeedsChoice, setCloudDraftNeedsChoice] = useState(false);
+  const [cloudDraftReady, setCloudDraftReady] = useState(authMode !== "cloud");
+  const [cloudDraftVersion, setCloudDraftVersion] = useState(0);
+  const [cloudDraftSaving, setCloudDraftSaving] = useState(false);
+  const lastCloudDraftFingerprint = useRef("");
+  const cloudDraftSaveInFlight = useRef(false);
   const [historyLoadState] = useState(() => historyRepository.loadState());
   const [history, setHistory] = useState<SavedCalculation[]>(historyLoadState.records);
   const [historyNeedsRecovery, setHistoryNeedsRecovery] = useState(historyLoadState.needsRecovery);
@@ -216,6 +234,130 @@ export function App({
         : "Borrador guardado en este navegador."
       : "No se pudo guardar el borrador local. Evita cerrar esta pestaña hasta guardar tu cálculo.");
   }, [authMode, breakEvenInput, currency, input, name, selectedCatalogItem, storage]);
+
+  function applyCalculatorDraft(draft: CalculatorDraft) {
+    setName(draft.name);
+    setCurrency(draft.currency);
+    setInput(draft.input);
+    setBreakEvenInput(draft.breakEvenInput);
+    setSelectedCatalogItem(draft.selectedCatalogItem);
+  }
+
+  useEffect(() => {
+    if (authMode !== "cloud" || !businessId) {
+      setCloudDraftReady(false);
+      setCloudDraftNeedsChoice(false);
+      setCloudDraftCandidate(null);
+      return;
+    }
+    let active = true;
+    setCloudDraftReady(false);
+    setCloudDraftNeedsChoice(false);
+    setCloudDraftCandidate(null);
+    void cloudCalculatorDraftService.load(businessId).then((remote) => {
+      if (!active) return;
+      setCloudDraftVersion(remote.version);
+      if (remote.invalid) {
+        setDraftStatus("El borrador cloud no pasó la validación. Se conservó la copia local y no se sobrescribió ningún dato.");
+        return;
+      }
+      const local = readCalculatorDraft(storage);
+      if (remote.draft && local) {
+        setCloudDraftCandidate(remote.draft);
+        setCloudDraftNeedsChoice(true);
+        setDraftStatus("Hay una copia local y otra cloud. Elige cuál conservar; Fixora no las mezclará automáticamente.");
+        return;
+      }
+      if (remote.draft) {
+        applyCalculatorDraft(remote.draft);
+        lastCloudDraftFingerprint.current = calculatorDraftFingerprint(remote.draft);
+        setCloudDraftReady(true);
+        setDraftStatus("Borrador cloud restaurado para este usuario y negocio.");
+        return;
+      }
+      if (local) {
+        setCloudDraftNeedsChoice(true);
+        setDraftStatus("Encontramos un borrador local que aún no está en la nube. Puedes sincronizarlo explícitamente.");
+        return;
+      }
+      lastCloudDraftFingerprint.current = "";
+      setCloudDraftReady(true);
+      setDraftStatus("Borrador cloud listo. Los cambios nuevos se sincronizarán automáticamente.");
+    }).catch((error: unknown) => {
+      if (!active) return;
+      setDraftStatus(error instanceof Error
+        ? `No se pudo comprobar el borrador cloud: ${error.message} La copia local se conserva.`
+        : "No se pudo comprobar el borrador cloud. La copia local se conserva.");
+    });
+    return () => { active = false; };
+  }, [authMode, businessId, cloudCalculatorDraftService, storage]);
+
+  async function chooseCloudDraft() {
+    if (!cloudDraftCandidate) return;
+    const local = readCalculatorDraft(storage);
+    if (local) {
+      try {
+        storage.setItem("fixora.calculator-draft.local-backup.v1", JSON.stringify(local));
+      } catch {
+        setDraftStatus("No se pudo guardar una copia de seguridad local. No se cambió el borrador activo.");
+        return;
+      }
+    }
+    applyCalculatorDraft(cloudDraftCandidate);
+    lastCloudDraftFingerprint.current = calculatorDraftFingerprint(cloudDraftCandidate);
+    setCloudDraftNeedsChoice(false);
+    setCloudDraftReady(true);
+    setDraftStatus("Elegiste el borrador cloud. La copia local anterior se conserva como respaldo en este dispositivo.");
+  }
+
+  async function chooseLocalDraft() {
+    if (!businessId) return;
+    const local = readCalculatorDraft(storage);
+    if (!local) {
+      setDraftStatus("No encontramos un borrador local válido para sincronizar.");
+      return;
+    }
+    setCloudDraftSaving(true);
+    try {
+      const nextVersion = await cloudCalculatorDraftService.save(businessId, local, cloudDraftVersion);
+      setCloudDraftVersion(nextVersion);
+      lastCloudDraftFingerprint.current = calculatorDraftFingerprint(local);
+      setCloudDraftNeedsChoice(false);
+      setCloudDraftReady(true);
+      setDraftStatus("El borrador local elegido se sincronizó con la nube. La copia del dispositivo se conserva.");
+    } catch (error) {
+      setDraftStatus(error instanceof Error ? error.message : "No fue posible sincronizar el borrador local.");
+    } finally {
+      setCloudDraftSaving(false);
+    }
+  }
+
+  useEffect(() => {
+    if (authMode !== "cloud" || !businessId || !cloudDraftReady || cloudDraftNeedsChoice) return;
+    const timeout = window.setTimeout(() => {
+      if (cloudDraftSaveInFlight.current) return;
+      const draft = readCalculatorDraft(storage);
+      if (!draft) return;
+      const fingerprint = calculatorDraftFingerprint(draft);
+      if (fingerprint === lastCloudDraftFingerprint.current) return;
+      cloudDraftSaveInFlight.current = true;
+      setCloudDraftSaving(true);
+      void cloudCalculatorDraftService.save(businessId, draft, cloudDraftVersion).then((nextVersion) => {
+        setCloudDraftVersion(nextVersion);
+        lastCloudDraftFingerprint.current = fingerprint;
+        setDraftStatus("Borrador sincronizado con la nube para este usuario y negocio.");
+      }).catch((error: unknown) => {
+        setDraftStatus(error instanceof Error ? error.message : "No fue posible sincronizar el borrador. La copia local se conserva.");
+        if (error instanceof Error && error.message.includes("otro dispositivo")) {
+          setCloudDraftReady(false);
+        }
+      }).finally(() => {
+        cloudDraftSaveInFlight.current = false;
+        setCloudDraftSaving(false);
+      });
+    }, 1000);
+    return () => window.clearTimeout(timeout);
+  }, [authMode, businessId, cloudDraftReady, cloudDraftNeedsChoice, cloudDraftVersion, cloudCalculatorDraftService, breakEvenInput, currency, input, name, selectedCatalogItem, storage]);
 
   useEffect(() => {
     try {
@@ -531,6 +673,16 @@ export function App({
               </div>
 
               {draftStatus && <p className="draft-status" role="status">{draftStatus}</p>}
+              {authMode === "cloud" && cloudDraftNeedsChoice && (
+                <div className="guide-callout" role="group" aria-label="Elegir borrador para sincronizar">
+                  <strong>Elige qué versión conservar</strong>
+                  <p>Los borradores son privados por usuario y negocio. No combinaremos dos versiones ni eliminaremos la copia local automáticamente.</p>
+                  <div className="catalog-form-actions">
+                    {cloudDraftCandidate && <button className="outline-button" type="button" disabled={cloudDraftSaving} onClick={() => void chooseCloudDraft()}>Usar borrador cloud</button>}
+                    <button className="primary-button compact" type="button" disabled={cloudDraftSaving} onClick={() => void chooseLocalDraft()}>{cloudDraftSaving ? "Sincronizando…" : cloudDraftCandidate ? "Conservar local y reemplazar cloud" : "Sincronizar borrador local"} <span>↗</span></button>
+                  </div>
+                </div>
+              )}
 
               <div className="product-name-row">
                 <div className="product-name-field">
