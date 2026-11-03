@@ -6,7 +6,7 @@ Proyecto Supabase de pruebas autorizado: eyesite-security-test. Nunca usar el pr
 
 ## 1. Hallazgos comprobados en el código revisado
 
-La rama feat/web-auth-cloud-20261102 ya contiene:
+La rama feat/web-auth-cloud-20261102 ya contiene, según las migraciones y el modelo de datos revisados:
 
 - Edge Function activate-license: requiere usuario autenticado, correo confirmado y código de activación de 64 caracteres; deriva hash de instalación con HMAC y llama a una RPC de servidor.
 - El panel de activación mantiene el código en memoria y no lo persiste en el navegador.
@@ -43,19 +43,21 @@ No copiar código de proyectos externos. Reutilizar ideas y contratos, respetand
 
 Nunca inferir que un usuario es administrador porque compró un kit. Nunca inferir que tiene un kit por ser administrador. Nunca aceptar user_metadata, localStorage, parámetros URL, flags de frontend o SKU enviado por el navegador como prueba de pago.
 
-## 4. Modelo de datos propuesto
+## 4. Modelo de datos: reutilizar el esquema existente
 
-Nombres lógicos; deben ajustarse a las tablas existentes después de inspeccionar todas las migraciones, no crearse a ciegas.
+La migración base ya define en el esquema privado:
 
-- product_catalog: SKU, código de producto, tipo (core, kit, bundle), precio de catálogo, moneda, duración, activo; cambios de precio versionados.
-- product_components: relación bundle → productos incluidos. El servidor resuelve componentes; el cliente no puede inventar el contenido del paquete.
-- purchase_orders: proveedor, identificador externo normalizado, usuario destinatario, SKU, importe/moneda verificados, estado, evidencia hash, idempotency key y marcas de tiempo. Restricción única por proveedor + orden externa.
-- license_grants / entitlements: usuario titular, código de producto, estado, inicio, expiración, origen de compra y auditoría. Restricción única para impedir concesiones duplicadas por la misma línea de pedido.
-- license_activations: conservar mecanismo existente de dispositivos, asociándolo con titular/licencia y verificando cuota bajo transacción.
-- admin_roles / permisos: reutilizar la implementación actual; no mezclarla con catálogo de productos.
-- admin_audit_events: registro append-only de invitaciones, concesiones, suspensiones, revocaciones, verificaciones, cambios de precio y operaciones privilegiadas.
+- fixora_products: SKU, nombre, duración en meses, máximo de dispositivos, lista de entitlements, lista de entitlements retenidos y estado activo.
+- fixora_purchase_orders: proveedor, identificador externo único por proveedor, SKU, estado de pago/reembolso, método de verificación y hashes de evidencia/correo.
+- fixora_licenses: una licencia por pedido verificado, titular, SKU, estado, activación, vencimiento y máximo de dispositivos.
+- fixora_license_entitlements: claves de capacidad por licencia, con enabled, retained_after_expiry y ventana starts_at/ends_at.
+- fixora_license_devices: hash HMAC de instalación, etiqueta, estado y actividad.
+- fixora_activation_code_hashes, fixora_provider_events y fixora_license_events: códigos hasheados, idempotencia de eventos de proveedor y trazabilidad.
+- fixora_admin_memberships, fixora_admin_role_permissions, fixora_admin_invites, fixora_admin_audit_events y fixora_security_events: administración separada del derecho comercial.
 
-El esquema y las claves reales deben mapearse contra las migraciones existentes antes de diseñar SQL final. No crear tablas duplicadas si ya hay equivalentes.
+No crear product_catalog, product_components, license_grants, license_activations ni tablas de administración paralelas. La primera implementación debe extender el catálogo fixora_products y las funciones existentes con SKUs nuevos y claves de entitlement específicas. La tabla fixora_licenses tiene actualmente una relación única con purchase_order_id; para la primera versión, cada paquete bundle debe ser un SKU de producto único con la unión exacta de entitlements incluidos. Una compra add-on crea una licencia de SKU de complemento con solo el entitlement de ese kit. La autorización efectiva se calcula agregando las licencias vigentes del titular y aplicando el requisito de General.
+
+La compra y la licencia existentes se vinculan al user_id. El alcance final (licencia por cuenta o por business_id y cómo se comparte con business_memberships) debe decidirse antes de permitir múltiples negocios o colaboradores. No ampliar silenciosamente la licencia a todos los negocios o miembros.
 
 ## 5. Contrato de autorización para abrir un módulo
 
@@ -64,14 +66,14 @@ Una operación de módulo solo se permite cuando se cumplen todos los puntos:
 - JWT válido y usuario no anónimo.
 - Correo confirmado, según política de producto.
 - El usuario es titular del derecho o pertenece al negocio al que está asignado el derecho.
-- General tiene estado active y expires_at > now().
-- El kit específico tiene estado active y expires_at > now().
+- Existe una licencia General activa y no vencida, o una licencia bundle activa que incluya General.
+- Existe el entitlement exacto del kit, activo y dentro de su ventana de vigencia, en una licencia elegible.
 - Ni el usuario, negocio, compra ni derecho están suspendidos/revocados.
 - El endpoint/RPC comprueba el derecho del lado del servidor y el acceso a filas sigue protegido por RLS.
 
 Para cada función de módulo: prueba de usuario anónimo, usuario autenticado sin compra, comprador de General sin kit, comprador del kit equivocado, kit vencido, derecho suspendido, negocio de otro usuario y administrador sin permiso comercial. La prueba debe llamar directamente a Edge Function/RPC/API, no solo verificar botones.
 
-El frontend recibe una lista de derechos efectiva para mostrar navegación, pero esa lista es solo UX. El servidor vuelve a comprobar la autorización en cada operación y no acepta moduleEnabled=true del cliente.
+El frontend recibe la lista de available_entitlements de fixora_get_license_access() para mostrar navegación, pero esa lista es solo UX. No interpretar kits.access como permiso universal para ejecutar todos los kits: exigir una clave específica, por ejemplo kit.retail, kit.services_beauty, kit.food, kit.workshop o kit.digital_products. El servidor vuelve a comprobar la autorización en cada operación y no acepta moduleEnabled=true del cliente.
 
 ## 6. Compra y concesión segura
 
