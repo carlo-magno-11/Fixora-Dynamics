@@ -12,9 +12,9 @@ Estado al 3 de noviembre de 2026. Este documento separa evidencia existente de t
 ## 0. Integración de ramas
 - [x] Rama única de trabajo creada: `integration/fixora-mainline-20261103`, desde el head validado de PR #13.
 - [x] La cadena principal de Essentials, Auth/cloud, edición numérica, marca, paleta, documentación comercial, guías y duración por días está incluida en esa rama.
-- [ ] La bandeja de soporte de PR #6 (variante R4) y seguridad de PR #8 siguen en una línea separada. PR #8 depende de R4; GitHub reportó conflicto al comparar su head con la rama única. Se restauró su base original y no se fusionó.
-- [ ] Integrar soporte R4 y seguridad mediante checkout local, revisión de diffs y resolución manual; no usar merge/rebase/cherry-pick ciego ni sobrescribir el trabajo de la otra IA.
-- [ ] Ejecutar CI y DB tests completos después de resolver los conflictos y comprobar el orden de migraciones.
+- [x] La variante R4 de soporte y la línea de seguridad de PR #8 se integraron en la rama central mediante merge revisado el 3-11-2026 (commit `248d67f`).
+- [x] PR #8 no compartía rutas modificadas con PR #14; su head tenía CI, Security, CodeQL y Database tests exitosos antes del merge.
+- [ ] Ejecutar y verificar CI, Security, CodeQL y Database tests sobre el HEAD combinado y los commits posteriores de la rama central.
 - [ ] No declarar release integrado mientras los PRs continúen en borrador y no exista una rama de release validada.
 
 ## 1. Base de aplicación
@@ -28,9 +28,9 @@ Estado al 3 de noviembre de 2026. Este documento separa evidencia existente de t
 - [ ] Resolver y probar sincronización offline antes de prometerla; actualmente no está disponible.
 
 ## 2. Seguridad y administración
-- [x] PR #8 reportó 14 check runs exitosos en SHA 3649d026659a6c6f5337b1139f86fa161c6c2b84 el 3-11-2026: CodeQL, Gitleaks, Trivy, OSV-Scanner, zizmor, validación y pruebas de base.
+- [x] PR #8 reportó CI #1174, Security #82, CodeQL #21 y Database tests #730 exitosos en SHA `3649d026` antes del merge del 3-11-2026.
 - [x] Rate limit server-side agregado en rama PR #8 con tests Deno, pgTAP y prueba de concurrencia.
-- [ ] **No desplegado en el proyecto de pruebas al 3-11-2026:** el último migration registrado es 20261102234809; falta 20261103030100_fixora_server_rate_limits. La función admin-support-inbox tampoco aparece entre las ocho Edge Functions activas. CI de PR #8 verde no significa que estos cambios estén aplicados/desplegados.
+- [ ] **No desplegado en el proyecto remoto de pruebas:** el último migration registrado sigue siendo `20261102234809`; falta `20261103030100_fixora_server_rate_limits`. `admin-support-inbox` tampoco aparece entre las ocho Edge Functions activas. El merge de PR #8 y sus checks no aplican migraciones ni despliegan funciones.
 - [x] Supabase Security Advisor en el proyecto de pruebas: cero hallazgos el 3-11-2026.
 - [ ] Revisar 11 avisos informativos de rendimiento (10 índices sin uso y estrategia de conexiones Auth); la mayoría puede deberse a tablas aún vacías, no borrar índices sin medir.
 - [x] El proyecto de pruebas registra tres migraciones baseline heredadas de EYESITE en su historial, pero el inventario actual del esquema public muestra solo tablas Fixora; no se debe resetear ni borrar el proyecto por esos nombres históricos.
@@ -68,7 +68,7 @@ Estado al 3 de noviembre de 2026. Este documento separa evidencia existente de t
 - [x] Borrador de guía General y cinco guías especializadas documentado en PR #12.
 - [x] Plan de implementación de kits especializado documentado en `docs/KIT-MODULES-IMPLEMENTATION-PLAN.md`; Comercio y reventa queda como piloto.
 - [ ] Sincronizar guía General con mensajes reales y fórmulas probadas.
-- [x] Dominio inicial del kit Comercio y reventa: coste puesto en almacén, coste por unidad vendible, precio sugerido con base de comisión configurable, contribución y libro de movimientos con cuarentena de devoluciones; pruebas unitarias añadidas (validación CI del último avance pendiente).
+- [x] Dominio inicial del kit Comercio y reventa: coste puesto en almacén, coste por unidad vendible, precio sugerido con base de comisión configurable, contribución y libro de movimientos con cuarentena de devoluciones; las pruebas unitarias estuvieron incluidas en CI #1269 y Database tests #825 de la rama integrada antes del merge de seguridad.
 - [ ] Completar UI, persistencia/movimientos de inventario, RLS, entitlement server-side y ayuda contextual del kit piloto.
 - [ ] Crear capturas reales y PDF de la versión aprobada.
 - [ ] No publicar kits cuyo módulo o guía siga en borrador.
@@ -106,3 +106,13 @@ Consulta de solo lectura al proyecto de pruebas `eyesite-security-test` (`dclaeb
 - La migración de rate limiting `20261103030100` y la Edge Function `admin-support-inbox` siguen ausentes del proyecto remoto. Las ocho funciones desplegadas mantienen `verify_jwt=true`.
 
 Conclusión: la política de 30 días, los entitlements específicos por kit y la aplicación remota del límite de tres dispositivos por licencia siguen siendo requisitos de implementación, no funciones activas. No se ejecutó SQL de escritura, migración, despliegue ni cambio de Storage.
+
+
+## Revisión de integración y arquitectura — 2026-11-03 (posterior al merge de seguridad)
+
+- PR #8 quedó fusionado en `integration/fixora-mainline-20261103` con commit `248d67fafe6225e2f1a26c5faa1336c5665febbe`. No equivale a desplegar la migración de rate limits ni la Edge Function de soporte.
+- Se actualizaron los triggers `push` de CI, Security y Database tests para incluir `integration/**`. Los cambios quedaron en commits separados por archivo; falta confirmar los workflows sobre el HEAD final de la rama.
+- La rama usa actualmente repositorios de navegador para catálogo, gastos e historial: `create-app-services.ts` construye `browser-catalog-repository`, `browser-expenses-repository` y `browser-calculation-repository`. En `App.tsx`, incluso el modo cloud conserva el borrador en localStorage y comunica explícitamente que todavía no está sincronizado con la nube. **Autenticación cloud no significa persistencia cloud**; no ofrecer sincronización ni restauración entre dispositivos hasta implementar y probar repositorios cloud, RLS, conflictos y recuperación.
+- La interfaz aún presenta kits como planificación/catálogo. Retail tiene dominio probado, pero carece de UI, persistencia transaccional, RLS y entitlement ejecutable.
+- El proyecto remoto sigue sin usuarios Auth ni membresías admin (0/0); no se puede probar AAL2 real. El bucket heredado `eyesite-media` continúa público, vacío y sin políticas de objetos; no se tocó.
+- Próxima puerta General: completar persistencia cloud del catálogo, gastos, snapshots e historial con RLS y sincronización idempotente; definir exportación/backup y recuperación; después ejecutar E2E con dos usuarios, negocio propio y ajeno, desconexión/reintento y cambio de dispositivo.
