@@ -8,20 +8,49 @@ import {
   MAX_ACTIVE_DEVICES,
 } from "./license-policy";
 
-describe("Fixora annual license policy", () => {
-  it("calculates one calendar year from first activation", () => {
+describe("Fixora license duration policy", () => {
+  it("calculates one calendar year from first activation by default", () => {
     expect(calculateLicenseExpiry("2026-10-30T12:00:00.000Z")).toBe("2027-10-30T12:00:00.000Z");
   });
 
-  it("clamps leap-day activation to the last valid day in February", () => {
+  it("clamps leap-day annual activation to the last valid day in February", () => {
     expect(calculateLicenseExpiry("2024-02-29T08:15:00.000Z")).toBe("2025-02-28T08:15:00.000Z");
+  });
+
+  it("calculates exactly 30 days as 720 hours from activation", () => {
+    expect(calculateLicenseExpiry("2026-11-03T12:00:00.000Z", {
+      unit: "days",
+      value: 30,
+    })).toBe("2026-12-03T12:00:00.000Z");
+  });
+
+  it("preserves UTC time and handles day terms across leap day", () => {
+    expect(calculateLicenseExpiry("2024-02-28T08:15:00.000Z", {
+      unit: "days",
+      value: 2,
+    })).toBe("2024-03-01T08:15:00.000Z");
+  });
+
+  it("supports calendar month terms without treating them as fixed days", () => {
+    expect(calculateLicenseExpiry("2026-01-31T10:00:00.000Z", {
+      unit: "months",
+      value: 1,
+    })).toBe("2026-02-28T10:00:00.000Z");
   });
 
   it("rejects invalid activation dates", () => {
     expect(() => calculateLicenseExpiry("not-a-date")).toThrow(RangeError);
   });
 
-  it("keeps the license active immediately before expiry and expires at the boundary", () => {
+  it("rejects zero, negative, fractional and out-of-range terms", () => {
+    expect(() => calculateLicenseExpiry("2026-11-03T12:00:00.000Z", { unit: "days", value: 0 })).toThrow(RangeError);
+    expect(() => calculateLicenseExpiry("2026-11-03T12:00:00.000Z", { unit: "days", value: -1 })).toThrow(RangeError);
+    expect(() => calculateLicenseExpiry("2026-11-03T12:00:00.000Z", { unit: "days", value: 1.5 })).toThrow(RangeError);
+    expect(() => calculateLicenseExpiry("2026-11-03T12:00:00.000Z", { unit: "days", value: 3651 })).toThrow(RangeError);
+    expect(() => calculateLicenseExpiry("2026-11-03T12:00:00.000Z", { unit: "months", value: 61 })).toThrow(RangeError);
+  });
+
+  it("keeps annual licenses active immediately before expiry and expires at the boundary", () => {
     const license = {
       status: "active" as const,
       activatedAt: "2026-10-30T12:00:00.000Z",
@@ -29,6 +58,26 @@ describe("Fixora annual license policy", () => {
     };
     expect(getEffectiveLicenseState(license, "2027-10-30T11:59:59.999Z")).toBe("active");
     expect(getEffectiveLicenseState(license, "2027-10-30T12:00:00.000Z")).toBe("expired");
+  });
+
+  it("keeps 30-day licenses active immediately before expiry and expires at the boundary", () => {
+    const license = {
+      status: "active" as const,
+      activatedAt: "2026-11-03T12:00:00.000Z",
+      expiresAt: "2026-12-03T12:00:00.000Z",
+      term: { unit: "days" as const, value: 30 },
+    };
+    expect(getEffectiveLicenseState(license, "2026-12-03T11:59:59.999Z")).toBe("active");
+    expect(getEffectiveLicenseState(license, "2026-12-03T12:00:00.000Z")).toBe("expired");
+  });
+
+  it("rejects a 30-day license whose stored expiry is inconsistent", () => {
+    expect(() => getEffectiveLicenseState({
+      status: "active",
+      activatedAt: "2026-11-03T12:00:00.000Z",
+      expiresAt: "2026-12-04T12:00:00.000Z",
+      term: { unit: "days", value: 30 },
+    }, "2026-11-20T12:00:00.000Z")).toThrow("El vencimiento no corresponde a la duración del producto.");
   });
 
   it("keeps a pending license pending even if dates are accidentally populated", () => {
@@ -57,14 +106,6 @@ describe("Fixora annual license policy", () => {
     }, "2026-10-30T12:00:00.000Z")).toThrow(RangeError);
   });
 
-  it("rejects an expiry date that grants more or less than one calendar year", () => {
-    expect(() => getEffectiveLicenseState({
-      status: "active",
-      activatedAt: "2026-10-30T12:00:00.000Z",
-      expiresAt: "2028-10-30T12:00:00.000Z",
-    }, "2027-01-01T00:00:00.000Z")).toThrow("El vencimiento debe corresponder a un año calendario desde la activación.");
-  });
-
   it("preserves account, history and export capabilities after expiry", () => {
     const capabilities = getLicenseCapabilities("expired");
     expect(capabilities).toContain("account.read");
@@ -79,7 +120,7 @@ describe("Fixora annual license policy", () => {
     expect(getLicenseCapabilities("revoked")).not.toContain("premium.tools");
   });
 
-  it("allows no more than three active devices", () => {
+  it("allows no more than three active devices per license", () => {
     expect(MAX_ACTIVE_DEVICES).toBe(3);
     expect(canActivateAnotherDevice("active", 2)).toBe(true);
     expect(canActivateAnotherDevice("active", 3)).toBe(false);
