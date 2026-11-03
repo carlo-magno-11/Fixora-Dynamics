@@ -16,6 +16,17 @@ function dateLabel(value: string) {
   return new Intl.DateTimeFormat("es-MX", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
 }
 
+function ticketStatusLabel(status: string) {
+  switch (status) {
+    case "open": return "Abierta";
+    case "pending": return "Pendiente";
+    case "answered": return "Respondida";
+    case "resolved": return "Resuelta";
+    case "closed": return "Cerrada";
+    default: return "Estado desconocido";
+  }
+}
+
 export function SupportPage({ businessId }: { businessId?: string }) {
   const supabase = useMemo(() => getSupabaseClient(), []);
   const [tickets, setTickets] = useState<Ticket[]>([]);
@@ -109,12 +120,12 @@ export function SupportPage({ businessId }: { businessId?: string }) {
         <div className="support-section-heading"><h2>Tus solicitudes</h2><button className="outline-button" onClick={() => void loadTickets()}>Actualizar</button></div>
         {loading ? <p>Consultando solicitudes…</p> : tickets.length === 0 ? <p>Aún no tienes solicitudes.</p> : tickets.map((ticket) =>
           <button type="button" key={ticket.ticket_id} className={ticket.ticket_id === selectedId ? "support-ticket-option selected" : "support-ticket-option"} onClick={() => setSelectedId(ticket.ticket_id)}>
-            <strong>{ticket.subject}</strong><span>{ticket.status === "open" ? "Abierta" : ticket.status === "answered" ? "Respondida" : ticket.status === "resolved" ? "Resuelta" : "Cerrada"}</span><small>{dateLabel(ticket.updated_at)} · {ticket.message_count} mensajes</small>
+            <strong>{ticket.subject}</strong><span>{ticketStatusLabel(ticket.status)}</span><small>{dateLabel(ticket.updated_at)} · {ticket.message_count} mensajes</small>
           </button>)}
       </div>
       <div className="support-conversation">
         {selected ? <>
-          <div className="support-section-heading"><div><span className="eyebrow">{selected.category}</span><h2>{selected.subject}</h2><small className="support-ticket-reference">Folio de soporte: {selected.ticket_id}</small></div><span className="planned-pill">{selected.status === "open" ? "ABIERTA" : selected.status === "answered" ? "RESPONDIDA" : selected.status === "resolved" ? "RESUELTA" : "CERRADA"}</span></div>
+          <div className="support-section-heading"><div><span className="eyebrow">{selected.category}</span><h2>{selected.subject}</h2><small className="support-ticket-reference">Folio de soporte: {selected.ticket_id}</small></div><span className="planned-pill">{ticketStatusLabel(selected.status).toUpperCase()}</span></div>
           <div className="support-message-list" aria-live="polite">
             {messages.length === 0 ? <p>Cargando conversación…</p> : messages.map((message) =>
               <article className={message.sender_type === "customer" ? "support-message customer" : "support-message team"} key={message.message_id}>
