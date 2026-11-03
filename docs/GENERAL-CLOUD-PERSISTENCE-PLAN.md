@@ -2,7 +2,7 @@
 
 Fecha: 3 de noviembre de 2026  
 Rama de referencia: `integration/fixora-mainline-20261103`  
-Estado: rutas cloud para catálogo, gastos, snapshots/historial y borradores implementadas en la rama central. El commit `dcc8e63` tuvo CI, Security, CodeQL y Database tests exitosos; CI registró 199 pruebas Vitest y 14 pruebas Deno. Los cambios posteriores de aislamiento local por negocio y estados de fallo seguro están en validación nuevamente. No equivale a una validación E2E en staging.
+Estado: rutas cloud para catálogo, gastos, snapshots/historial y borradores implementadas en la rama central. HEAD `9ceaaa85` validado: CI #1501 y Database tests #1055 SUCCESS, CodeQL #161 SUCCESS; Security #313 seguía pendiente al actualizar este documento. CI registró 201 pruebas Vitest y 14 pruebas Deno. La reconstrucción de Supabase local aplicó todas las migraciones y pgTAP, pruebas negativas RLS y concurrencia terminaron correctamente. No equivale a una validación E2E en staging.
 
 ## 1. Estado real observado
 
@@ -111,7 +111,8 @@ No forzar una conversión de todos los contratos locales a Promise si no aporta 
 - Mapeo de configuración valida periodo, unidades y versión segura.
 - La UI permite recargar y conserva el control optimista de concurrencia.
 - El número de unidades estimadas debe ser entero positivo seguro; la migración añade constraint validada y trigger para impedir que escrituras directas o el RPC almacenen valores que la aplicación no pueda leer.
-- Pendiente: confirmar CI/pgTAP de la nueva migración y pruebas E2E de RPC para IDs cruzados, duplicados, límites, importes inválidos, rollback y dos escritores simultáneos.
+- CI #1055 reconstruyó el esquema con la migración `20261103100000_fixora_expense_units_integer.sql`; pgTAP pasó, incluyendo validación directa/RPC, exactitud numérica y límite de 100 líneas por tipo.
+- Pendiente: pruebas E2E de RPC para IDs cruzados, duplicados, rollback y dos escritores simultáneos.
 
 ### G3 — snapshots/historial cloud
 
@@ -133,9 +134,9 @@ No forzar una conversión de todos los contratos locales a Promise si no aporta 
 - La UI detecta borrador local/cloud, solicita elección explícita y no mezcla versiones.
 - La copia local se conserva; al elegir cloud, la copia previa se respalda por cuenta/negocio y puede restaurarse.
 - El almacenamiento local de borradores usa un namespace por cuenta y negocio; hay prueba unitaria de aislamiento entre dos negocios.
-- La aplicación reinicia e hidrata estado al cambiar cuenta/negocio y descarta respuestas asíncronas obsoletas.
+- La aplicación reinicia e hidrata estado al cambiar cuenta/negocio y descarta respuestas asíncronas obsoletas. AuthGate también invalida cargas de lista de negocios cuando cambia la sesión.
 - La UI de catálogo/gastos/historial bloquea escritura o presentación como vacía cuando la lectura cloud falla.
-- Pendiente: conflicto real con dos dispositivos, pruebas de desconexión/reintento, importación de borradores históricos con negocio no identificado y E2E.
+- Pendiente: conflicto real con dos dispositivos, pruebas de desconexión/reintento, importación local de catálogo/gastos/historial, importación de borradores históricos con negocio no identificado y E2E.
 - Nunca mezclar datos de dos cuentas o negocios por compartir navegador.
 
 ### G5 — staging y salida
