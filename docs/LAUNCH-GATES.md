@@ -29,7 +29,7 @@ Estado al 3 de noviembre de 2026. Este documento separa evidencia existente de t
 - [x] Rutas cloud implementadas para catálogo, gastos, snapshots/historial y borradores privados por usuario/negocio; pgTAP de borradores pasó en Database tests #979.
 - [x] Almacenamiento local de borradores separado por cuenta y negocio; pruebas de aislamiento y recuperación legacy con ámbito confirmado añadidas.
 - [x] AuthGate invalida cargas asíncronas de negocios al cambiar de sesión; la UI fail-closed oculta datos anteriores y bloquea escrituras si falla la lectura.
-- [x] Migración `20261103100000_fixora_expense_units_integer.sql` aplicada en reconstrucción local CI #1055; pgTAP cubre constraint, trigger, RPC, escritura directa, tipo numérico exacto y máximo de 100 líneas por tipo.
+- [x] Migración `20261103234930_fixora_expense_units_integer.sql` aplicada en Supabase remoto y en reconstrucción local CI; pgTAP cubre constraint, trigger, RPC, escritura directa, tipo numérico exacto y máximo de 100 líneas por tipo.
 - [ ] Validación E2E de cambio de negocio, conflicto entre dos dispositivos, desconexión/reintento, recuperación/backup y migración de datos locales a cloud.
 - [ ] Resolver y probar sincronización offline antes de prometerla; actualmente no está disponible.
 - [ ] Ejecutar E2E en staging con dos usuarios, dos negocios y dos dispositivos; CI verde no sustituye esta evidencia.
