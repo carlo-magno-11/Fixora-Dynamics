@@ -166,14 +166,18 @@ export function App({
   const [cloudDraftReady, setCloudDraftReady] = useState(authMode !== "cloud");
   const [cloudDraftVersion, setCloudDraftVersion] = useState(0);
   const [cloudDraftSaving, setCloudDraftSaving] = useState(false);
-  const [localBackupDraft, setLocalBackupDraft] = useState<CalculatorDraft | null>(() => {
+  const [localBackupDraft, setLocalBackupDraft] = useState<CalculatorDraft | null>(null);
+
+  useEffect(() => {
+    setLocalBackupDraft(null);
+    if (!businessId) return;
     try {
-      const raw = storage.getItem("fixora.calculator-draft.local-backup.v1");
-      return raw ? parseCalculatorDraftValue(JSON.parse(raw) as unknown) : null;
+      const raw = storage.getItem(`fixora.calculator-draft.local-backup.v1:${businessId}`);
+      setLocalBackupDraft(raw ? parseCalculatorDraftValue(JSON.parse(raw) as unknown) : null);
     } catch {
-      return null;
+      setLocalBackupDraft(null);
     }
-  });
+  }, [businessId, storage]);
   const [cloudDraftNeedsReload, setCloudDraftNeedsReload] = useState(false);
   const [cloudDraftReloadToken, setCloudDraftReloadToken] = useState(0);
   const lastCloudDraftFingerprint = useRef("");
@@ -309,7 +313,7 @@ export function App({
     const local = readCalculatorDraft(storage);
     if (local) {
       try {
-        storage.setItem("fixora.calculator-draft.local-backup.v1", JSON.stringify(local));
+        storage.setItem(`fixora.calculator-draft.local-backup.v1:${businessId}`, JSON.stringify(local));
         setLocalBackupDraft(local);
       } catch {
         setDraftStatus("No se pudo guardar una copia de seguridad local. No se cambió el borrador activo.");
