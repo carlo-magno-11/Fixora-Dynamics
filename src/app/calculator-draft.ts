@@ -1,11 +1,15 @@
 import type { CalculatorDraft } from "../modules/drafts/domain/calculator-draft";
 import { parseCalculatorDraftValue } from "../modules/drafts/domain/calculator-draft";
-import type { KeyValueStorage } from "../shared/infrastructure/key-value-storage";
+import { createNamespacedKeyValueStorage, type KeyValueStorage } from "../shared/infrastructure/key-value-storage";
 
 export { parseCalculatorDraftValue };
 export type { CalculatorDraft };
 
 export const CALCULATOR_DRAFT_KEY = "fixora.calculator-draft.v1";
+
+export function createCalculatorDraftStorage(storage: KeyValueStorage, businessId: string | null | undefined): KeyValueStorage {
+  return createNamespacedKeyValueStorage(storage, `business:${businessId ?? "none"}`);
+}
 
 export function readCalculatorDraft(storage: KeyValueStorage): CalculatorDraft | null {
   try {
