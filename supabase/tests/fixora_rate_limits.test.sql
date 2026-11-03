@@ -47,16 +47,10 @@ SELECT ok((
   WHERE oid = 'fixora_private.consume_rate_limit(bytea,integer,integer)'::regprocedure
 ), 'The private atomic counter uses SECURITY DEFINER with an empty search_path');
 
-SELECT is(
-  (SELECT allowed FROM public.fixora_server_consume_rate_limit(pg_catalog.decode(pg_catalog.repeat('a', 64), 'hex'), 2, 60)),
-  true,
-  'The first request in a window is allowed'
-);
-
-SELECT is(
-  (SELECT remaining FROM public.fixora_server_consume_rate_limit(pg_catalog.decode(pg_catalog.repeat('b', 64), 'hex'), 2, 60)),
-  1,
-  'The first request leaves one remaining slot in a two-request window'
+SELECT results_eq(
+  $$SELECT allowed, remaining FROM public.fixora_server_consume_rate_limit(pg_catalog.decode(pg_catalog.repeat('a', 64), 'hex'), 2, 60)$$,
+  $$VALUES (true, 1)$$,
+  'The first request is allowed and leaves one slot'
 );
 
 SELECT is(
