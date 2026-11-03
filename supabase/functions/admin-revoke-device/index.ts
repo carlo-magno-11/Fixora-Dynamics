@@ -3,12 +3,15 @@ import { userAuthConfig } from "../_shared/auth.ts";
 import { getAal2Actor, hasAdminPermission, requestAuditHashes } from "../_shared/admin.ts";
 import { isUuid } from "../_shared/crypto.ts";
 import { jsonResponse, readJsonObject, rpcErrorResponse } from "../_shared/http.ts";
+import { enforceRateLimit } from "../_shared/rate-limit.ts";
 
 export default {
   fetch: withSupabase(userAuthConfig, async (request, ctx) => {
     if (request.method !== "POST") return jsonResponse({ error: "Method not allowed." }, 405);
     const actorId = getAal2Actor(ctx.jwtClaims);
     if (!actorId) return jsonResponse({ error: "AAL2 administrator authentication is required." }, 403);
+    const rateLimit = await enforceRateLimit(ctx.supabaseAdmin, actorId, "admin.device.revoke", 10, 60);
+    if (rateLimit) return rateLimit;
     const body = await readJsonObject(request);
     if (!body || !isUuid(body.licenseId) || !isUuid(body.deviceId)) {
       return jsonResponse({ error: "Valid license and device IDs are required." }, 400);
