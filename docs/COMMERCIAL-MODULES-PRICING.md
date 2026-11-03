@@ -57,7 +57,7 @@ Una persona puede entrar a Fixora General solo con una licencia General vigente.
 
 Una compra directa en paquete crea dos derechos (General y kit) bajo el mismo pedido y periodo. Una compra de complemento crea únicamente el derecho del kit; no crea ni extiende General. Si General vence, los kits quedan bloqueados para uso hasta que General vuelva a estar vigente. Los derechos y datos no se borran por vencimiento.
 
-Para el MVP, cada licencia de kit tendrá su propio periodo de 12 meses desde la compra. La interfaz debe avisar que el acceso al kit también exige General vigente. La renovación de General y la del kit son transacciones separadas.
+Para mantener coherencia con la licencia existente, General, kits y bundles tendrán una vigencia de 12 meses desde la primera activación, no desde la fecha de compra. Cada licencia adicional conserva su propia fecha de activación y vencimiento. La interfaz debe avisar que el acceso al kit también exige General vigente. La renovación de General y la del kit son transacciones separadas.
 
 ## 4. Experiencia de compra
 
