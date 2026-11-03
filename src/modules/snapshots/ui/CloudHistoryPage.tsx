@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { SavedCalculation } from "../domain/saved-calculation";
 import { isSavedCalculation } from "../domain/saved-calculation";
 import { calculationsToCsv } from "../domain/calculation-export";
@@ -8,6 +8,7 @@ import type { Database } from "../../../shared/infrastructure/supabase/database.
 import { getSupabaseClient } from "../../../shared/infrastructure/supabase/client";
 
 type SnapshotRow = Database["public"]["Tables"]["fixora_calculation_snapshots"]["Row"];
+const PAGE_SIZE = 100;
 
 function mapSnapshotRow(row: SnapshotRow): SavedCalculation | null {
   const record: SavedCalculation = {
@@ -33,7 +34,7 @@ function downloadCsv(records: readonly SavedCalculation[]) {
     result: record.result,
     formulaVersion: record.formulaVersion,
   })));
-  const blob = new Blob(["\uFEFF", csv], { type: "text/csv;charset=utf-8" });
+  const blob = new Blob(["\\uFEFF", csv], { type: "text/csv;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
@@ -54,40 +55,78 @@ export function CloudHistoryPage({ businessId, formatMoney, onOpenCalculation, o
   const supabase = useMemo(() => getSupabaseClient(), []);
   const [records, setRecords] = useState<SavedCalculation[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [invalidCount, setInvalidCount] = useState(0);
 
   useEffect(() => {
     let active = true;
     async function load() {
+      setLoading(true);
+      setLoadingMore(false);
+      setPage(0);
+      setHasMore(false);
+      setRecords([]);
+      setInvalidCount(0);
       if (!supabase) {
         setErrorMessage("No se pudo inicializar la conexión con Supabase.");
         setLoading(false);
         return;
       }
-      setLoading(true);
       const { data, error } = await supabase
         .from("fixora_calculation_snapshots")
         .select("id, business_id, created_by, created_at, name, currency_code, schema_version, formula_version, pricing_input, pricing_result, catalog_item_snapshot")
         .eq("business_id", businessId)
         .order("created_at", { ascending: false })
-        .limit(100);
+        .order("id", { ascending: false })
+        .range(0, PAGE_SIZE - 1);
       if (!active) return;
       setLoading(false);
       if (error) {
-        setErrorMessage(error.message);
+        setErrorMessage("No fue posible cargar el historial de este negocio. Inténtalo de nuevo.");
         return;
       }
       const mapped = (data ?? []).map(mapSnapshotRow);
       const valid = mapped.filter((record): record is SavedCalculation => record !== null);
       setRecords(valid);
       setInvalidCount(mapped.length - valid.length);
+      setHasMore(mapped.length === PAGE_SIZE);
+      setPage(1);
       setErrorMessage("");
       onRecordsLoaded(valid);
     }
     void load();
     return () => { active = false; };
   }, [businessId, supabase, onRecordsLoaded]);
+
+  const loadMore = useCallback(async () => {
+    if (!supabase || loadingMore || loading || !hasMore) return;
+    setLoadingMore(true);
+    setErrorMessage("");
+    const from = page * PAGE_SIZE;
+    const { data, error } = await supabase
+      .from("fixora_calculation_snapshots")
+      .select("id, business_id, created_by, created_at, name, currency_code, schema_version, formula_version, pricing_input, pricing_result, catalog_item_snapshot")
+      .eq("business_id", businessId)
+      .order("created_at", { ascending: false })
+      .order("id", { ascending: false })
+      .range(from, from + PAGE_SIZE - 1);
+    setLoadingMore(false);
+    if (error) {
+      setErrorMessage("No fue posible cargar más registros. Puedes volver a intentarlo.");
+      return;
+    }
+    const mapped = (data ?? []).map(mapSnapshotRow);
+    const valid = mapped.filter((record): record is SavedCalculation => record !== null);
+    const combined = [...records, ...valid];
+    setRecords(combined);
+    setInvalidCount((count) => count + mapped.length - valid.length);
+    setHasMore(mapped.length === PAGE_SIZE);
+    setPage((current) => current + 1);
+    onRecordsLoaded(combined);
+  }, [businessId, hasMore, loading, loadingMore, onRecordsLoaded, page, records, supabase]);
 
   return (
     <div className="secondary-page">
@@ -100,7 +139,7 @@ export function CloudHistoryPage({ businessId, formatMoney, onOpenCalculation, o
         <div className="empty-state"><span>◷</span><h2>Aún no hay cálculos guardados</h2><p>Cuando guardes un análisis, aparecerá aquí para que puedas consultarlo desde este negocio.</p></div>
       ) : (
         <>
-          <div className="history-actions"><span>{records.length} {records.length === 1 ? "registro" : "registros"}</span><button className="outline-button" onClick={() => downloadCsv(records)}>Exportar CSV ↓</button></div>
+          <div className="history-actions"><span>{records.length} {records.length === 1 ? "registro" : "registros"} cargados</span><button className="outline-button" onClick={() => downloadCsv(records)}>Exportar CSV ↓</button></div>
           <div className="history-list">
             {records.map((record) => (
               <article className="history-row" key={record.id}>
@@ -111,6 +150,7 @@ export function CloudHistoryPage({ businessId, formatMoney, onOpenCalculation, o
               </article>
             ))}
           </div>
+          {hasMore && <div className="history-actions"><span>Hay más cálculos guardados en este negocio.</span><button className="outline-button" disabled={loadingMore} onClick={() => void loadMore()}>{loadingMore ? "Cargando…" : "Cargar más cálculos"}</button></div>}
         </>
       )}
       <p className="local-storage-note">Este historial está guardado en Supabase y aislado por negocio. Los registros no se pueden eliminar desde esta vista.</p>
