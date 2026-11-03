@@ -62,7 +62,7 @@ export function MfaSettings() {
 
   async function removeFactor(factorId: string) {
     if (!supabase || busy) return;
-    if (!window.confirm("¿Deseas quitar este autenticador? Las operaciones administrativas volverán a exigir una verificación MFA antes de continuar.")) return;
+    if (!window.confirm("¿Deseas retirar este factor de autenticación de tu cuenta?")) return;
     setBusy(true); setError(""); setNotice("");
     const { error: removeError } = await supabase.auth.mfa.unenroll({ factorId });
     if (removeError) setError("No fue posible retirar el autenticador. Es posible que necesites verificar MFA primero.");
