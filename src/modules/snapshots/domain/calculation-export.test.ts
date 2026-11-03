@@ -39,6 +39,16 @@ describe("calculationsToCsv", () => {
     expect(csv).toContain("274.51,69.49,0.25,0.3756,pricing.v1");
   });
 
+  it("exports the commission basis and defaults older calculations to discounted price", () => {
+    const defaultCsv = calculationsToCsv([record]);
+    const preDiscountCsv = calculationsToCsv([{
+      ...record,
+      input: { ...record.input, variableFeeBasis: "pre_discount" as const },
+    }]);
+    expect(defaultCsv).toContain("0.05,discounted_price,0.1,0.25");
+    expect(preDiscountCsv).toContain("0.05,pre_discount,0.1,0.25");
+  });
+
   it("escapes quotes and line breaks in user-provided names", () => {
     const csv = calculationsToCsv([{ ...record, name: 'Lote "A"\nsegunda línea' }]);
     expect(csv).toContain('"Lote ""A""\nsegunda línea"');
@@ -57,6 +67,6 @@ describe("calculationsToCsv", () => {
   );
 
   it("returns only the header when there are no records", () => {
-    expect(calculationsToCsv([])).toBe("Fecha (UTC),Nombre,Moneda,Materiales (entrada),Tiempo de trabajo (min),Coste por hora,Otros costes directos,Tasa de merma,Materiales calculados,Mano de obra calculada,Merma calculada,Costes directos calculados,Gastos fijos por unidad,Coste total unitario,Comisión,Descuento,Margen objetivo,Precio sugerido,Ganancia estimada,Margen efectivo,Recargo,Versión de fórmula");
+    expect(calculationsToCsv([])).toBe("Fecha (UTC),Nombre,Moneda,Materiales (entrada),Tiempo de trabajo (min),Coste por hora,Otros costes directos,Tasa de merma,Materiales calculados,Mano de obra calculada,Merma calculada,Costes directos calculados,Gastos fijos por unidad,Coste total unitario,Comisión,Base de comisión,Descuento,Margen objetivo,Precio sugerido,Ganancia estimada,Margen efectivo,Recargo,Versión de fórmula");
   });
 });
