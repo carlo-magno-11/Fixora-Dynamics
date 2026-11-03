@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { createCloudCalculatorDraftApplicationService } from "./cloud-calculator-draft-service";
+import type { CalculatorDraft } from "../domain/calculator-draft";
 
 const validDraft = {
   version: 1,
@@ -18,7 +19,7 @@ const validDraft = {
     discountRate: 0,
   },
   breakEvenInput: { fixedCosts: 100, sellingPrice: 50, variableCostPerUnit: 20 },
-};
+} satisfies CalculatorDraft;
 
 describe("cloud calculator draft application service", () => {
   it("validates a stored cloud draft before returning it", async () => {
