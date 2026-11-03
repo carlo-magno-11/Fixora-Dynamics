@@ -1,6 +1,6 @@
 import type { BreakEvenInput } from "../modules/break-even/domain/break-even";
 import type { CatalogItemSnapshot } from "../modules/snapshots/domain/calculation-snapshot";
-import type { PricingInput } from "../modules/pricing/domain/pricing";
+import type { PricingFeeBasis, PricingInput } from "../modules/pricing/domain/pricing";
 import type { KeyValueStorage } from "../shared/infrastructure/key-value-storage";
 
 export const CALCULATOR_DRAFT_KEY = "fixora.calculator-draft.v1";
@@ -59,10 +59,11 @@ export function readCalculatorDraft(storage: KeyValueStorage): CalculatorDraft |
     const input = value.input;
     const breakEvenInput = value.breakEvenInput;
     if (!hasFiniteFields(input, pricingFields) || !hasFiniteFields(breakEvenInput, breakEvenFields)) return null;
+    const feeBasis = (input as Record<string, unknown>).variableFeeBasis;
     if (
-      input.variableFeeBasis !== undefined &&
-      input.variableFeeBasis !== "discounted_price" &&
-      input.variableFeeBasis !== "pre_discount"
+      feeBasis !== undefined &&
+      feeBasis !== "discounted_price" &&
+      feeBasis !== "pre_discount"
     ) return null;
     if (value.selectedCatalogItem !== undefined && !isCatalogSnapshot(value.selectedCatalogItem)) return null;
     return {
@@ -80,8 +81,8 @@ export function readCalculatorDraft(storage: KeyValueStorage): CalculatorDraft |
         variableFeeRate: input.variableFeeRate,
         targetMarginRate: input.targetMarginRate,
         discountRate: input.discountRate,
-        ...(input.variableFeeBasis !== undefined
-          ? { variableFeeBasis: input.variableFeeBasis }
+        ...(feeBasis !== undefined
+          ? { variableFeeBasis: feeBasis as PricingFeeBasis }
           : {}),
       },
       breakEvenInput: {
