@@ -72,7 +72,8 @@ begin
       using errcode = '42501';
   end if;
 
-  if p_expected_version < 0
+  if p_expected_version is null
+    or p_expected_version < 0
     or p_draft is null
     or pg_catalog.jsonb_typeof(p_draft) <> 'object'
     or pg_catalog.pg_column_size(p_draft) > 131072 then
@@ -85,7 +86,7 @@ begin
       using errcode = '42501';
   end if;
 
-  insert into public.fixora_calculator_drafts (
+  insert into public.fixora_calculator_drafts as current_draft (
     business_id, user_id, draft
   )
   values (
@@ -94,9 +95,9 @@ begin
   on conflict (business_id, user_id)
   do update
     set draft = excluded.draft,
-        version = public.fixora_calculator_drafts.version + 1,
+        version = current_draft.version + 1,
         updated_at = pg_catalog.clock_timestamp()
-    where public.fixora_calculator_drafts.version = p_expected_version
+    where current_draft.version = p_expected_version
   returning version into v_version;
 
   if v_version is null then
