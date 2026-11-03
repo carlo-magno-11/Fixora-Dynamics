@@ -74,3 +74,66 @@ Las estrellas son una fotografía aproximada consultada el 31-10-2026; no repres
 - [OWASP ASVS 5.0.0](https://github.com/OWASP/ASVS/releases/tag/v5.0.0) y [sitio oficial](https://asvs.owasp.org/).
 - [Supabase: Test Row Level Security policies with pgTAP](https://supabase.com/docs/guides/database/postgres/testing-row-level-security).
 - [Supabase: Managing config and secrets](https://supabase.com/docs/guides/local-development/managing-config).
+
+
+## Investigación adicional — administración operativa e importación/exportación (2 de noviembre de 2026)
+
+Se amplió la revisión con repositorios públicos de más de 1,000 estrellas. Las cifras son aproximadas y deben volver a comprobarse antes de una adopción; las licencias indicadas corresponden al repositorio o paquete consultado, no necesariamente a todos sus plugins o dependencias transitivas.
+
+| Repositorio | Estrellas observadas aprox. | Licencia | Uso potencial en Fixora | Decisión |
+|---|---:|---|---|---|
+| [refinedev/refine](https://github.com/refinedev/refine) | 35.9k | MIT | Patrones CRUD, control de acceso, filtros, adaptadores y separación de UI/datos para consola administrativa. | Referencia arquitectónica; no reemplazar la app Vite ni introducir otro framework en esta etapa. |
+| [marmelab/react-admin](https://github.com/marmelab/react-admin) | 27k | MIT | Data providers, listados, filtros, formularios, relaciones, permisos y estados optimistas para herramientas administrativas. | Referencia de patrones; no adoptar el framework completo porque implicaría una reescritura de la consola y una capa Material UI ajena al diseño actual. |
+| [TanStack/table](https://github.com/TanStack/table) | 28.4k | MIT | Tablas de usuarios, compras, licencias, dispositivos, tickets y auditoría con orden, selección, filtros y paginación. | Candidato de adopción cuando existan endpoints de listado con autorización y paginación del lado servidor. |
+| [react-hook-form/react-hook-form](https://github.com/react-hook-form/react-hook-form) | 44.9k | MIT | Formularios de importación, configuración de negocio y operaciones administrativas con menor trabajo manual de estado. | Evaluar junto con Zod en formularios complejos; no sustituir formularios nativos que ya son pequeños y accesibles. |
+| [colinhacks/zod](https://github.com/colinhacks/zod) | Más de 1k | MIT | Validación runtime de CSV importado, preferencias, formularios y respuestas de API antes de confiar en los tipos TypeScript. | Candidato prioritario para las fronteras de importación y respuestas externas; mantener validación autoritativa en servidor/Postgres. |
+| [mholt/PapaParse](https://github.com/mholt/PapaParse) | 13.6k | MIT | Lectura CSV en navegador, detección de encabezados, errores de parseo y previsualización antes de importar gastos o catálogo. | Candidato prioritario para la futura importación guiada; primero diseñar mapeo, validación, duplicados, moneda y vista previa sin escritura automática. |
+| [diegomura/react-pdf](https://github.com/diegomura/react-pdf) | 16.8k | MIT | Generación de presupuestos, fichas de coste e informes PDF a partir de datos validados. | Evaluar para documentos comerciales; comparar bundle, fuentes, paginación y compatibilidad Vite antes de instalar. |
+| [pdfme/pdfme](https://github.com/pdfme/pdfme) | 4.9k | MIT | Plantillas PDF editables por el usuario, viewer y generación en navegador/Node. | Alternativa si Fixora necesita plantillas personalizables; no añadir junto con react-pdf sin un requisito concreto. |
+| [TanStack/query](https://github.com/TanStack/query) | ~50k | MIT | Caché, invalidación, reintentos, estados de carga y sincronización de consultas cloud. | Ya contemplado en la arquitectura; adoptar de forma deliberada cuando se necesite caché compartida y no duplicar el estado local. |
+
+### Decisiones concretas para el siguiente ciclo
+
+1. **Consola administrativa:** implementar primero endpoints/RPCs paginados y autorizados en el servidor; después construir listados. TanStack Table es el candidato UI. No confiar en permisos del menú o filtros del cliente como autorización.
+2. **Importación de datos:** diseñar un flujo de cuatro etapas: archivo local → detección/mapeo de columnas → previsualización y validación → confirmación explícita y escritura transaccional. PapaParse puede resolver el parseo CSV; Zod puede validar cada fila. Nunca importar directamente al cargar el archivo.
+3. **PDF:** mantener exportación actual y definir primero qué documentos necesita el cliente. React PDF es adecuado para documentos generados desde datos; pdfme es más apropiado si se requieren plantillas visuales editables.
+4. **Formularios:** no incorporar React Hook Form + Zod en bloque. Medir el coste de migración y usarlo solo en flujos con validación condicional, arrays de campos o pasos múltiples.
+5. **Frameworks administrativos:** Refine y React-admin son referencias sólidas, pero adoptar cualquiera completo duplicaría decisiones de routing, permisos, data providers y diseño. Fixora ya tiene autorización AAL2 y operaciones server-side propias; preservar esa fuente única de verdad.
+
+### Verificación de compatibilidad y licencias
+
+- Se consultaron los README y, cuando estuvo disponible, el archivo LICENSE o el campo `license` del package.json del repositorio.
+- React Hook Form, TanStack Table, TanStack Query, Refine, Zod y PapaParse muestran licencia MIT en sus fuentes consultadas.
+- React PDF declara MIT en su README.
+- Antes de instalar: fijar versión exacta, revisar changelog y avisos de seguridad, compatibilidad con React 19/Vite/TypeScript actual, dependencias transitivas, tamaño del bundle y preservar notices.
+- Las estrellas solo se usan como filtro de popularidad solicitado; no son criterio suficiente para introducir una dependencia.
+
+### Fuentes primarias
+
+- [Refine](https://github.com/refinedev/refine), [React-admin](https://github.com/marmelab/react-admin), [TanStack Table](https://github.com/TanStack/table).
+- [React Hook Form](https://github.com/react-hook-form/react-hook-form), [Zod](https://github.com/colinhacks/zod), [PapaParse](https://github.com/mholt/PapaParse).
+- [React PDF](https://github.com/diegomura/react-pdf), [pdfme](https://github.com/pdfme/pdfme), [TanStack Query](https://github.com/TanStack/query).
+- Star snapshots corroborated against GitHub repository pages and public repository indexes on 2 November 2026; values are rounded and can change.
+
+
+## Referencias de producto financiero y facturación (2 de noviembre de 2026)
+
+Además de librerías, se revisaron aplicaciones completas con más de 1,000 estrellas para estudiar flujos reales de pequeños negocios. Se consideran referencias de producto/UX, no dependencias a integrar.
+
+| Proyecto | Estrellas aprox. | Licencia | Qué estudiar | Restricción/decisión |
+|---|---:|---|---|---|
+| [Firefly III](https://github.com/firefly-iii/firefly-iii) | 25.1k | AGPL-3.0 | Categorías, presupuestos, transacciones, cash flow, etiquetas y privacidad de finanzas personales. | Inspiración de flujos únicamente; no copiar código AGPL ni convertir Fixora en una app de finanzas personales. |
+| [Akaunting](https://github.com/akaunting/akaunting) | 10.3k | BSL 1.1 / Business Source License | Modularidad, gastos, facturación, panel de negocio y extensiones. | Su README declara BSL; no tratarlo como MIT ni copiar código sin revisión de grant/fecha de cambio de licencia. |
+| [Invoice Ninja](https://github.com/invoiceninja/invoiceninja) | 10.4k | Elastic License 2.0 | Flujo de presupuestos, facturas, pagos, proyectos y seguimiento de tiempo. | Source-available con restricciones para ofrecer servicios alojados; usar como benchmark funcional, no reutilizar código sin análisis legal. |
+| [Invoify](https://github.com/al1abb/invoify) | 6.4k | MIT | Constructor de facturas TypeScript, vista previa, plantillas y exportación PDF. | Candidato para estudiar o reutilizar piezas MIT tras revisar versión, avisos y dependencias; su base Next.js no debe introducirse como framework en Fixora. |
+
+### Qué aportan a Fixora Essentials
+
+- Separar el **motor de coste/precio** de los módulos de facturación, gastos y flujo de caja. Fixora no debe presentarse como software contable/fiscal ni sustituir un contador.
+- Diseñar un documento comercial con datos consistentes: negocio, cliente, concepto, cantidades, moneda, subtotal, descuentos, impuestos configurables cuando aplique, total y condiciones.
+- Añadir categorías y reportes sencillos sin perder el enfoque central de saber cuánto cuesta producir/vender y cuánto queda de margen.
+- Mantener una línea de tiempo/auditoría para cambios relevantes y exportación del historial del usuario.
+
+### Regla de licencias
+
+El número de estrellas no concede permiso de reutilización. MIT es permisiva con atribución y conservación de avisos; AGPL, BSL y Elastic tienen condiciones distintas y deben revisarse por versión y caso de distribución. Para Fixora, la decisión por defecto es **inspirarse en patrones de producto y reutilizar solo dependencias/código con licencia compatible comprobada**, sin copiar módulos completos de Akaunting, Invoice Ninja o Firefly III.

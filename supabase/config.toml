@@ -14,3 +14,21 @@ verify_jwt = true
 
 [functions.admin-verify-etsy-purchase]
 verify_jwt = true
+
+[functions.admin-reissue-activation-code]
+verify_jwt = true
+
+[functions.admin-revoke-device]
+verify_jwt = true
+
+[functions.admin-support-reply]
+verify_jwt = true
+
+[functions.admin-create-invite]
+verify_jwt = true
+
+[functions.admin-accept-invite]
+verify_jwt = true
+
+[functions.admin-console]
+verify_jwt = true

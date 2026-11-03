@@ -1,7 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { calculatePrice } from "../modules/pricing/domain/pricing";
 import { ExpensesPage } from "../modules/expenses/ui/ExpensesPage";
+import { CloudExpensesPage } from "../modules/expenses/ui/CloudExpensesPage";
 import { CatalogPage } from "../modules/catalog/ui/CatalogPage";
+import { CloudCatalogPage } from "../modules/catalog/ui/CloudCatalogPage";
+import { CloudHistoryPage } from "../modules/snapshots/ui/CloudHistoryPage";
+import { SupportPage } from "../modules/support/ui/SupportPage";
+import { AdminConsoleContainer } from "../modules/admin/ui/AdminConsoleContainer";
 import type { CatalogItem } from "../modules/catalog/domain/catalog";
 import type { CatalogItemSnapshot } from "../modules/snapshots/domain/calculation-snapshot";
 import { calculateBreakEven } from "../modules/break-even/domain/break-even";
@@ -10,10 +15,15 @@ import type { PricingInput } from "../modules/pricing/domain/pricing";
 import { AboutPage, AccountPage, GuidePage } from "./BrandPages";
 import { LegalPage } from "./LegalPages";
 import { createAppServices } from "./create-app-services";
+import { readCalculatorDraft, saveCalculatorDraft } from "./calculator-draft";
 import { calculationsToCsv } from "../modules/snapshots/domain/calculation-export";
 import type { SavedCalculation } from "../modules/snapshots/domain/saved-calculation";
+import { createNamespacedKeyValueStorage, type KeyValueStorage } from "../shared/infrastructure/key-value-storage";
+import { getSupabaseClient } from "../shared/infrastructure/supabase/client";
+import type { Database, Json } from "../shared/infrastructure/supabase/database.types";
 
-type View = "essentials" | "calculator" | "breakEven" | "expenses" | "catalog" | "kits" | "history" | "guide" | "account" | "about" | "terms" | "privacy";
+type View = "essentials" | "calculator" | "breakEven" | "expenses" | "catalog" | "kits" | "history" | "guide" | "account" | "support" | "admin" | "about" | "terms" | "privacy";
+const mobilePrimaryViews: View[] = ["essentials", "calculator", "expenses", "history"];
 type BusinessType = "general" | "retail" | "food" | "services_beauty" | "digital_products" | "workshop";
 type CurrencyCode = "MXN" | "USD";
 const BUSINESS_TYPE_KEY = "fixora.business-type.v1";
@@ -25,9 +35,9 @@ const businessTypes: { id: BusinessType; title: string; subtitle: string; detail
   { id: "digital_products", title: "Productos digitales y creativos", subtitle: "Creación y plataformas", detail: "Tiempo de creación, comisiones y costes recurrentes." },
   { id: "workshop", title: "Taller y manufactura", subtitle: "Producción por etapas", detail: "Materiales, operaciones, lotes y desperdicio." },
 ];
-function readBusinessType(): BusinessType {
+function readBusinessType(storage: KeyValueStorage): BusinessType {
   try {
-    const value = window.localStorage.getItem(BUSINESS_TYPE_KEY);
+    const value = storage.getItem(BUSINESS_TYPE_KEY);
     return businessTypes.some((item) => item.id === value) ? (value as BusinessType) : "general";
   } catch {
     return "general";
@@ -48,6 +58,7 @@ const initial: PricingInput = {
 };
 
 const currencyOptions: CurrencyCode[] = ["MXN", "USD"];
+type LicenseAccess = Database["public"]["Functions"]["fixora_get_license_access"]["Returns"][number];
 
 function downloadHistoryCsv(records: readonly SavedCalculation[]) {
   const csv = calculationsToCsv(records.map((record) => ({
@@ -82,24 +93,61 @@ function percent(value: number) {
   return `${(value * 100).toFixed(1)}%`;
 }
 
-export function App() {
+interface AppProps {
+  storageScope?: string;
+  businessId?: string;
+  authMode?: "cloud" | "local";
+  userEmail?: string;
+  businessName?: string;
+  initialBusinessType?: BusinessType;
+  initialCurrency?: CurrencyCode;
+  onSignOut?: () => void;
+  onSwitchBusiness?: () => void;
+  onBusinessTypeChange?: (businessType: BusinessType) => Promise<void>;
+}
+
+export function App({
+  storageScope,
+  businessId,
+  authMode = "local",
+  userEmail,
+  businessName,
+  initialBusinessType,
+  initialCurrency,
+  onSignOut,
+  onSwitchBusiness,
+  onBusinessTypeChange,
+}: AppProps = {}) {
+  const supabase = useMemo(() => getSupabaseClient(), []);
+  const storage = useMemo(
+    () => storageScope
+      ? createNamespacedKeyValueStorage(window.localStorage, storageScope)
+      : window.localStorage,
+    [storageScope],
+  );
   const appServices = useMemo(
     () => createAppServices({
-      storage: () => window.localStorage,
+      storage,
       generateId: () => crypto.randomUUID(),
       now: () => new Date().toISOString(),
     }),
-    [],
+    [storage],
   );
   const { historyRepository, snapshotService, catalogService, expensesService } = appServices;
-  const [input, setInput] = useState<PricingInput>(initial);
-  const [currency, setCurrency] = useState<CurrencyCode>("MXN");
+  const [restoredDraft] = useState(() => readCalculatorDraft(storage));
+  const [input, setInput] = useState<PricingInput>(() => restoredDraft?.input ?? initial);
+  const [currency, setCurrency] = useState<CurrencyCode>(() => restoredDraft?.currency ?? initialCurrency ?? "MXN");
   const [view, setView] = useState<View>("essentials");
-  const [businessType, setBusinessType] = useState<BusinessType>(readBusinessType);
+  const [mobileMoreOpen, setMobileMoreOpen] = useState(false);
+  const [businessType, setBusinessType] = useState<BusinessType>(() => initialBusinessType ?? readBusinessType(storage));
   const [profileMessage, setProfileMessage] = useState("");
-  const [breakEvenInput, setBreakEvenInput] = useState<BreakEvenInput>(initialBreakEven);
-  const [name, setName] = useState("Mi primer producto");
-  const [selectedCatalogItem, setSelectedCatalogItem] = useState<CatalogItemSnapshot | undefined>();
+  const [licenseAccess, setLicenseAccess] = useState<LicenseAccess | null>(null);
+  const [licenseLoading, setLicenseLoading] = useState(false);
+  const [licenseError, setLicenseError] = useState("");
+  const [breakEvenInput, setBreakEvenInput] = useState<BreakEvenInput>(() => restoredDraft?.breakEvenInput ?? initialBreakEven);
+  const [name, setName] = useState(() => restoredDraft?.name ?? "Mi primer producto");
+  const [selectedCatalogItem, setSelectedCatalogItem] = useState<CatalogItemSnapshot | undefined>(() => restoredDraft?.selectedCatalogItem);
+  const [draftStatus, setDraftStatus] = useState(() => restoredDraft ? "Se recuperó el borrador de esta cuenta y negocio." : "");
   const [historyLoadState] = useState(() => historyRepository.loadState());
   const [history, setHistory] = useState<SavedCalculation[]>(historyLoadState.records);
   const [historyNeedsRecovery, setHistoryNeedsRecovery] = useState(historyLoadState.needsRecovery);
@@ -125,26 +173,84 @@ export function App() {
   }, [input]);
 
   useEffect(() => {
+    const saved = saveCalculatorDraft(storage, {
+      name,
+      currency,
+      input,
+      breakEvenInput,
+      selectedCatalogItem,
+    });
+    setDraftStatus(saved
+      ? authMode === "cloud"
+        ? "Borrador local guardado en este dispositivo; todavía no está sincronizado con la nube."
+        : "Borrador guardado en este navegador."
+      : "No se pudo guardar el borrador local. Evita cerrar esta pestaña hasta guardar tu cálculo.");
+  }, [authMode, breakEvenInput, currency, input, name, selectedCatalogItem, storage]);
+
+  useEffect(() => {
     try {
-      window.localStorage.setItem(BUSINESS_TYPE_KEY, businessType);
+      storage.setItem(BUSINESS_TYPE_KEY, businessType);
     } catch {
       setProfileMessage("No fue posible guardar el perfil en este navegador.");
     }
-  }, [businessType]);
+  }, [businessType, storage]);
 
   useEffect(() => {
-    if (historyNeedsRecovery) return;
+    if (authMode !== "cloud" || !supabase) {
+      setLicenseAccess(null);
+      setLicenseLoading(false);
+      setLicenseError("");
+      return;
+    }
+    let active = true;
+    setLicenseLoading(true);
+    setLicenseError("");
+    void supabase.rpc("fixora_get_license_access").then(({ data, error }) => {
+      if (!active) return;
+      if (error) {
+        setLicenseError("No fue posible consultar el estado de la licencia. Inténtalo más tarde.");
+        setLicenseAccess(null);
+      } else {
+        setLicenseAccess(data?.[0] ?? null);
+      }
+      setLicenseLoading(false);
+    });
+    return () => { active = false; };
+  }, [authMode, supabase]);
+
+  useEffect(() => {
+    if (authMode === "cloud" || historyNeedsRecovery) return;
     try {
       historyRepository.save(history);
     } catch {
       setSavedMessage("No fue posible guardar en este navegador.");
     }
-  }, [history, historyNeedsRecovery, historyRepository]);
+  }, [authMode, history, historyNeedsRecovery, historyRepository]);
 
-  function chooseBusinessType(type: BusinessType) {
-    setBusinessType(type);
-    setProfileMessage("Perfil guardado en este dispositivo. Los kits especializados se habilitarán por etapas.");
-    setView("essentials");
+  async function refreshLicenseAccess() {
+    if (authMode !== "cloud" || !supabase) return;
+    setLicenseLoading(true);
+    const { data, error } = await supabase.rpc("fixora_get_license_access");
+    if (error) {
+      setLicenseError("No fue posible actualizar el estado de la licencia.");
+    } else {
+      setLicenseAccess(data?.[0] ?? null);
+      setLicenseError("");
+    }
+    setLicenseLoading(false);
+  }
+
+  async function chooseBusinessType(type: BusinessType) {
+    try {
+      await onBusinessTypeChange?.(type);
+      setBusinessType(type);
+      setProfileMessage(authMode === "cloud"
+        ? "Actividad actualizada en tu negocio."
+        : "Perfil guardado en este dispositivo. Los kits especializados se habilitarán por etapas.");
+      setView("essentials");
+    } catch (error) {
+      setProfileMessage(error instanceof Error ? error.message : "No fue posible actualizar el perfil del negocio.");
+    }
   }
 
   function updateBreakEven(key: keyof BreakEvenInput, rawValue: string) {
@@ -177,8 +283,8 @@ export function App() {
     setSavedMessage("Elemento del catálogo vinculado. Completa y revisa los costes antes de guardar.");
   }
 
-  function saveCalculation() {
-    if (historyNeedsRecovery) {
+  async function saveCalculation() {
+    if (authMode !== "cloud" && historyNeedsRecovery) {
       setSavedMessage("Revisa o reinicia el historial antes de guardar un cálculo nuevo.");
       return;
     }
@@ -190,7 +296,7 @@ export function App() {
         pricingInput: input,
         catalogItem: selectedCatalogItem,
       });
-      const record: SavedCalculation = {
+      let record: SavedCalculation = {
         id: snapshot.id,
         name: snapshot.name,
         createdAt: snapshot.createdAt,
@@ -201,6 +307,30 @@ export function App() {
         snapshotVersion: snapshot.schemaVersion,
         catalogItem: snapshot.catalogItem,
       };
+      if (authMode === "cloud") {
+        if (!supabase || !businessId) throw new Error("No hay un negocio cloud seleccionado.");
+        const { data, error } = await supabase
+          .from("fixora_calculation_snapshots")
+          .insert({
+            business_id: businessId,
+            name: snapshot.name,
+            currency_code: snapshot.currency,
+            schema_version: snapshot.schemaVersion,
+            formula_version: snapshot.formulaVersion,
+            pricing_input: JSON.parse(JSON.stringify(snapshot.pricingInput)) as Json,
+            pricing_result: JSON.parse(JSON.stringify(snapshot.pricingResult)) as Json,
+            catalog_item_snapshot: snapshot.catalogItem
+              ? JSON.parse(JSON.stringify(snapshot.catalogItem)) as Json
+              : null,
+          })
+          .select("id, created_at")
+          .single();
+        if (error) throw error;
+        record = { ...record, id: data.id, createdAt: data.created_at };
+        setHistory((current) => [record, ...current].slice(0, 100));
+        setSavedMessage("Cálculo guardado en Supabase para este negocio.");
+        return;
+      }
       setHistory((current) => [record, ...current].slice(0, 100));
       setSavedMessage("Cálculo guardado en este dispositivo.");
     } catch (error) {
@@ -248,47 +378,72 @@ export function App() {
           <span className="brand-word">FIXORA <b>DYNAMICS</b></span>
         </a>
         <div className="topbar-right">
-          <span className="status-dot" />
-          <span className="topbar-caption">ESPACIO DE TRABAJO</span>
-          <button className="avatar avatar-button" aria-label="Abrir mi cuenta" onClick={() => setView("account")}>U</button>
+          <span className={authMode === "cloud" ? "status-dot is-connected" : "status-dot is-local"} aria-hidden="true" />
+          <span className="topbar-caption">{authMode === "cloud" ? (businessName ?? "NEGOCIO CONECTADO") : "MODO LOCAL · SIN CUENTA"}</span>
+          {onSwitchBusiness && <button className="topbar-action" onClick={onSwitchBusiness}>Cambiar negocio</button>}
+          {onSignOut && <button className="topbar-action" onClick={onSignOut}>Salir</button>}
+          <button className="avatar avatar-button" title={userEmail ?? "Cuenta"} aria-label="Abrir mi cuenta" onClick={() => setView("account")}>{userEmail?.trim().slice(0, 1).toUpperCase() ?? "U"}</button>
         </div>
       </header>
+
+      <nav className="mobile-nav" aria-label="Navegación principal">
+        <button type="button" aria-current={view === "essentials" ? "page" : undefined} onClick={() => { setView("essentials"); setMobileMoreOpen(false); }}><span>✳</span><small>Inicio</small></button>
+        <button type="button" aria-current={view === "calculator" ? "page" : undefined} onClick={() => { setView("calculator"); setMobileMoreOpen(false); }}><span>⌗</span><small>Calcular</small></button>
+        <button type="button" aria-current={view === "expenses" ? "page" : undefined} onClick={() => { setView("expenses"); setMobileMoreOpen(false); }}><span>＋</span><small>Gastos</small></button>
+        <button type="button" aria-current={view === "history" ? "page" : undefined} onClick={() => { setView("history"); setMobileMoreOpen(false); }}><span>◷</span><small>Historial</small></button>
+        <button type="button" aria-expanded={mobileMoreOpen} aria-controls="mobile-more-menu" aria-current={!mobilePrimaryViews.includes(view) ? "page" : undefined} onClick={() => setMobileMoreOpen((open) => !open)}><span>☰</span><small>{mobileMoreOpen ? "Cerrar" : "Más"}</small></button>
+      </nav>
+      {mobileMoreOpen && <nav className="mobile-more-menu" id="mobile-more-menu" aria-label="Más secciones">
+        <div className="mobile-more-heading"><strong>Más herramientas y recursos</strong><button type="button" aria-label="Cerrar menú" onClick={() => setMobileMoreOpen(false)}>×</button></div>
+        <button type="button" onClick={() => { setView("breakEven"); setMobileMoreOpen(false); }}>◒　Punto de equilibrio</button>
+        <button type="button" onClick={() => { setView("catalog"); setMobileMoreOpen(false); }}>◇　Catálogo</button>
+        <button type="button" onClick={() => { setView("kits"); setMobileMoreOpen(false); }}>✳　Kits por negocio</button>
+        <button type="button" onClick={() => { setView("account"); setMobileMoreOpen(false); }}>◉　Mi cuenta</button>
+        {authMode === "cloud" && <button type="button" onClick={() => { setView("support"); setMobileMoreOpen(false); }}>?　Soporte</button>}
+        {authMode === "cloud" && <button type="button" onClick={() => { setView("admin"); setMobileMoreOpen(false); }}>⌘　Administración</button>}
+        <button type="button" onClick={() => { setView("guide"); setMobileMoreOpen(false); }}>⌘　Guía de uso</button>
+        <button type="button" onClick={() => { setView("about"); setMobileMoreOpen(false); }}>✳　Nuestra familia</button>
+        <button type="button" onClick={() => { setView("terms"); setMobileMoreOpen(false); }}>§　Términos</button>
+        <button type="button" onClick={() => { setView("privacy"); setMobileMoreOpen(false); }}>⌑　Privacidad</button>
+      </nav>}
 
       <div className="app-layout">
         <aside className="sidebar" aria-label="Navegación principal">
           <p className="nav-label">TU ESPACIO</p>
-          <button className={view === "essentials" ? "nav-item active" : "nav-item"} onClick={() => setView("essentials")}>
+          <button className={view === "essentials" ? "nav-item active" : "nav-item"} aria-current={view === "essentials" ? "page" : undefined} onClick={() => setView("essentials")}>
             <span className="nav-icon">✳</span> Fixora Essentials
           </button>
-          <button className={view === "calculator" ? "nav-item active" : "nav-item"} onClick={() => setView("calculator")}>
+          <button className={view === "calculator" ? "nav-item active" : "nav-item"} aria-current={view === "calculator" ? "page" : undefined} onClick={() => setView("calculator")}>
             <span className="nav-icon">⌗</span> Calculadora
           </button>
-          <button className={view === "breakEven" ? "nav-item active" : "nav-item"} onClick={() => setView("breakEven")}>
+          <button className={view === "breakEven" ? "nav-item active" : "nav-item"} aria-current={view === "breakEven" ? "page" : undefined} onClick={() => setView("breakEven")}>
             <span className="nav-icon">◒</span> Punto de equilibrio
           </button>
-          <button className={view === "expenses" ? "nav-item active" : "nav-item"} onClick={() => setView("expenses")}>
+          <button className={view === "expenses" ? "nav-item active" : "nav-item"} aria-current={view === "expenses" ? "page" : undefined} onClick={() => setView("expenses")}>
             <span className="nav-icon">＋</span> Control de gastos
           </button>
-          <button className={view === "catalog" ? "nav-item active" : "nav-item"} onClick={() => setView("catalog")}>
+          <button className={view === "catalog" ? "nav-item active" : "nav-item"} aria-current={view === "catalog" ? "page" : undefined} onClick={() => setView("catalog")}>
             <span className="nav-icon">◇</span> Catálogo
           </button>
-          <button className={view === "kits" ? "nav-item active" : "nav-item"} onClick={() => setView("kits")}>
+          <button className={view === "kits" ? "nav-item active" : "nav-item"} aria-current={view === "kits" ? "page" : undefined} onClick={() => setView("kits")}>
             <span className="nav-icon">◇</span> Kits por negocio
           </button>
           <p className="nav-label nav-label-spaced">MIS REGISTROS</p>
-          <button className={view === "history" ? "nav-item active" : "nav-item"} onClick={() => setView("history")}>
+          <button className={view === "history" ? "nav-item active" : "nav-item"} aria-current={view === "history" ? "page" : undefined} onClick={() => setView("history")}>
             <span className="nav-icon">◷</span> Mis cálculos
             <span className="nav-count">{history.length}</span>
           </button>
           <p className="nav-label nav-label-spaced">TU CUENTA</p>
-          <button className={view === "account" ? "nav-item active" : "nav-item"} onClick={() => setView("account")}><span className="nav-icon">◉</span> Mi cuenta</button>
-          <button className={view === "about" ? "nav-item active" : "nav-item"} onClick={() => setView("about")}><span className="nav-icon">✳</span> Nuestra familia</button>
+          <button className={view === "account" ? "nav-item active" : "nav-item"} aria-current={view === "account" ? "page" : undefined} onClick={() => setView("account")}><span className="nav-icon">◉</span> Mi cuenta</button>
+          {authMode === "cloud" && <button className={view === "support" ? "nav-item active" : "nav-item"} aria-current={view === "support" ? "page" : undefined} onClick={() => setView("support")}><span className="nav-icon">?</span> Soporte</button>}
+          {authMode === "cloud" && <button className={view === "admin" ? "nav-item active" : "nav-item"} aria-current={view === "admin" ? "page" : undefined} onClick={() => setView("admin")}><span className="nav-icon">⌘</span> Administración</button>}
+          <button className={view === "about" ? "nav-item active" : "nav-item"} aria-current={view === "about" ? "page" : undefined} onClick={() => setView("about")}><span className="nav-icon">✳</span> Nuestra familia</button>
           <p className="nav-label nav-label-spaced">RECURSOS</p>
-          <button className={view === "guide" ? "nav-item active" : "nav-item"} onClick={() => setView("guide")}>
+          <button className={view === "guide" ? "nav-item active" : "nav-item"} aria-current={view === "guide" ? "page" : undefined} onClick={() => setView("guide")}>
             <span className="nav-icon">⌘</span> Guía de uso
           </button>
-          <button className={view === "terms" ? "nav-item active" : "nav-item"} onClick={() => setView("terms")}><span className="nav-icon">§</span> Términos</button>
-          <button className={view === "privacy" ? "nav-item active" : "nav-item"} onClick={() => setView("privacy")}><span className="nav-icon">⌑</span> Privacidad</button>
+          <button className={view === "terms" ? "nav-item active" : "nav-item"} aria-current={view === "terms" ? "page" : undefined} onClick={() => setView("terms")}><span className="nav-icon">§</span> Términos</button>
+          <button className={view === "privacy" ? "nav-item active" : "nav-item"} aria-current={view === "privacy" ? "page" : undefined} onClick={() => setView("privacy")}><span className="nav-icon">⌑</span> Privacidad</button>
           <div className="sidebar-note">
             <span className="sidebar-note-mark">✳</span>
             <strong>Decisiones con claridad.</strong>
@@ -342,7 +497,7 @@ export function App() {
                 ))}
               </div>
               <div className="guide-callout"><strong>¿Todavía no tienes un sector definido?</strong><p>Conserva el perfil general. Fixora Essentials funciona como base y no necesitas elegir un kit especializado para calcular costes y precios.</p><button className="text-button" onClick={() => chooseBusinessType("general")}>Mantener perfil general</button></div>
-              <p className="local-storage-note">La selección del perfil se guarda únicamente en este navegador por ahora. Todavía no crea una cuenta ni sincroniza datos.</p>
+              <p className="local-storage-note">{authMode === "cloud" ? "La selección del perfil se guarda en la configuración de este negocio en Supabase." : "La selección del perfil se guarda únicamente en este navegador. Todavía no crea una cuenta ni sincroniza datos."}</p>
             </div>
           )}
 
@@ -361,6 +516,8 @@ export function App() {
                   </select>
                 </label>
               </div>
+
+              {draftStatus && <p className="draft-status" role="status">{draftStatus}</p>}
 
               <div className="product-name-row">
                 <div className="product-name-field">
@@ -481,10 +638,16 @@ export function App() {
             </div>
           )}
 
-          {view === "expenses" && <ExpensesPage service={expensesService} currency={currency} formatMoney={formatMoney} />}
-          {view === "catalog" && <CatalogPage service={catalogService} currency={currency} formatMoney={formatMoney} onUseInCalculator={useCatalogItem} />}
+          {view === "expenses" && authMode === "cloud" && businessId
+            ? <CloudExpensesPage businessId={businessId} currency={initialCurrency ?? currency} formatMoney={formatMoney} />
+            : view === "expenses" && <ExpensesPage service={expensesService} currency={currency} formatMoney={formatMoney} />}
+          {view === "catalog" && authMode === "cloud" && businessId
+            ? <CloudCatalogPage businessId={businessId} currency={initialCurrency ?? currency} formatMoney={formatMoney} onUseInCalculator={useCatalogItem} />
+            : view === "catalog" && <CatalogPage service={catalogService} currency={currency} formatMoney={formatMoney} onUseInCalculator={useCatalogItem} />}
 
-          {view === "history" && (
+          {view === "history" && authMode === "cloud" && businessId
+            ? <CloudHistoryPage businessId={businessId} formatMoney={formatMoney} onOpenCalculation={openCalculation} onRecordsLoaded={setHistory} />
+            : view === "history" && (
             <div className="secondary-page">
               <p className="eyebrow">TU ACTIVIDAD <span> / </span> 02</p>
               <h1>Mis cálculos.</h1>
@@ -516,8 +679,10 @@ export function App() {
             </div>
           )}
 
+          {view === "support" && authMode === "cloud" && <SupportPage businessId={businessId} />}
+          {view === "admin" && authMode === "cloud" && <AdminConsoleContainer />}
           {view === "guide" && <GuidePage />}
-          {view === "account" && <AccountPage onOpenGuide={() => setView("guide")} />}
+          {view === "account" && <AccountPage onOpenGuide={() => setView("guide")} authMode={authMode} userEmail={userEmail} businessName={businessName} onSignOut={onSignOut} licenseAccess={licenseAccess} licenseLoading={licenseLoading} licenseError={licenseError} onLicenseActivated={refreshLicenseAccess} />}
           {view === "about" && <AboutPage />}
           {view === "terms" && <LegalPage kind="terms" />}
           {view === "privacy" && <LegalPage kind="privacy" />}
@@ -530,10 +695,28 @@ export function App() {
 }
 
 function Field({ label, value, suffix, onChange }: { label: string; value: number; suffix: string; onChange: (value: string) => void }) {
+  const [rawValue, setRawValue] = useState(() => String(value));
+  useEffect(() => setRawValue(String(value)), [value]);
+
   return (
     <label className="field">
       <span>{label}</span>
-      <span className="input-wrap"><input type="number" min="0" step="0.01" value={value} onChange={(event) => onChange(event.target.value)} /><small>{suffix}</small></span>
+      <span className="input-wrap">
+        <input type="number" min="0" step="0.01" value={rawValue}
+          onChange={(event) => {
+            const nextValue = event.target.value;
+            setRawValue(nextValue);
+            if (nextValue !== "") onChange(nextValue);
+          }}
+          onBlur={() => {
+            if (rawValue.trim() === "") {
+              setRawValue("0");
+              onChange("0");
+            }
+          }}
+        />
+        <small>{suffix}</small>
+      </span>
     </label>
   );
 }

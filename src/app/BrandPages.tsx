@@ -1,4 +1,10 @@
 import { getMessages, type SupportedLocale } from "../i18n/messages";
+import { MfaSettings } from "../modules/auth/ui/MfaSettings";
+import { LicenseActivationPanel } from "../modules/licensing/ui/LicenseActivationPanel";
+import { AdminInviteAcceptancePanel } from "../modules/admin/ui/AdminInviteAcceptancePanel";
+import type { Database } from "../shared/infrastructure/supabase/database.types";
+
+type LicenseAccess = Database["public"]["Functions"]["fixora_get_license_access"]["Returns"][number];
 
 type PageProps = { locale?: SupportedLocale };
 
@@ -37,7 +43,17 @@ export function AboutPage({ locale }: PageProps) {
   );
 }
 
-export function AccountPage({ locale, onOpenGuide }: PageProps & { onOpenGuide: () => void }) {
+export function AccountPage({ locale, onOpenGuide, authMode = "local", userEmail, businessName, onSignOut, licenseAccess, licenseLoading = false, licenseError, onLicenseActivated }: PageProps & {
+  onOpenGuide: () => void;
+  authMode?: "cloud" | "local";
+  userEmail?: string;
+  businessName?: string;
+  onSignOut?: () => void;
+  licenseAccess?: LicenseAccess | null;
+  licenseLoading?: boolean;
+  licenseError?: string;
+  onLicenseActivated?: () => Promise<void>;
+}) {
   const copy = getMessages(locale).account;
   const sections = [
     { icon: "◉", title: copy.profile, detail: "Nombre visible, correo verificado y preferencias." },
@@ -54,22 +70,42 @@ export function AccountPage({ locale, onOpenGuide }: PageProps & { onOpenGuide: 
       <p className="page-lead">{copy.lead}</p>
       <section className="account-security-banner">
         <span className="account-security-icon">⌑</span>
-        <div><strong>{copy.authTitle}</strong><p>{copy.authBody}</p></div>
-        <span className="planned-pill">{copy.pending}</span>
+        <div><strong>{authMode === "cloud" ? "Cuenta y negocio conectados" : copy.authTitle}</strong><p>{authMode === "cloud" ? `Sesión activa para ${userEmail || "tu cuenta"} en ${businessName || "tu negocio"}.` : copy.authBody}</p></div>
+        <span className={authMode === "cloud" ? "connected-pill" : "planned-pill"}>{authMode === "cloud" ? "CONECTADA" : copy.pending}</span>
       </section>
+      {authMode === "cloud" && <MfaSettings />}
+      {authMode === "cloud" && <AdminInviteAcceptancePanel />}
+      {authMode === "cloud" && <section className="guide-callout account-license-panel" aria-live="polite">
+        <strong>Estado de tu licencia</strong>
+        {licenseLoading ? <p>Consultando la licencia vinculada a tu cuenta…</p>
+          : licenseError ? <p role="alert">{licenseError}</p>
+          : licenseAccess ? <>
+            <p><b>{licenseAccess.product_sku}</b> · Estado: <b>{licenseAccess.status === "active" ? "Activa" : licenseAccess.status === "expired" ? "Vencida" : licenseAccess.status === "pending" ? "Pendiente" : licenseAccess.status}</b></p>
+            <p>Vigencia hasta: <b>{licenseAccess.expires_at ? new Date(licenseAccess.expires_at).toLocaleDateString("es-MX", { dateStyle: "long" }) : "Pendiente de activación"}</b></p>
+            <p>Dispositivos activos: <b>{licenseAccess.active_device_count} de {licenseAccess.max_active_devices}</b></p>
+            <p>Funciones habilitadas: {licenseAccess.available_entitlements.length ? licenseAccess.available_entitlements.join(", ") : "Ninguna disponible en este momento."}</p>
+          </>
+          : <p>Aún no hay una licencia vinculada a esta cuenta. La activación y la validación de compras se habilitarán cuando se complete la configuración segura del servicio.</p>}
+      </section>}
+      {authMode === "cloud" && <LicenseActivationPanel onActivated={onLicenseActivated} />}
       <div className="account-summary-grid">
         {sections.map((section) => (
           <article className="account-section-card" key={section.title}>
             <span className="account-section-icon">{section.icon}</span>
-            <div><h2>{section.title}</h2><p>{section.detail}</p><span className="account-card-status">{copy.pending}</span></div>
+            <div><h2>{section.title}</h2><p>{section.detail}</p><span className="account-card-status">{authMode === "cloud" && (section.title === copy.profile || section.title === copy.business || (section.title === copy.license && Boolean(licenseAccess)) || (section.title === copy.devices && Boolean(licenseAccess))) ? "CONECTADO" : copy.pending}</span></div>
           </article>
         ))}
       </div>
       <section className="account-preferences">
+        <div><span className="eyebrow">CORREO DE ACCESO</span><strong>{userEmail || "Modo local"}</strong></div>
+        <div><span className="eyebrow">NEGOCIO ACTIVO</span><strong>{businessName || "Sin negocio cloud"}</strong></div>
         <div><span className="eyebrow">{copy.language}</span><strong>{copy.languageValue}</strong></div>
         <button className="outline-button" onClick={onOpenGuide}>Abrir guía y ayuda</button>
+        {onSignOut && <button className="outline-button" onClick={onSignOut}>Cerrar sesión</button>}
       </section>
-      <p className="local-storage-note">{copy.storageNotice}</p>
+      <p className="local-storage-note">{authMode === "cloud"
+        ? "Tu cuenta, negocio, catálogo, gastos e historial se guardan en Supabase. Los registros previos del modo local no se importan automáticamente; la sincronización sin conexión aún no está disponible."
+        : copy.storageNotice}</p>
     </div>
   );
 }

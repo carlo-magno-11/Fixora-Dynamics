@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import {
   ADMIN_SECTION_LABELS,
   getAccessibleAdminSections,
@@ -14,6 +15,8 @@ type Props = {
   snapshot: AdminDashboardSnapshot | null;
   loading: boolean;
   error?: string;
+  activeSection: AdminSection;
+  sectionContent?: ReactNode;
   onRefresh: () => void;
   onOpenSection: (section: AdminSection) => void;
 };
@@ -26,9 +29,15 @@ export function AdminConsolePage({
   snapshot,
   loading,
   error,
+  activeSection,
+  sectionContent,
   onRefresh,
   onOpenSection,
 }: Props) {
+  if (loading && !access.allowed) {
+    return <main className="admin-access-denied" aria-live="polite"><span className="admin-eyebrow">FIXORA DYNAMICS / ADMINISTRACIÓN</span><h1>Comprobando autorización</h1><p>Validando tu sesión y los permisos en el servidor…</p></main>;
+  }
+
   if (!access.allowed) {
     const reason = access.reason === "mfa_required"
       ? "Completa la verificación multifactor para continuar."
@@ -38,6 +47,7 @@ export function AdminConsolePage({
         <span className="admin-eyebrow">FIXORA DYNAMICS / ADMINISTRACIÓN</span>
         <h1>Acceso restringido</h1>
         <p>{reason}</p>
+        {error && <p className="admin-error" role="alert">{error}</p>}
       </main>
     );
   }
@@ -63,6 +73,7 @@ export function AdminConsolePage({
           <button
             type="button"
             key={section}
+            className={section === activeSection ? "active" : ""}
             onClick={() => onOpenSection(section)}
           >
             {ADMIN_SECTION_LABELS[section]}
@@ -72,7 +83,12 @@ export function AdminConsolePage({
 
       {error && <p className="admin-error" role="alert">{error}</p>}
 
-      {!canReadDashboard ? (
+      {activeSection !== "overview" ? (
+        <section className="admin-empty-state">
+          <h2>{ADMIN_SECTION_LABELS[activeSection]}</h2>
+          {sectionContent ?? <p>Tu autorización para esta sección fue comprobada en el servidor. Las consultas y acciones operativas de este apartado todavía no están conectadas; no se muestran registros ficticios ni se habilitan cambios sin una API autorizada.</p>}
+        </section>
+      ) : !canReadDashboard ? (
         <section className="admin-empty-state">
           <h2>Resumen no autorizado</h2>
           <p>Tu rol permite otras tareas, pero no consultar las métricas generales.</p>
@@ -89,7 +105,7 @@ export function AdminConsolePage({
       ) : (
         <>
           <section className="admin-metric-grid" aria-label="Resumen de plataforma">
-            <article><span>Usuarios</span><strong>{formatCount(snapshot.users.total)}</strong><small>{formatCount(snapshot.users.active)} activos</small></article>
+            <article><span>Usuarios</span><strong>{formatCount(snapshot.users.total)}</strong><small>{formatCount(snapshot.users.active)} con negocio activo</small></article>
             <article><span>Compras por revisar</span><strong>{formatCount(snapshot.purchases.pendingReview)}</strong><small>Cola de validación</small></article>
             <article><span>Licencias activas</span><strong>{formatCount(snapshot.licenses.active)}</strong><small>{formatCount(snapshot.licenses.expired)} vencidas · {formatCount(snapshot.licenses.suspended)} suspendidas</small></article>
             <article><span>Dispositivos activos</span><strong>{formatCount(snapshot.devices.active)}</strong><small>Instalaciones registradas</small></article>

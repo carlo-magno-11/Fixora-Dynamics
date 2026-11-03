@@ -403,6 +403,17 @@ export type Database = {
         }
         Returns: string
       }
+      fixora_save_expenses: {
+        Args: {
+          p_business_id: string
+          p_expected_units: number
+          p_period: string
+          p_expected_version: number
+          p_fixed: Json
+          p_variable: Json
+        }
+        Returns: number
+      }
       fixora_create_support_ticket: {
         Args: {
           p_body: string
@@ -415,10 +426,10 @@ export type Database = {
       fixora_get_license_access: {
         Args: never
         Returns: {
-          activated_at: string
+          activated_at: string | null
           active_device_count: number
           available_entitlements: string[]
-          expires_at: string
+          expires_at: string | null
           license_id: string
           max_active_devices: number
           product_sku: string
@@ -482,6 +493,10 @@ export type Database = {
           p_role: string
         }
         Returns: string
+      }
+      fixora_server_get_admin_dashboard: {
+        Args: { p_user_id: string; p_aal: string }
+        Returns: Json
       }
       fixora_server_has_admin_permission: {
         Args: { p_aal: string; p_permission_key: string; p_user_id: string }

@@ -8,17 +8,22 @@ export type PlatformAdminRole =
 export type AdminPermission =
   | "dashboard.read"
   | "users.read"
+  | "users.read_limited"
   | "users.suspend"
   | "purchases.read"
   | "purchases.verify"
+  | "purchases.reject"
   | "licenses.read"
+  | "licenses.read_limited"
   | "licenses.issue"
+  | "licenses.suspend"
   | "licenses.revoke"
   | "devices.read"
   | "devices.revoke"
   | "audit.read"
+  | "security.read"
   | "support.read"
-  | "support.respond"
+  | "support.reply"
   | "settings.read"
   | "settings.write"
   | "admins.manage";
@@ -31,28 +36,23 @@ export interface AdminPrincipal {
   roles: readonly PlatformAdminRole[];
 }
 
+const ALL_ADMIN_PERMISSIONS: readonly AdminPermission[] = [
+  "dashboard.read", "users.read", "users.read_limited", "users.suspend",
+  "purchases.read", "purchases.verify", "purchases.reject",
+  "licenses.read", "licenses.read_limited", "licenses.issue", "licenses.suspend", "licenses.revoke",
+  "devices.read", "devices.revoke", "audit.read", "security.read",
+  "support.read", "support.reply", "settings.read", "settings.write", "admins.manage",
+];
+
 const ROLE_PERMISSIONS: Record<PlatformAdminRole, readonly AdminPermission[]> = {
-  platform_owner: [
-    "dashboard.read",
-    "users.read", "users.suspend",
-    "purchases.read", "purchases.verify",
-    "licenses.read", "licenses.issue", "licenses.revoke",
-    "devices.read", "devices.revoke",
-    "audit.read",
-    "support.read", "support.respond",
-    "settings.read", "settings.write", "admins.manage",
-  ],
+  platform_owner: ALL_ADMIN_PERMISSIONS,
   license_manager: [
-    "dashboard.read", "purchases.read", "purchases.verify",
-    "licenses.read", "licenses.issue", "licenses.revoke",
-    "devices.read", "devices.revoke", "audit.read",
+    "purchases.read", "licenses.read", "licenses.issue", "licenses.suspend",
+    "licenses.revoke", "devices.revoke",
   ],
-  purchase_reviewer: ["dashboard.read", "purchases.read", "purchases.verify", "licenses.read"],
-  support_agent: [
-    "dashboard.read", "users.read", "licenses.read", "devices.read",
-    "support.read", "support.respond",
-  ],
-  auditor: ["dashboard.read", "users.read", "purchases.read", "licenses.read", "devices.read", "audit.read"],
+  purchase_reviewer: ["purchases.read", "purchases.verify", "purchases.reject", "licenses.read"],
+  support_agent: ["users.read_limited", "licenses.read_limited", "support.read", "support.reply"],
+  auditor: ["audit.read", "licenses.read", "purchases.read", "security.read"],
 };
 
 export type AdminAccessDecision =
@@ -73,17 +73,15 @@ export function resolveAdminAccess(principal: AdminPrincipal): AdminAccessDecisi
   if (principal.aal !== "aal2") {
     return { allowed: false, reason: "mfa_required", permissions: [] };
   }
-
   const permissions = [...new Set(principal.roles.flatMap((role) => ROLE_PERMISSIONS[role] ?? []))];
-  if (permissions.length === 0) {
-    return { allowed: false, reason: "role_missing", permissions: [] };
-  }
+  if (permissions.length === 0) return { allowed: false, reason: "role_missing", permissions: [] };
   return { allowed: true, permissions };
 }
 
-export function hasAdminPermission(
-  decision: AdminAccessDecision,
-  permission: AdminPermission,
-): boolean {
+export function hasAdminPermission(decision: AdminAccessDecision, permission: AdminPermission): boolean {
   return decision.allowed && decision.permissions.includes(permission);
+}
+
+export function hasAnyAdminPermission(decision: AdminAccessDecision, permissions: readonly AdminPermission[]): boolean {
+  return decision.allowed && permissions.some((permission) => decision.permissions.includes(permission));
 }
