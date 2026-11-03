@@ -144,7 +144,7 @@ SELECT throws_ok(
 );
 
 SELECT throws_ok(
-  $SELECT public.fixora_save_expenses(
+  $sql$SELECT public.fixora_save_expenses(
     current_setting('app.fixora_test_business_id')::uuid,
     300, 'quarter', 3, '[{"name":"Invalid","amount":-1}]'::jsonb, '[]'::jsonb
   )$,
@@ -157,7 +157,7 @@ SELECT throws_ok(
   $SELECT public.fixora_save_expenses(
     current_setting('app.fixora_test_business_id')::uuid,
     300.5, 'quarter', 3, '[]'::jsonb, '[]'::jsonb
-  )$,
+  )$sql$,
   '22023',
   NULL,
   'Fractional expected unit counts are rejected'
