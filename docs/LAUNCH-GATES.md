@@ -14,7 +14,8 @@ Estado al 3 de noviembre de 2026. Este documento separa evidencia existente de t
 - [x] La cadena principal de Essentials, Auth/cloud, edición numérica, marca, paleta, documentación comercial, guías y duración por días está incluida en esa rama.
 - [x] La variante R4 de soporte y la línea de seguridad de PR #8 se integraron en la rama central mediante merge revisado el 3-11-2026 (commit `248d67f`).
 - [x] PR #8 no compartía rutas modificadas con PR #14; su head tenía CI, Security, CodeQL y Database tests exitosos antes del merge.
-- [ ] Ejecutar y verificar CI, Security, CodeQL y Database tests sobre el HEAD combinado y los commits posteriores de la rama central.
+- [x] HEAD `dcc8e63` validado: CI #1425, Security #237, CodeQL #94 y Database tests #979 SUCCESS. CI ejecutó TypeScript, 199 pruebas Vitest, build web, Deno check y 14 pruebas Deno; Database tests reconstruyó Supabase local y completó pgTAP, mutaciones negativas RLS y pruebas de concurrencia.
+- [ ] Revalidar el HEAD posterior `908e5cd` y los commits de corrección de aislamiento/errores seguros; no heredar automáticamente el estado verde del commit anterior.
 - [ ] No declarar release integrado mientras los PRs continúen en borrador y no exista una rama de release validada.
 
 ## 1. Base de aplicación
@@ -24,8 +25,11 @@ Estado al 3 de noviembre de 2026. Este documento separa evidencia existente de t
 - [x] Rediseño de marca y paleta personalizable en PR #9/#10, todavía draft.
 - [ ] Revisión visual manual en escritorio, móvil y tamaños intermedios.
 - [ ] Prueba de accesibilidad con teclado/lector y contraste.
-- [ ] Validación de restauración/backup y migración de modo local a cloud.
+- [x] Rutas cloud implementadas para catálogo, gastos, snapshots/historial y borradores privados por usuario/negocio; pgTAP de borradores pasó en Database tests #979.
+- [x] Almacenamiento local de borradores separado por cuenta y negocio; prueba unitaria específica añadida.
+- [ ] Validación E2E de cambio de negocio, conflicto entre dos dispositivos, desconexión/reintento, recuperación/backup y migración de datos locales a cloud.
 - [ ] Resolver y probar sincronización offline antes de prometerla; actualmente no está disponible.
+- [ ] Ejecutar E2E en staging con dos usuarios, dos negocios y dos dispositivos; CI verde no sustituye esta evidencia.
 
 ## 2. Seguridad y administración
 - [x] PR #8 reportó CI #1174, Security #82, CodeQL #21 y Database tests #730 exitosos en SHA `3649d026` antes del merge del 3-11-2026.
@@ -125,3 +129,15 @@ Conclusión: la política de 30 días, los entitlements específicos por kit y l
 - **Pendiente de CI:** no se declara aprobada la migración ni la suite nueva hasta que GitHub ejecute reconstrucción local y pgTAP sobre el HEAD actual.
 - **Pendiente de operación:** la función aún no tiene un scheduler configurado. No se ejecutará manualmente en remoto ni se habilitará `pg_cron` hasta verificar disponibilidad/configuración y acordar la frecuencia en el proyecto de pruebas.
 - No se aplicó esta migración a Supabase remoto.
+
+
+## 8. Persistencia cloud General — actualización 2026-11-03
+
+- Catálogo cloud: listado, alta, edición y archivado con servicios/repositorios Supabase tipados y RLS.
+- Gastos cloud: lectura y guardado atómico mediante RPC versionada.
+- Historial cloud: snapshots inmutables, paginación por cursor `created_at + id` y exportación del conjunto cargado.
+- Borradores cloud: persistencia privada por usuario + negocio; RPC versionada, RLS y pgTAP exitoso en CI #979.
+- Almacenamiento local de borradores: namespace por cuenta y negocio; la prueba unitaria verifica que dos negocios no comparten la misma clave.
+- UI: se está cerrando una revisión adicional para que cambios de negocio no muestren datos anteriores, las respuestas asíncronas obsoletas no actualicen la vista y los fallos de lectura no se interpreten como colecciones vacías editables.
+- CI #1425 / Security #237 / CodeQL #94 / Database tests #979 son evidencia del commit `dcc8e63`. El HEAD posterior `908e5cd` incorpora cambios adicionales y requiere nueva validación.
+- No se aplicaron migraciones ni se desplegaron funciones en Supabase remoto. No hay staging multiusuario/multidispositivo validado.
