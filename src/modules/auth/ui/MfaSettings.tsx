@@ -67,6 +67,10 @@ export function MfaSettings() {
     const { error: removeError } = await supabase.auth.mfa.unenroll({ factorId });
     if (removeError) setError("No fue posible retirar el autenticador. Es posible que necesites verificar MFA primero.");
     else {
+      if (pending?.id === factorId) {
+        setPending(null);
+        setCode("");
+      }
       setNotice("Autenticador retirado.");
       await supabase.auth.refreshSession();
       await loadFactors();
@@ -78,8 +82,9 @@ export function MfaSettings() {
     <strong>Seguridad de la cuenta · Autenticación multifactor</strong>
     <p>Protege tu acceso con una aplicación autenticadora compatible con códigos TOTP. La verificación multifactor es obligatoria para las operaciones administrativas.</p>
     {loading ? <p>Consultando tus factores…</p> : factors.length === 0 ? <p>No tienes un autenticador configurado.</p> : factors.map((factor) =>
-      <div className="mfa-factor-row" key={factor.id}><span><b>{factor.friendly_name || "Aplicación autenticadora"}</b><small>{factor.status === "verified" ? "Verificado" : "Pendiente de verificación"}</small></span>{factor.status === "verified" && <button className="outline-button" disabled={busy} onClick={() => void removeFactor(factor.id)}>Quitar</button>}</div>)}
-    {!pending && <button className="outline-button" disabled={busy} onClick={() => void startEnrollment()}>{busy ? "Preparando…" : factors.some((factor) => factor.status === "verified") ? "Añadir otro autenticador" : "Configurar autenticador"}</button>}
+      <div className="mfa-factor-row" key={factor.id}><span><b>{factor.friendly_name || "Aplicación autenticadora"}</b><small>{factor.status === "verified" ? "Verificado" : "Pendiente de verificación"}</small></span><button className="outline-button" disabled={busy} onClick={() => void removeFactor(factor.id)}>{factor.status === "verified" ? "Quitar" : "Cancelar"}</button></div>)}
+    {!pending && !factors.some((factor) => factor.status === "unverified") && <button className="outline-button" disabled={busy} onClick={() => void startEnrollment()}>{busy ? "Preparando…" : factors.some((factor) => factor.status === "verified") ? "Añadir otro autenticador" : "Configurar autenticador"}</button>}
+    {!pending && factors.some((factor) => factor.status === "unverified") && <p>Hay una configuración TOTP pendiente. Cancélala antes de iniciar otra.</p>}
     {pending && <div className="mfa-enrollment">
       <p>Escanea este QR desde tu aplicación autenticadora. Si no puedes escanearlo, introduce manualmente la clave secreta.</p>
       <img src={pending.qrCode} alt="Código QR para configurar autenticación multifactor" />
@@ -88,7 +93,7 @@ export function MfaSettings() {
         <label htmlFor="mfa-enroll-code">Código de seis dígitos</label>
         <input id="mfa-enroll-code" inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6} value={code} onChange={(event) => setCode(event.target.value.replace(/\D/g, "").slice(0, 6))} required />
         <button className="welcome-primary" type="submit" disabled={busy || code.length !== 6}>{busy ? "Verificando…" : "Verificar y activar"}</button>
-        <button className="outline-button" type="button" disabled={busy} onClick={() => { setPending(null); setCode(""); }}>Cancelar configuración</button>
+        <button className="outline-button" type="button" disabled={busy} onClick={() => void removeFactor(pending.id)}>Cancelar configuración</button>
       </form>
     </div>}
     {error && <p className="auth-error" role="alert">{error}</p>}
