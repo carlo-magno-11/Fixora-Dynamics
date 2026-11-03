@@ -69,6 +69,14 @@ Proyecto revisado: `eyesite-security-test`, ref `dclaebknyalimmtgppeg`, PostgreS
 - El historial de licencias, auditoría y seguridad tiene restricciones append-only comprobadas por pgTAP.
 - Las pruebas de reconstrucción, pgTAP, mutaciones negativas RLS y activación concurrente de dispositivos pasan en CI.
 
+### Revisión de Gitleaks — 3-11-2026
+
+La primera pasada encontró cinco coincidencias `generic-api-key` en el historial. La revisión de archivo/línea determinó:
+- una cadena de 32 caracteres era un fixture determinista de una prueba HMAC, no una variable de producción; se sustituyó por `"x".repeat(32)`;
+- cuatro coincidencias eran identificadores/constantes TypeScript (`ExpensesRepositoryPort`, `CALCULATION_HISTORY_STORAGE_KEY`, `CurrencyCode` y `LegalPage`), no credenciales.
+
+Se añadieron únicamente sus cinco fingerprints históricos exactos a `.gitleaksignore`. No se excluyeron carpetas, reglas completas ni patrones globales. Cualquier nuevo secreto con fingerprint distinto continúa bloqueando CI. La ejecución posterior debe confirmar que el escaneo ya queda limpio.
+
 ### Hallazgos que siguen abiertos
 
 1. **Bucket heredado público:** existe `eyesite-media` con `public=true`, sin límite de tamaño ni MIME allowlist y con cero objetos. No se encontraron políticas de `storage.objects`. Al estar vacío no se observó fuga de archivos, pero cualquier objeto futuro podría ser descargable públicamente. No se cambió desde SQL: los metadatos de Storage deben administrarse por Storage API/Dashboard. Antes de lanzamiento, confirmar que no lo usa Fixora y hacerlo privado o eliminarlo mediante Storage API.
