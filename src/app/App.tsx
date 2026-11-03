@@ -139,6 +139,10 @@ export function App({
     [storageScope],
   );
   const calculatorDraftScope = `${storageScope ?? "default"}:${businessId ?? "none"}`;
+  const calculatorDraftStorage = useMemo(
+    () => createNamespacedKeyValueStorage(storage, `business:${businessId ?? "none"}`),
+    [businessId, storage],
+  );
   const appServices = useMemo(
     () => createAppServices({
       storage,
@@ -148,7 +152,7 @@ export function App({
     [storage],
   );
   const { historyRepository, snapshotService, catalogService, expensesService, cloudCatalogService, cloudExpensesService, cloudHistoryService, cloudCalculatorDraftService } = appServices;
-  const [restoredDraft] = useState(() => readCalculatorDraft(storage));
+  const [restoredDraft] = useState(() => readCalculatorDraft(calculatorDraftStorage));
   const [input, setInput] = useState<PricingInput>(() => restoredDraft?.input ?? initial);
   const [currency, setCurrency] = useState<CurrencyCode>(() => restoredDraft?.currency ?? initialCurrency ?? "MXN");
   const [view, setView] = useState<View>("essentials");
@@ -181,12 +185,12 @@ export function App({
     setLocalBackupDraftScope(calculatorDraftScope);
     if (!businessId) return;
     try {
-      const raw = storage.getItem(`fixora.calculator-draft.local-backup.v1:${businessId}`);
+      const raw = calculatorDraftStorage.getItem(`fixora.calculator-draft.local-backup.v1:${businessId}`);
       setLocalBackupDraft(raw ? parseCalculatorDraftValue(JSON.parse(raw) as unknown) : null);
     } catch {
       setLocalBackupDraft(null);
     }
-  }, [businessId, calculatorDraftScope, storage]);
+  }, [businessId, calculatorDraftScope, calculatorDraftStorage]);
   const [cloudDraftNeedsReload, setCloudDraftNeedsReload] = useState(false);
   const [cloudDraftReloadToken, setCloudDraftReloadToken] = useState(0);
   const lastCloudDraftFingerprint = useRef("");
@@ -247,7 +251,7 @@ export function App({
     if (previousDraftScope.current === calculatorDraftScope) return;
     previousDraftScope.current = calculatorDraftScope;
     setDraftHydratedScope("");
-    const draft = readCalculatorDraft(storage);
+    const draft = readCalculatorDraft(calculatorDraftStorage);
     setInput(draft?.input ?? initial);
     setCurrency(draft?.currency ?? initialCurrency ?? "MXN");
     setBreakEvenInput(draft?.breakEvenInput ?? initialBreakEven);
@@ -278,7 +282,7 @@ export function App({
 
   useEffect(() => {
     if (draftHydratedScope !== calculatorDraftScope) return;
-    const saved = saveCalculatorDraft(storage, {
+    const saved = saveCalculatorDraft(calculatorDraftStorage, {
       name,
       currency,
       input,
@@ -290,7 +294,7 @@ export function App({
         ? "Borrador local guardado en este dispositivo; todavía no está sincronizado con la nube."
         : "Borrador guardado en este navegador."
       : "No se pudo guardar el borrador local. Evita cerrar esta pestaña hasta guardar tu cálculo.");
-  }, [authMode, breakEvenInput, calculatorDraftScope, currency, draftHydratedScope, input, name, selectedCatalogItem, storage]);
+  }, [authMode, breakEvenInput, calculatorDraftScope, calculatorDraftStorage, currency, draftHydratedScope, input, name, selectedCatalogItem]);
 
   function applyCalculatorDraft(draft: CalculatorDraft) {
     setName(draft.name);
@@ -321,7 +325,7 @@ export function App({
         setDraftStatus("El borrador cloud no pasó la validación. Se conservó la copia local y no se sobrescribió ningún dato.");
         return;
       }
-      const local = readCalculatorDraft(storage);
+      const local = readCalculatorDraft(calculatorDraftStorage);
       if (remote.draft && local) {
         setCloudDraftCandidate(remote.draft);
         setCloudDraftCandidateScope(calculatorDraftScope);
@@ -354,14 +358,14 @@ export function App({
         : "No se pudo comprobar el borrador cloud. La copia local se conserva.");
     });
     return () => { active = false; };
-  }, [authMode, businessId, calculatorDraftScope, cloudCalculatorDraftService, cloudDraftReloadToken, draftHydratedScope, storage]);
+  }, [authMode, businessId, calculatorDraftScope, calculatorDraftStorage, cloudCalculatorDraftService, cloudDraftReloadToken, draftHydratedScope]);
 
   async function chooseCloudDraft() {
     if (!cloudDraftCandidate || cloudDraftCandidateScope !== calculatorDraftScope) return;
-    const local = readCalculatorDraft(storage);
+    const local = readCalculatorDraft(calculatorDraftStorage);
     if (local) {
       try {
-        storage.setItem(`fixora.calculator-draft.local-backup.v1:${businessId}`, JSON.stringify(local));
+        calculatorDraftStorage.setItem(`fixora.calculator-draft.local-backup.v1:${businessId}`, JSON.stringify(local));
         setLocalBackupDraft(local);
         setLocalBackupDraftScope(calculatorDraftScope);
       } catch {
@@ -400,7 +404,7 @@ export function App({
 
   async function chooseLocalDraft() {
     if (!businessId || cloudDraftChoiceScope !== calculatorDraftScope) return;
-    const local = readCalculatorDraft(storage);
+    const local = readCalculatorDraft(calculatorDraftStorage);
     if (!local) {
       setDraftStatus("No encontramos un borrador local válido para sincronizar.");
       return;
@@ -429,7 +433,7 @@ export function App({
     const timeout = window.setTimeout(() => {
       if (cloudDraftSaveInFlight.current === calculatorDraftScope) return;
       const saveScope = calculatorDraftScope;
-      const draft = readCalculatorDraft(storage);
+      const draft = readCalculatorDraft(calculatorDraftStorage);
       if (!draft) return;
       const fingerprint = calculatorDraftFingerprint(draft);
       if (fingerprint === lastCloudDraftFingerprint.current) return;
@@ -453,7 +457,7 @@ export function App({
       });
     }, 1000);
     return () => window.clearTimeout(timeout);
-  }, [authMode, businessId, calculatorDraftScope, cloudDraftReady, cloudDraftNeedsChoice, cloudDraftVersion, cloudCalculatorDraftService, breakEvenInput, currency, draftHydratedScope, input, name, selectedCatalogItem, storage]);
+  }, [authMode, businessId, calculatorDraftScope, calculatorDraftStorage, cloudDraftReady, cloudDraftNeedsChoice, cloudDraftVersion, cloudCalculatorDraftService, breakEvenInput, currency, draftHydratedScope, input, name, selectedCatalogItem]);
 
   useEffect(() => {
     if (draftHydratedScope !== calculatorDraftScope) return;
