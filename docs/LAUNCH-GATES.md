@@ -66,7 +66,8 @@ Estado al 3 de noviembre de 2026. Este documento separa evidencia existente de t
 - [x] Borrador de guía General y cinco guías especializadas documentado en PR #12.
 - [x] Plan de implementación de kits especializado documentado en `docs/KIT-MODULES-IMPLEMENTATION-PLAN.md`; Comercio y reventa queda como piloto.
 - [ ] Sincronizar guía General con mensajes reales y fórmulas probadas.
-- [ ] Implementar kit Comercio y reventa, tests, entitlements y ayuda contextual.
+- [x] Primera lógica de dominio del kit Comercio y reventa: coste puesto en almacén, unidad vendible, comisión, descuento y contribución; pruebas unitarias añadidas en la rama de integración (CI pendiente).
+- [ ] Completar UI, persistencia/movimientos de inventario, RLS, entitlement server-side y ayuda contextual del kit piloto.
 - [ ] Crear capturas reales y PDF de la versión aprobada.
 - [ ] No publicar kits cuyo módulo o guía siga en borrador.
 
