@@ -242,3 +242,15 @@ Un kit no se considera terminado hasta cumplir todo:
 - guía marcada como publicada solo cuando coincide con el módulo real.
 
 No vender un kit por tener una guía o una tarjeta de navegación. No declarar un kit implementado por existir su SKU en el catálogo.
+
+
+## 9. Primer avance de implementación — Comercio y reventa
+
+En la rama de integración ya existe el primer módulo puro de dominio:
+
+- `src/modules/retail/domain/retail-costing.ts`
+- `src/modules/retail/domain/retail-costing.test.ts`
+
+Calcula coste del lote puesto en almacén, coste de adquisición por unidad vendible, descuento, base configurable de comisión (precio antes o después del descuento), ingreso neto, contribución antes de gastos fijos, asignación fija, contribución estimada después de gastos fijos, margen y recargo. Usa Decimal.js y redondeo monetario explícito; permite mostrar contribuciones negativas y marca el margen como no disponible cuando el ingreso neto es cero o negativo.
+
+Este avance es únicamente lógica de dominio. Todavía no incluye interfaz, movimientos persistidos de inventario, tablas, RPC, RLS, entitlement `kit.retail`, SKU comercial ni activación de ventas. Esos elementos se implementarán después de validar el dominio y cerrar las decisiones de titularidad y autorización.
