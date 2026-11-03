@@ -14,7 +14,7 @@ Añadir Fixora Inicio de 30 días sin alterar licencias anuales existentes ni co
 - La expiración es exclusiva: el acceso está activo si now < expires_at y vencido cuando now >= expires_at.
 - El backend calcula y persiste expires_at; el cliente nunca puede enviar ni cambiarlo.
 - Reintentos de activación idempotentes no reinician activated_at ni extienden expires_at.
-- El código de activación tiene vencimiento independiente de 30 días desde emisión; no confundir ese plazo con la vigencia de la licencia.
+- El código de activación tiene vencimiento independiente de exactamente 30 × 24 horas (720 horas) desde emisión; no confundir ese plazo con la vigencia de la licencia. El timestamp de emisión se captura una sola vez y se reutiliza para el vencimiento y el evento de auditoría.
 
 ## Modelo recomendado
 
@@ -34,14 +34,16 @@ Para días, usar suma UTC exacta en milisegundos: activationInstant + days × 86
 
 Para meses, conservar el algoritmo anual existente que clampa el día al último día válido del mes destino. No usar una suma fija de 365 días.
 
-La función de política debe recibir el plazo del producto desde una fuente confiable; no deducirlo del SKU o de una variable del cliente.
+La función de política debe recibir el plazo guardado en el snapshot confiable de la licencia; no deducirlo del SKU ni de una variable del cliente. Cambiar el catálogo después de emitir una licencia no debe alterar lo comprado.
+
+Los SKU publicados deben tratarse como versiones comerciales inmutables: no cambiar duración ni entitlements de un SKU que ya tenga órdenes. Para modificar condiciones, crear un SKU nuevo y desactivar el anterior para nuevas ventas. La emisión bloquea la fila de producto mientras toma el snapshot. En el futuro checkout propio, la orden también deberá guardar un snapshot de SKU, duración, entitlements, precio y moneda al crear el pedido; la licencia se emitirá desde ese snapshot verificado.
 
 ## SQL transaccional
 
 En la activación:
 1. Bloquear la licencia y el pedido.
 2. Comprobar compra aprobada, sin reembolso/disputa y producto activo.
-3. Si la licencia está pending, leer duración del producto y calcular expires_at en PostgreSQL.
+3. Al emitir la licencia, copiar term_days/term_months del producto a un snapshot inmutable en fixora_licenses. Al activarla por primera vez, calcular expires_at desde ese snapshot en PostgreSQL.
 4. Persistir activated_at y expires_at una sola vez.
 5. Activar entitlements con starts_at=activated_at y ends_at=expires_at salvo retención.
 6. Registrar evento de activación.
