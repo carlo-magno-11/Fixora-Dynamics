@@ -23,7 +23,7 @@ La prioridad es **confianza en los datos + claridad de uso + accesibilidad + ren
 | Idioma | Varias vistas siguen teniendo textos literales aunque exista catálogo i18n. | El inglés futuro sería incompleto y las correcciones de copy serían dispersas. | P2 |
 | Operación cloud | El aviso reconoce que no existe sincronización offline ni importación automática del modo local. | Mantener el aviso visible y diseñar importación con revisión antes de escribir. | P1 |
 
-## Mejora ya aplicada en esta rama
+## Mejoras ya aplicadas en esta rama
 
 ### Navegación móvil sin scroll horizontal
 
@@ -33,25 +33,30 @@ Se reemplazó la navegación móvil horizontal por:
 - etiquetas visibles, estado actual con `aria-current`, controles táctiles de al menos 44 px y soporte para áreas seguras de iOS;
 - el menú administrativo y soporte solo aparecen en modo cloud.
 
-No se eliminó la navegación lateral de escritorio. La implementación debe validarse en anchos 320, 375, 390, 768, 1024 y 1440 px antes de darla por aprobada visualmente.
+No se eliminó la navegación lateral de escritorio. La navegación lateral expone el estado actual con `aria-current`; el menú móvil es un landmark `nav`. La implementación debe validarse en anchos 320, 375, 390, 768, 1024 y 1440 px antes de darla por aprobada visualmente.
+
+### Borrador automático de calculadora
+
+Implementado en `src/app/calculator-draft.ts` y conectado a `src/app/App.tsx`:
+- guarda nombre, moneda, entradas de pricing, punto de equilibrio y referencia del catálogo;
+- usa esquema versionado y valida la estructura antes de restaurar;
+- maneja JSON corrupto, versiones no compatibles y fallos de localStorage sin romper la app;
+- se guarda en el storage namespaced por usuario/negocio cuando hay sesión cloud;
+- informa que el borrador cloud sigue siendo local al dispositivo y no está sincronizado.
+
+Se añadieron pruebas unitarias para round-trip, referencia de catálogo, datos corruptos, versión incompatible y almacenamiento bloqueado. No es un backup cloud ni una función offline.
 
 ## Plan recomendado por prioridad
 
 ### P0 — proteger el trabajo y hacer la navegación inmediata
 
-1. **Borrador automático de calculadora**:
-   - guardar localmente en el almacenamiento namespaced existente por usuario/negocio;
-   - guardar nombre, moneda, entradas de pricing, referencia de catálogo y datos de punto de equilibrio;
-   - validar versión y tipos al restaurar;
-   - mostrar “Borrador restaurado” y permitir restablecerlo;
-   - no enviar cada pulsación a Supabase ni fingir sincronización cloud;
-   - nunca mezclar borradores de cuentas o negocios distintos.
-2. **Navegación móvil**: ya implementada en esta rama; agregar pruebas de interacción y comprobación visual real.
-3. **Estado de guardado inequívoco**: diferenciar borrador local, guardado en nube, error de guardado y cambio pendiente.
+1. **Borrador automático de calculadora**: implementado. Pendiente añadir acción explícita para descartar el borrador y validar recuperación con E2E en navegador real.
+2. **Navegación móvil**: implementada. Pendiente comprobación visual real y prueba con teclado/lector de pantalla.
+3. **Estado de guardado inequívoco**: el estado del borrador local ya se distingue del guardado de snapshots cloud; falta centralizar un indicador único de guardado para todos los módulos.
 
 ### P1 — edición fiable y explicación de resultados
 
-1. **Campos numéricos editables**: conservar temporalmente el texto introducido para permitir vacío, punto decimal y edición; validar y convertir al confirmar/blur, sin cambiar las reglas del motor Decimal.js.
+1. **Campos numéricos editables**: la calculadora principal ahora permite vaciar el campo durante la edición y confirma cero al salir si permanece vacío. Falta aplicar el mismo patrón a gastos y otras vistas, además de probar entrada decimal localizada.
 2. **Calculadora más pedagógica**:
    - agrupar campos por “coste de producir”, “coste de vender” y “objetivo de margen”;
    - explicar con ejemplos qué incluye cada partida;
@@ -102,8 +107,8 @@ No se eliminó la navegación lateral de escritorio. La implementación debe val
 
 ## Próxima secuencia de ejecución
 
-1. Validar la nueva navegación móvil con CI y pruebas automatizadas.
-2. Implementar borrador versionado y restauración de la calculadora.
-3. Corregir la edición de campos numéricos sin alterar el motor de cálculo.
-4. Añadir pruebas E2E de flujo de trabajo y una matriz WCAG 2.2 AA.
-5. Realizar pruebas visuales reales en navegador/dispositivo y medir Core Web Vitals.
+1. Validar visualmente la navegación y el borrador en navegador real (320–1440 px, Android/iOS/desktop).
+2. Aplicar la edición numérica tolerante a campos de gastos y otras vistas.
+3. Añadir descarte explícito de borrador y pruebas E2E de recuperación.
+4. Añadir matriz WCAG 2.2 AA y pruebas con teclado/lector de pantalla.
+5. Medir Core Web Vitals en el percentil 75 por separado en móvil y escritorio.
