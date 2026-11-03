@@ -154,7 +154,7 @@ SELECT throws_ok(
 );
 
 SELECT throws_ok(
-  $SELECT public.fixora_save_expenses(
+  $sql$SELECT public.fixora_save_expenses(
     current_setting('app.fixora_test_business_id')::uuid,
     300.5, 'quarter', 3, '[]'::jsonb, '[]'::jsonb
   )$sql$,
