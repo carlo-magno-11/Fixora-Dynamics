@@ -22,7 +22,7 @@ import { calculationsToCsv } from "../modules/snapshots/domain/calculation-expor
 import type { SavedCalculation } from "../modules/snapshots/domain/saved-calculation";
 import { createNamespacedKeyValueStorage, type KeyValueStorage } from "../shared/infrastructure/key-value-storage";
 import { getSupabaseClient } from "../shared/infrastructure/supabase/client";
-import type { Database, Json } from "../shared/infrastructure/supabase/database.types";
+import type { Database } from "../shared/infrastructure/supabase/database.types";
 
 type View = "essentials" | "calculator" | "breakEven" | "expenses" | "catalog" | "kits" | "history" | "guide" | "account" | "support" | "admin" | "about" | "terms" | "privacy";
 const mobilePrimaryViews: View[] = ["essentials", "calculator", "expenses", "history"];
@@ -338,26 +338,13 @@ export function App({
         catalogItem: snapshot.catalogItem,
       };
       if (authMode === "cloud") {
-        if (!supabase || !businessId) throw new Error("No hay un negocio cloud seleccionado.");
-        const { data, error } = await supabase
-          .from("fixora_calculation_snapshots")
-          .insert({
-            business_id: businessId,
-            name: snapshot.name,
-            currency_code: snapshot.currency,
-            schema_version: snapshot.schemaVersion,
-            formula_version: snapshot.formulaVersion,
-            pricing_input: JSON.parse(JSON.stringify(snapshot.pricingInput)) as Json,
-            pricing_result: JSON.parse(JSON.stringify(snapshot.pricingResult)) as Json,
-            catalog_item_snapshot: snapshot.catalogItem
-              ? JSON.parse(JSON.stringify(snapshot.catalogItem)) as Json
-              : null,
-          })
-          .select("id, created_at")
-          .single();
-        if (error) throw error;
-        record = { ...record, id: data.id, createdAt: data.created_at };
-        setHistory((current) => [record, ...current].slice(0, 100));
+        if (!businessId) throw new Error("No hay un negocio cloud seleccionado.");
+        const cloudRecord = await cloudHistoryService.saveSnapshot(businessId, snapshot);
+        setHistory((current) => [cloudRecord, ...current].slice(0, 100));
+        setSavedMessage("Cálculo guardado en Supabase para este negocio.");
+        return;
+      }
+      setHistory((current) => [record, ...current].slice(0, 100));
         setSavedMessage("Cálculo guardado en Supabase para este negocio.");
         return;
       }
