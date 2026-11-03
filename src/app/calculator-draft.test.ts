@@ -30,6 +30,32 @@ describe("calculator draft", () => {
     });
   });
 
+  it("preserves an explicit commission basis without changing old drafts", () => {
+    const storage = memoryStorage();
+    const inputWithBasis = { ...input, variableFeeBasis: "pre_discount" as const };
+    saveCalculatorDraft(storage, {
+      name: "Producto con comisión sobre precio original",
+      currency: "MXN",
+      input: inputWithBasis,
+      breakEvenInput,
+    });
+    expect(readCalculatorDraft(storage)?.input).toEqual(inputWithBasis);
+  });
+
+  it("rejects an unsupported commission basis in a stored draft", () => {
+    const invalid = {
+      version: 1,
+      savedAt: "2026-11-03T12:00:00.000Z",
+      name: "Producto",
+      currency: "MXN",
+      input: { ...input, variableFeeBasis: "unknown" },
+      breakEvenInput,
+    };
+    expect(readCalculatorDraft(memoryStorage({
+      [CALCULATOR_DRAFT_KEY]: JSON.stringify(invalid),
+    }))).toBeNull();
+  });
+
   it("preserves an optional catalog snapshot", () => {
     const storage = memoryStorage();
     const selectedCatalogItem = { id: "item-1", name: "Taza", kind: "product" as const, unit: "pieza", sku: "TAZA-1", currency: "MXN" as const, referenceCost: 25 };
