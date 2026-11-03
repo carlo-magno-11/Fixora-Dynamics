@@ -257,4 +257,7 @@ Calcula coste del lote puesto en almacén, coste de adquisición por unidad vend
 
 - También se añadió `src/modules/retail/domain/retail-inventory.ts` y su suite de pruebas: reconstruye el saldo por secuencia inmutable, separa unidades vendibles de devoluciones en cuarentena y rechaza ventas, ajustes o disposiciones que producirían saldos negativos.
 
+- Se conectó el cálculo de precio sugerido del kit al motor común mediante `src/modules/retail/application/retail-pricing.ts`. El motor compartido ahora permite declarar si la comisión del canal se calcula sobre el precio con descuento o sobre el precio previo al descuento; el comportamiento anterior permanece como valor predeterminado.
+- El libro de movimientos es una proyección pura y ordenada por secuencia. No protege contra ventas concurrentes por sí solo: la futura escritura debe pasar por RPC transaccional, generar secuencia/idempotency key en servidor y bloquear el saldo del SKU antes de aceptar una salida.
+
 Este avance es únicamente lógica de dominio. Todavía no incluye interfaz, movimientos persistidos de inventario, tablas, RPC, RLS, entitlement `kit.retail`, SKU comercial ni activación de ventas. Esos elementos se implementarán después de validar el dominio y cerrar las decisiones de titularidad y autorización.
