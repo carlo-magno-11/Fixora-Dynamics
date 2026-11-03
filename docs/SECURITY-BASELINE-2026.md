@@ -50,6 +50,7 @@ Cifras consultadas en GitHub el 3-11-2026; cambian con el tiempo. La licencia es
 | [Checkov](https://github.com/bridgecrewio/checkov) | 9,129 | Apache-2.0 | IaC, Docker, Kubernetes, OpenAPI y misconfiguración cloud. | Adoptar cuando el despliegue/IaC esté versionado; no inventar infraestructura que aún no existe. |
 | [OpenSSF Scorecard](https://github.com/ossf/scorecard) | 5,807 | Apache-2.0 | Higiene de seguridad del repositorio y cadena de suministro. | Evaluar posture del repositorio y acciones; una puntuación alta no prueba ausencia de bugs. |
 | [zizmor](https://github.com/zizmorcore/zizmor) | 6,861 | MIT | Riesgos en GitHub Actions: permisos excesivos, inyección, secretos, referencias y runners. | Adoptar en CI y fijar todas las acciones a SHA. |
+| [GitHub CodeQL Action](https://github.com/github/codeql-action) | 1,668 | MIT | SAST semántico para JavaScript/TypeScript y publicación de resultados SARIF. | Adoptar para análisis programado y PR; revisar cada alerta y no asumir que cubre toda la lógica de negocio. |
 
 **No instalar todo por popularidad.** La primera capa implementada es Gitleaks + OSV-Scanner + Trivy + zizmor. ZAP queda condicionado a staging. Nuclei y escaneo activo no deben ejecutarse contra producción ni terceros sin autorización expresa.
 
