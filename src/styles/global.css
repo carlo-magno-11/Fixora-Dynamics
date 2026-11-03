@@ -670,3 +670,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
   .admin-support-ticket { align-items: flex-start; flex-direction: column; }
   .admin-support-ticket button { width: 100%; }
 }
+
+.admin-support-filter { display: grid; flex: 0 0 160px; gap: 5px; color: var(--ink); font-size: 10px; font-weight: 700; }
+.admin-support-filter select { width: 100%; min-height: 38px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; background: white; color: var(--ink); font: inherit; font-size: 10px; }
+@media (max-width: 520px) { .admin-support-filter { width: 100%; max-width: none; flex-basis: auto; } }
