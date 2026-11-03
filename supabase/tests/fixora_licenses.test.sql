@@ -242,7 +242,8 @@ BEGIN
     RAISE EXCEPTION 'Initial device count or maximum is incorrect';
   END IF;
 
-  IF v_activation.expires_at IS DISTINCT FROM v_activation.activated_at + interval '12 months' THEN
+  IF v_activation.expires_at IS DISTINCT FROM
+      ((v_activation.activated_at AT TIME ZONE 'UTC') + interval '12 months') AT TIME ZONE 'UTC' THEN
     RAISE EXCEPTION 'License expiration is not one calendar year from first activation';
   END IF;
 
