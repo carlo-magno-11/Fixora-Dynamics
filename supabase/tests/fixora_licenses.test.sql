@@ -3,7 +3,7 @@ BEGIN;
 
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 
-SELECT plan(27);
+SELECT plan(29);
 
 SELECT has_table('fixora_private', 'fixora_products', 'License product catalog exists');
 SELECT has_table('fixora_private', 'fixora_purchase_orders', 'Purchase orders exist');
@@ -75,6 +75,12 @@ SELECT ok((SELECT count(*) = 5 FROM pg_proc p
 
 SELECT ok(EXISTS (SELECT 1 FROM fixora_private.fixora_products
   WHERE product_sku = 'FIXORA-ESSENTIALS-ANNUAL'), 'Annual Essentials product is seeded');
+SELECT has_column('fixora_private', 'fixora_products', 'term_days',
+  'Product catalog supports exact-day terms');
+SELECT ok((SELECT term_months = 12 AND term_days IS NULL
+  FROM fixora_private.fixora_products
+  WHERE product_sku = 'FIXORA-ESSENTIALS-ANNUAL'),
+  'Existing annual SKU remains a 12-calendar-month product');
 SELECT results_eq($$SELECT term_months FROM fixora_private.fixora_products WHERE product_sku = 'FIXORA-ESSENTIALS-ANNUAL'$$,
   ARRAY[12::smallint], 'Annual license term is 12 months');
 SELECT results_eq($$SELECT max_active_devices FROM fixora_private.fixora_products WHERE product_sku = 'FIXORA-ESSENTIALS-ANNUAL'$$,
@@ -106,6 +112,11 @@ DO $$
 DECLARE
   v_order_id uuid;
   v_pending_order_id uuid;
+  v_trial_order_id uuid;
+  v_trial_license_id uuid;
+  v_trial_code text;
+  v_trial_code_hash bytea;
+  v_trial_activation record;
   v_license_id uuid;
   v_idempotent_license_id uuid;
   v_code text;
@@ -149,6 +160,46 @@ BEGIN
   );
   IF v_license_id IS DISTINCT FROM v_idempotent_license_id THEN
     RAISE EXCEPTION 'License issuance is not idempotent';
+  END IF;
+
+
+  INSERT INTO fixora_private.fixora_products (
+    product_sku, display_name, term_months, term_days, max_active_devices,
+    entitlements, retained_entitlements
+  )
+  VALUES (
+    'FIXORA-ESSENTIALS-30D-TEST', 'Fixora 30 day test', NULL, 30, 3,
+    ARRAY['account.read', 'history.read', 'data.export', 'premium.tools'],
+    ARRAY['account.read', 'history.read', 'data.export']
+  );
+
+  INSERT INTO fixora_private.fixora_purchase_orders (
+    provider, external_order_id, product_sku, payment_status, refund_status,
+    verified_at, verification_method
+  )
+  VALUES (
+    'manual', 'FIXORA-30D-TEST-ORDER', 'FIXORA-ESSENTIALS-30D-TEST',
+    'approved', 'none', pg_catalog.now(), 'manual_seller_review'
+  )
+  RETURNING id INTO v_trial_order_id;
+
+  v_trial_license_id := fixora_private.issue_license_for_verified_purchase(
+    v_trial_order_id, 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb2'
+  );
+  v_trial_code := fixora_private.create_activation_code(v_trial_license_id);
+  v_trial_code_hash := extensions.digest(pg_catalog.convert_to(v_trial_code, 'UTF8'), 'sha256');
+
+  SELECT * INTO v_trial_activation
+  FROM fixora_private.redeem_activation_code(
+    v_trial_code_hash,
+    'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb2',
+    v_device_hash_five,
+    '30 day test device'
+  );
+
+  IF v_trial_activation.expires_at IS DISTINCT FROM
+      v_trial_activation.activated_at + interval '30 days' THEN
+    RAISE EXCEPTION '30-day license did not expire exactly 720 hours after activation';
   END IF;
 
   v_code := fixora_private.create_activation_code(v_license_id);
