@@ -695,10 +695,28 @@ export function App({
 }
 
 function Field({ label, value, suffix, onChange }: { label: string; value: number; suffix: string; onChange: (value: string) => void }) {
+  const [rawValue, setRawValue] = useState(() => String(value));
+  useEffect(() => setRawValue(String(value)), [value]);
+
   return (
     <label className="field">
       <span>{label}</span>
-      <span className="input-wrap"><input type="number" min="0" step="0.01" value={value} onChange={(event) => onChange(event.target.value)} /><small>{suffix}</small></span>
+      <span className="input-wrap">
+        <input type="number" min="0" step="0.01" value={rawValue}
+          onChange={(event) => {
+            const nextValue = event.target.value;
+            setRawValue(nextValue);
+            if (nextValue !== "") onChange(nextValue);
+          }}
+          onBlur={() => {
+            if (rawValue.trim() === "") {
+              setRawValue("0");
+              onChange("0");
+            }
+          }}
+        />
+        <small>{suffix}</small>
+      </span>
     </label>
   );
 }
