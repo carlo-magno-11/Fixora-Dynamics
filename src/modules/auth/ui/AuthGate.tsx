@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { FormEvent, ReactNode } from "react";
 import type { Session } from "@supabase/supabase-js";
 import type { Database } from "../../../shared/infrastructure/supabase/database.types";
@@ -53,6 +53,7 @@ export function AuthGate({ children }: AuthGateProps) {
   const [session, setSession] = useState<Session | null>(null);
   const [sessionLoading, setSessionLoading] = useState(FIXORA_AUTH_MODE === "cloud");
   const [businesses, setBusinesses] = useState<Business[]>([]);
+  const businessLoadRequest = useRef(0);
   const [businessLoading, setBusinessLoading] = useState(false);
   const [selectedBusinessId, setSelectedBusinessId] = useState<string | null>(null);
   const [authView, setAuthView] = useState<AuthView>(
@@ -74,12 +75,14 @@ export function AuthGate({ children }: AuthGateProps) {
 
   const loadBusinesses = useCallback(async (userId: string) => {
     if (!supabase) return;
+    const currentRequest = ++businessLoadRequest.current;
     setBusinessLoading(true);
     setErrorMessage("");
     const { data, error } = await supabase
       .from("fixora_businesses")
       .select("id, name, business_type, currency_code, timezone, created_by, created_at, updated_at")
       .order("created_at", { ascending: true });
+    if (currentRequest !== businessLoadRequest.current) return;
     setBusinessLoading(false);
     if (error) {
       setErrorMessage(`No se pudieron cargar tus negocios: ${error.message}`);
@@ -111,6 +114,8 @@ export function AuthGate({ children }: AuthGateProps) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, nextSession) => {
       setSession(nextSession);
       if (event === "SIGNED_IN" || event === "SIGNED_OUT") {
+        businessLoadRequest.current += 1;
+        setBusinessLoading(false);
         setBusinesses([]);
         setSelectedBusinessId(null);
       }
