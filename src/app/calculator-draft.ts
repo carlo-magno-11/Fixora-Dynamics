@@ -8,7 +8,9 @@ export type { CalculatorDraft };
 export const CALCULATOR_DRAFT_KEY = "fixora.calculator-draft.v1";
 
 export function createCalculatorDraftStorage(storage: KeyValueStorage, businessId: string | null | undefined): KeyValueStorage {
-  return createNamespacedKeyValueStorage(storage, `business:${businessId ?? "none"}`);
+  return businessId
+    ? createNamespacedKeyValueStorage(storage, `business:${businessId}`)
+    : storage;
 }
 
 export function readCalculatorDraft(storage: KeyValueStorage): CalculatorDraft | null {
