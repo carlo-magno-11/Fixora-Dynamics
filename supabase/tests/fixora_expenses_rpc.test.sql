@@ -147,7 +147,7 @@ SELECT throws_ok(
   $sql$SELECT public.fixora_save_expenses(
     current_setting('app.fixora_test_business_id')::uuid,
     300, 'quarter', 3, '[{"name":"Invalid","amount":-1}]'::jsonb, '[]'::jsonb
-  )$,
+  )$sql$,
   '22023',
   NULL,
   'Negative amounts are rejected before writes'
