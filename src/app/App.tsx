@@ -135,7 +135,7 @@ export function App({
     }),
     [storage],
   );
-  const { historyRepository, snapshotService, catalogService, expensesService } = appServices;
+  const { historyRepository, snapshotService, catalogService, expensesService, cloudCatalogService, cloudExpensesService, cloudHistoryService } = appServices;
   const [restoredDraft] = useState(() => readCalculatorDraft(storage));
   const [input, setInput] = useState<PricingInput>(() => restoredDraft?.input ?? initial);
   const [currency, setCurrency] = useState<CurrencyCode>(() => restoredDraft?.currency ?? initialCurrency ?? "MXN");
@@ -682,14 +682,14 @@ export function App({
           )}
 
           {view === "expenses" && authMode === "cloud" && businessId
-            ? <CloudExpensesPage businessId={businessId} currency={initialCurrency ?? currency} formatMoney={formatMoney} />
+            ? <CloudExpensesPage businessId={businessId} currency={initialCurrency ?? currency} formatMoney={formatMoney} service={cloudExpensesService} />
             : view === "expenses" && <ExpensesPage service={expensesService} currency={currency} formatMoney={formatMoney} />}
           {view === "catalog" && authMode === "cloud" && businessId
-            ? <CloudCatalogPage businessId={businessId} currency={initialCurrency ?? currency} formatMoney={formatMoney} onUseInCalculator={useCatalogItem} />
+            ? <CloudCatalogPage businessId={businessId} currency={initialCurrency ?? currency} formatMoney={formatMoney} onUseInCalculator={useCatalogItem} service={cloudCatalogService} />
             : view === "catalog" && <CatalogPage service={catalogService} currency={currency} formatMoney={formatMoney} onUseInCalculator={useCatalogItem} />}
 
           {view === "history" && authMode === "cloud" && businessId
-            ? <CloudHistoryPage businessId={businessId} formatMoney={formatMoney} onOpenCalculation={openCalculation} onRecordsLoaded={setHistory} />
+            ? <CloudHistoryPage businessId={businessId} formatMoney={formatMoney} onOpenCalculation={openCalculation} onRecordsLoaded={setHistory} service={cloudHistoryService} />
             : view === "history" && (
             <div className="secondary-page">
               <p className="eyebrow">TU ACTIVIDAD <span> / </span> 02</p>
