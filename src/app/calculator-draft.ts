@@ -22,6 +22,15 @@ export function readCalculatorDraft(storage: KeyValueStorage): CalculatorDraft |
   }
 }
 
+export function readCalculatorDraftWithLegacyFallback(
+  businessStorage: KeyValueStorage,
+  legacyStorage: KeyValueStorage,
+  allowLegacyFallback: boolean,
+): CalculatorDraft | null {
+  return readCalculatorDraft(businessStorage)
+    ?? (allowLegacyFallback ? readCalculatorDraft(legacyStorage) : null);
+}
+
 export function saveCalculatorDraft(
   storage: KeyValueStorage,
   draft: Omit<CalculatorDraft, "version" | "savedAt">,
