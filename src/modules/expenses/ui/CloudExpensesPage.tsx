@@ -130,6 +130,7 @@ export function CloudExpensesPage({ businessId, currency, formatMoney }: {
       <p className="eyebrow">FIXORA ESSENTIALS <span> / </span> 05 · NUBE</p>
       <h1>Controla tus gastos.</h1>
       <p className="page-lead">Separa lo que pagas durante el periodo de lo que cuesta cada unidad. Tus cambios se guardan juntos y con control de concurrencia.</p>
+      <div className="history-actions"><span>Datos del negocio seleccionado</span><button className="outline-button" type="button" disabled={loading || saving} onClick={() => void loadData()}>{loading ? "Actualizando…" : "Actualizar gastos"}</button></div>
       {errorMessage && <p className="error-state" role="alert">{errorMessage}</p>}
       {loading ? <p className="local-storage-note">Cargando gastos del negocio…</p> : (
         <>
