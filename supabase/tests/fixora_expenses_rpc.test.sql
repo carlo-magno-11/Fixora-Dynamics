@@ -3,7 +3,7 @@ BEGIN;
 
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 
-SELECT plan(14);
+SELECT plan(16);
 
 SELECT ok(
   to_regprocedure('public.fixora_save_expenses(uuid,numeric,text,bigint,jsonb,jsonb)') IS NOT NULL,
@@ -103,13 +103,32 @@ SELECT throws_ok(
 );
 
 SELECT throws_ok(
-  $$SELECT public.fixora_save_expenses(
+  $SELECT public.fixora_save_expenses(
     current_setting('app.fixora_test_business_id')::uuid,
     300, 'quarter', 3, '[{"name":"Invalid","amount":-1}]'::jsonb, '[]'::jsonb
-  )$$,
+  )$,
   '22023',
   NULL,
   'Negative amounts are rejected before writes'
+);
+
+SELECT throws_ok(
+  $SELECT public.fixora_save_expenses(
+    current_setting('app.fixora_test_business_id')::uuid,
+    300.5, 'quarter', 3, '[]'::jsonb, '[]'::jsonb
+  )$,
+  '22023',
+  NULL,
+  'Fractional expected unit counts are rejected'
+);
+
+SELECT throws_ok(
+  $UPDATE public.fixora_expense_settings
+    SET expected_units = 1.5, version = version + 1
+    WHERE business_id = current_setting('app.fixora_test_business_id')::uuid$,
+  '22023',
+  NULL,
+  'Direct table updates cannot bypass integer expected unit validation'
 );
 
 RESET ROLE;
