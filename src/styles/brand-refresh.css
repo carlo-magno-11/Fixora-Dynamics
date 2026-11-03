@@ -595,6 +595,6 @@ tr { border-color: var(--line); }
 .sidebar-note-logo { display: block; margin-bottom: 3px; }
 .mobile-nav button > span > svg { display: block; }
 .mobile-more-menu > button { display: flex; align-items: center; gap: 10px; }
-.mobile-menu-icon { display: inline-flex; flex: 0 0 20px; align-items: center; justify-content: center; color: #A9684A; }
+.mobile-menu-icon { display: inline-flex; flex: 0 0 20px; align-items: center; justify-content: center; color: #92583F; }
 .mobile-more-heading button { display: grid; place-items: center; }
 .mobile-more-heading button svg { display: block; }
