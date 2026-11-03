@@ -100,7 +100,7 @@ export function CloudCatalogPage({ businessId, currency, formatMoney, onUseInCal
     try {
       if (editingId) {
         const updated = await service.update(businessId, editingId, draft, items);
-        if (activeBusinessId.current !== businessId) return;
+        if (activeBusinessId.current !== saveBusinessId || saveRequestId.current !== currentSaveRequest) return;
         setItems((current) => current.map((item) => item.id === editingId ? updated : item));
         setMessage("Cambios guardados en el catálogo cloud.");
       } else {
