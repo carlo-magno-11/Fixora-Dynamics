@@ -50,5 +50,7 @@ describe("Supabase expenses repository mapping", () => {
     expect(() => mapExpenseSettings({ ...settings, period: "fortnight" })).toThrow("periodo de gastos no reconocido");
     expect(() => mapExpenseSettings({ ...settings, expected_units: 0 })).toThrow("configuración de gastos");
     expect(() => mapExpenseSettings({ ...settings, version: -1 })).toThrow("configuración de gastos");
+    expect(() => mapExpenseSettings({ ...settings, expected_units: 100.5 })).toThrow("configuración de gastos");
+    expect(() => mapExpenseSettings({ ...settings, expected_units: Number.MAX_SAFE_INTEGER + 1 })).toThrow("configuración de gastos");
   });
 });
