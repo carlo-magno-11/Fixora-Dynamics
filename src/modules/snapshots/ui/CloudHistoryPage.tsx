@@ -56,7 +56,7 @@ export function CloudHistoryPage({ businessId, formatMoney, onOpenCalculation, o
   const [records, setRecords] = useState<SavedCalculation[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [page, setPage] = useState(0);
+  const [cursor, setCursor] = useState<{ createdAt: string; id: string } | null>(null);
   const [hasMore, setHasMore] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [invalidCount, setInvalidCount] = useState(0);
@@ -66,7 +66,7 @@ export function CloudHistoryPage({ businessId, formatMoney, onOpenCalculation, o
     async function load() {
       setLoading(true);
       setLoadingMore(false);
-      setPage(0);
+      setCursor(null);
       setHasMore(false);
       setRecords([]);
       setInvalidCount(0);
@@ -81,19 +81,21 @@ export function CloudHistoryPage({ businessId, formatMoney, onOpenCalculation, o
         .eq("business_id", businessId)
         .order("created_at", { ascending: false })
         .order("id", { ascending: false })
-        .range(0, PAGE_SIZE - 1);
+        .limit(PAGE_SIZE);
       if (!active) return;
       setLoading(false);
       if (error) {
         setErrorMessage("No fue posible cargar el historial de este negocio. Inténtalo de nuevo.");
         return;
       }
-      const mapped = (data ?? []).map(mapSnapshotRow);
+      const rows = (data ?? []) as SnapshotRow[];
+      const mapped = rows.map(mapSnapshotRow);
       const valid = mapped.filter((record): record is SavedCalculation => record !== null);
+      const last = rows.at(-1);
       setRecords(valid);
       setInvalidCount(mapped.length - valid.length);
-      setHasMore(mapped.length === PAGE_SIZE);
-      setPage(1);
+      setHasMore(rows.length === PAGE_SIZE);
+      setCursor(last ? { createdAt: last.created_at, id: last.id } : null);
       setErrorMessage("");
       onRecordsLoaded(valid);
     }
@@ -102,31 +104,33 @@ export function CloudHistoryPage({ businessId, formatMoney, onOpenCalculation, o
   }, [businessId, supabase, onRecordsLoaded]);
 
   const loadMore = useCallback(async () => {
-    if (!supabase || loadingMore || loading || !hasMore) return;
+    if (!supabase || !cursor || loadingMore || loading || !hasMore) return;
     setLoadingMore(true);
     setErrorMessage("");
-    const from = page * PAGE_SIZE;
     const { data, error } = await supabase
       .from("fixora_calculation_snapshots")
       .select("id, business_id, created_by, created_at, name, currency_code, schema_version, formula_version, pricing_input, pricing_result, catalog_item_snapshot")
       .eq("business_id", businessId)
+      .or(`created_at.lt.${cursor.createdAt},and(created_at.eq.${cursor.createdAt},id.lt.${cursor.id})`)
       .order("created_at", { ascending: false })
       .order("id", { ascending: false })
-      .range(from, from + PAGE_SIZE - 1);
+      .limit(PAGE_SIZE);
     setLoadingMore(false);
     if (error) {
       setErrorMessage("No fue posible cargar más registros. Puedes volver a intentarlo.");
       return;
     }
-    const mapped = (data ?? []).map(mapSnapshotRow);
+    const rows = (data ?? []) as SnapshotRow[];
+    const mapped = rows.map(mapSnapshotRow);
     const valid = mapped.filter((record): record is SavedCalculation => record !== null);
     const combined = [...records, ...valid];
+    const last = rows.at(-1);
     setRecords(combined);
     setInvalidCount((count) => count + mapped.length - valid.length);
-    setHasMore(mapped.length === PAGE_SIZE);
-    setPage((current) => current + 1);
+    setHasMore(rows.length === PAGE_SIZE);
+    setCursor(last ? { createdAt: last.created_at, id: last.id } : null);
     onRecordsLoaded(combined);
-  }, [businessId, hasMore, loading, loadingMore, onRecordsLoaded, page, records, supabase]);
+  }, [businessId, cursor, hasMore, loading, loadingMore, onRecordsLoaded, records, supabase]);
 
   return (
     <div className="secondary-page">
