@@ -17,9 +17,10 @@ MXN y USD son monedas distintas. Cambiar la etiqueta no convierte importes. La a
 4. Introduce minutos de trabajo y coste por hora.
 5. Si aplica, registra merma como porcentaje.
 6. Introduce la asignación de gastos fijos por unidad, calculada aparte.
-7. Añade comisiones, descuentos y margen objetivo.
-8. Revisa coste total, precio sugerido, ganancia estimada, margen y recargo.
-9. Guarda el cálculo para conservar su instantánea.
+7. Añade comisiones y descuentos como porcentajes y define el margen objetivo.
+8. Selecciona la base de comisión según las reglas reales de tu canal: precio original o precio con descuento. No adivines ni uses una tarifa genérica.
+9. Revisa coste total, precio sugerido, ganancia estimada, margen y recargo.
+10. Guarda el cálculo para conservar su instantánea.
 
 Mano de obra:
 \[
@@ -28,7 +29,13 @@ Mano de obra:
 \]
 Ejemplo: 30 minutos × $120/h = $60 por unidad.
 
-Margen = ganancia ÷ ingreso. Recargo = ganancia ÷ coste. Si el coste es $100 y el precio $150, la ganancia antes de otros conceptos es $50; margen 33.33%, recargo 50%.
+La comisión puede calcularse sobre el precio ya descontado o sobre el precio original; elige la base que use tu canal.
+- Base descontada: ingreso neto = precio × (1 − descuento) × (1 − comisión).
+- Base original: ingreso neto = precio × (1 − descuento) − precio × comisión.
+
+Ejemplo: precio $200, descuento 10% y comisión 10%. Con base descontada, el ingreso neto es $162 (descuento $20 y comisión $18). Con base original, el ingreso neto es $160 (descuento $20 y comisión $20).
+
+Margen = ganancia ÷ ingreso neto después de comisión. Recargo = ganancia ÷ coste. Si el coste es $100 y el precio $150, sin descuento ni comisión la ganancia es $50; margen 33.33%, recargo 50%. La exportación CSV registra la base elegida.
 
 ## 4. Control de gastos
 Registra gastos fijos con periodo, costes variables por unidad y unidades estimadas. No agregues el mismo gasto dos veces.
@@ -55,7 +62,7 @@ Guarda cálculos con nombres claros. Al abrirlos, revisa los valores antes de re
 Elegir un perfil orienta la experiencia, pero no compra ni desbloquea un kit. Cada kit requiere licencia y entitlement específicos.
 
 ## 9. Limitaciones
-La ayuda actual indica que los datos locales se guardan en el navegador; la sincronización cloud tiene condiciones distintas. No limpies los datos del sitio si necesitas conservarlos. No hay conversión automática de moneda ni periodos. No se incluyen automáticamente impuestos, envíos, financiación ni obligaciones fiscales.
+La ayuda actual indica que los datos locales se guardan en el navegador; la sincronización cloud tiene condiciones distintas. No limpies los datos del sitio si necesitas conservarlos. No hay conversión automática de moneda ni periodos. El primer cálculo comercial no modela por separado impuestos, envío cobrado al cliente ni comisiones sobre envío/impuestos. Las tarifas fijas por pedido deben asignarse manualmente por unidad; no se precargan tarifas de Etsy ni de otras plataformas.
 
 ## 10. FAQ
 **¿Cambiar MXN a USD convierte cantidades?** No; ajusta manualmente los importes.
