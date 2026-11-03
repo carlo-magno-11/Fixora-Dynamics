@@ -3,7 +3,7 @@ BEGIN;
 
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 
-SELECT plan(18);
+SELECT plan(20);
 
 SELECT ok(
   to_regprocedure('public.fixora_save_expenses(uuid,numeric,text,bigint,jsonb,jsonb)') IS NOT NULL,
@@ -43,6 +43,27 @@ SELECT ok(
       AND NOT tgisinternal
   ),
   'Expected unit settings are validated on direct writes'
+);
+
+SELECT is(
+  (
+    SELECT pg_catalog.format_type(atttypid, atttypmod)
+    FROM pg_catalog.pg_attribute
+    WHERE attrelid = 'public.fixora_expense_settings'::regclass
+      AND attname = 'expected_units'
+      AND NOT attisdropped
+  ),
+  'numeric',
+  'Expected units preserve exact numeric input before validation'
+);
+
+SELECT ok(
+  (
+    SELECT NOT prosecdef AND proconfig @> ARRAY['search_path=""']
+    FROM pg_catalog.pg_proc
+    WHERE oid = 'fixora_private.validate_expense_settings()'::regprocedure
+  ),
+  'The validation trigger is invoker-safe with an empty search_path'
 );
 
 INSERT INTO auth.users (id, email, raw_user_meta_data)
