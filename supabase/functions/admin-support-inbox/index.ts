@@ -27,7 +27,7 @@ export default {
 
     let query = ctx.supabaseAdmin
       .from("fixora_support_tickets")
-      .select("id, created_by, subject, category, priority, status, created_at, updated_at")
+      .select("id, subject, category, priority, status, created_at, updated_at")
       .order("updated_at", { ascending: false })
       .limit(50);
 
@@ -38,7 +38,6 @@ export default {
 
     const tickets = (data ?? []).map((ticket) => ({
       id: ticket.id,
-      createdBy: ticket.created_by,
       subject: ticket.subject,
       category: ticket.category,
       priority: ticket.priority,
