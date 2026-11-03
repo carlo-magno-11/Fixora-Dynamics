@@ -16,6 +16,9 @@ const movement = (
   occurredAt: "2026-11-03T10:00:00.000Z",
   kind,
   quantity,
+  ...(["write_off", "adjustment_in", "adjustment_out", "return_disposed"].includes(kind)
+    ? { reason: `Motivo ${kind}` }
+    : {}),
 });
 
 describe("calculateRetailInventoryBalance", () => {
@@ -111,6 +114,15 @@ describe("calculateRetailInventoryBalance", () => {
     expect(() => calculateRetailInventoryBalance("SKU-001", [
       { ...movement("receipt", 1, "purchase_receipt", 1), occurredAt: "not-a-date" },
     ])).toThrow("La fecha del movimiento no es válida.");
+  });
+
+  it("requires an audit reason for manual adjustments and disposal", () => {
+    for (const kind of ["write_off", "adjustment_in", "adjustment_out", "return_disposed"] as const) {
+      expect(() => calculateRetailInventoryBalance("SKU-001", [{
+        ...movement("manual", 1, kind, 1),
+        reason: "   ",
+      }])).toThrow("Este movimiento requiere un motivo para la auditoría.");
+    }
   });
 
   it("rejects unknown movement kinds", () => {
