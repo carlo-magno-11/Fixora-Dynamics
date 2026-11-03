@@ -18,6 +18,7 @@ La aplicación ya tiene rutas cloud para los datos operativos principales. La au
 - Catálogo, gastos e historial ahora pasan por repositorios Supabase tipados y servicios de aplicación. Los componentes UI reciben contratos de aplicación; la composición de dependencias se concentra en `src/app/create-app-services.ts`. Las pruebas de arquitectura impiden que UI importe infraestructura directamente.
 - Los repositorios tienen pruebas unitarias de mapeo/validación y los servicios cloud tienen pruebas de delegación y reglas de dominio. El CI #1353 confirmó 195 pruebas Vitest, TypeScript y build web.
 - La UI oculta datos anteriores al cambiar de negocio, ignora respuestas asíncronas obsoletas y bloquea escrituras si no pudo cargar la colección actual. En catálogo, gastos e historial un error de lectura ya no se presenta como una colección vacía lista para editar.
+- La cantidad estimada de unidades ahora se valida como entero positivo seguro tanto en el dominio como en PostgreSQL; la migración bloquea datos heredados fraccionarios o fuera de rango en vez de redondearlos.
 - No hay evidencia de E2E en staging con dos cuentas, dos negocios y dos dispositivos.
 
 **Conclusión:** catálogo, gastos, snapshots/historial y borradores tienen caminos cloud implementados con repositorios/servicios tipados y respaldo de tablas/RLS/RPC. El borrador ya tiene persistencia cloud privada, pero aún falta validar conflictos reales entre dispositivos, migración/importación de datos históricos y E2E operativas. No se debe anunciar sincronización integral ni hacer dual-write silencioso o borrar datos locales durante la transición.
@@ -108,6 +109,7 @@ No forzar una conversión de todos los contratos locales a Promise si no aporta 
 - Repositorio Supabase y servicio de aplicación conectados a `fixora_save_expenses`.
 - Mapeo de configuración valida periodo, unidades y versión segura.
 - La UI permite recargar y conserva el control optimista de concurrencia.
+- El número de unidades estimadas debe ser entero positivo seguro; la migración añade constraint validada y trigger para impedir que escrituras directas o el RPC almacenen valores que la aplicación no pueda leer.
 - Pendiente: pruebas de RPC para IDs cruzados, duplicados, límites, importes inválidos, rollback y dos escritores simultáneos.
 
 ### G3 — snapshots/historial cloud
