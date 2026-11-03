@@ -16,6 +16,8 @@ FROM fixora_private.fixora_products AS product
 WHERE product.product_sku = license.product_sku;
 
 ALTER TABLE fixora_private.fixora_licenses
+  ADD CONSTRAINT fixora_license_term_months_range_check
+    CHECK (term_months IS NULL OR term_months BETWEEN 1 AND 60),
   ADD CONSTRAINT fixora_license_term_days_range_check
     CHECK (term_days IS NULL OR term_days BETWEEN 1 AND 3650),
   ADD CONSTRAINT fixora_license_exactly_one_term_check
