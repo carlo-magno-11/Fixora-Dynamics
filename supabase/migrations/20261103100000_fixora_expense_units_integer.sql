@@ -1,3 +1,30 @@
+do $
+begin
+  if exists (
+    select 1
+    from public.fixora_expense_settings
+    where expected_units::text in ('NaN', 'Infinity', '-Infinity')
+      or expected_units <> pg_catalog.trunc(expected_units)
+      or expected_units > 9007199254740991
+  ) then
+    raise exception 'Existing expense settings contain non-integer or unsafe expected units; review them before applying this migration'
+      using errcode = '23514';
+  end if;
+end;
+$;
+
+alter table public.fixora_expense_settings
+  add constraint fixora_expense_settings_expected_units_safe_integer_check
+  check (
+    expected_units > 0
+    and expected_units::text not in ('NaN', 'Infinity', '-Infinity')
+    and expected_units = pg_catalog.trunc(expected_units)
+    and expected_units <= 9007199254740991
+  ) not valid;
+
+alter table public.fixora_expense_settings
+  validate constraint fixora_expense_settings_expected_units_safe_integer_check;
+
 create or replace function fixora_private.validate_expense_settings()
 returns trigger
 language plpgsql
@@ -6,6 +33,7 @@ as $$
 begin
   if new.expected_units is null
     or new.expected_units <= 0
+    or new.expected_units::text in ('NaN', 'Infinity', '-Infinity')
     or new.expected_units <> pg_catalog.trunc(new.expected_units)
     or new.expected_units > 9007199254740991
   then
