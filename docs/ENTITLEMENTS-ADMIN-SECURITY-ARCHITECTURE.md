@@ -28,9 +28,9 @@ No incorporar un segundo servidor de licencias al MVP. El repositorio ya usa Sup
 
 Proyectos estudiados:
 
-- **Keygate**: servidor open source de licencias con activaciones por dispositivo/usuario, límites atómicos, idempotencia, auditoría y pagos Stripe. Su repositorio declara licencia **AGPL-3.0**. Es una referencia de diseño, no una dependencia recomendada: alojarlo o modificarlo como parte del servicio puede tener consecuencias de cumplimiento AGPL que deben revisarse jurídicamente. No copiar ni integrar código sin revisión de licencia, dependencias y seguridad.
-- **Lago**: sistema open source de billing y entitlements orientado a operaciones más complejas; sobredimensionado para el primer lanzamiento de Fixora.
-- **OpenFGA**: motor de autorización de grano fino inspirado en Zanzibar; potente, pero innecesario para los roles/permisos actuales si Postgres/RLS y las funciones de servidor están bien probadas.
+- **Keygate**: servidor open source de licencias con activaciones por dispositivo/usuario, límites atómicos, idempotencia, auditoría y pagos Stripe. Al consultar GitHub el 3-11-2026 tenía 207 estrellas, repositorio creado en marzo de 2026 y licencia **AGPL-3.0**. Por su juventud y tamaño de comunidad no lo pondría a cargo de licencias críticas; sirve como lista de casos límite. Alojarlo/modificarlo también puede tener consecuencias de cumplimiento AGPL. No copiar ni integrar código sin revisión jurídica y técnica.
+- **Lago**: plataforma madura de metering/billing con aproximadamente 10.7k estrellas y licencia **AGPL-3.0** al consultar GitHub el 3-11-2026. Está orientada a facturación por consumo, orquestación de pagos y analítica de ingresos; sobredimensionada y con coste operativo/licencia que no aporta valor suficiente al MVP.
+- **OpenFGA**: motor de autorización de grano fino inspirado en Zanzibar, aproximadamente 6.1k estrellas y licencia **Apache-2.0** al consultar GitHub el 3-11-2026. Es una opción sólida si Fixora evoluciona a permisos complejos entre organizaciones/recursos, pero innecesaria para los roles/permisos actuales si Postgres/RLS y las funciones de servidor están bien probadas.
 - **Supabase RBAC + RLS**: patrón más coherente con la arquitectura existente. Mantener roles administrativos separados de los derechos de compra de un cliente.
 
 No copiar código de proyectos externos. Reutilizar ideas y contratos, respetando licencias y atribución si en el futuro se incorpora código.
@@ -73,7 +73,7 @@ Una operación de módulo solo se permite cuando se cumplen todos los puntos:
 
 Para cada función de módulo: prueba de usuario anónimo, usuario autenticado sin compra, comprador de General sin kit, comprador del kit equivocado, kit vencido, derecho suspendido, negocio de otro usuario y administrador sin permiso comercial. La prueba debe llamar directamente a Edge Function/RPC/API, no solo verificar botones.
 
-El frontend recibe la lista de available_entitlements de fixora_get_license_access() para mostrar navegación, pero esa lista es solo UX. No interpretar kits.access como permiso universal para ejecutar todos los kits: exigir una clave específica, por ejemplo kit.retail, kit.services_beauty, kit.food, kit.workshop o kit.digital_products. El servidor vuelve a comprobar la autorización en cada operación y no acepta moduleEnabled=true del cliente.
+El frontend recibe la lista de available_entitlements de fixora_get_license_access() para mostrar navegación, pero esa lista es solo UX. El SKU General actualmente incluye kits.access; mientras no exista autorización por kit, esa clave solo puede representar descubrimiento/listado de kits y nunca ejecución. No interpretar kits.access como permiso universal para ejecutar todos los kits: exigir una clave específica, por ejemplo kit.retail, kit.services_beauty, kit.food, kit.workshop o kit.digital_products. El servidor vuelve a comprobar la autorización en cada operación y no acepta moduleEnabled=true del cliente.
 
 ## 6. Compra y concesión segura
 
@@ -165,6 +165,8 @@ Fase D — validación:
 - Keygate docs: https://keygate.app/docs
 - Keygate LICENSE (AGPL-3.0): https://github.com/tabloy/keygate/blob/main/LICENSE
 - Lago entitlements: https://getlago.com/platform/entitlements
-- OpenFGA: https://github.com/openfga/openfga
+- OpenFGA: https://github.com/openfga/openfga (Apache-2.0)
+- Lago: https://github.com/getlago/lago (AGPL-3.0)
+- GitHub metadata consultada para estrellas/licencias: https://api.github.com/repos/tabloy/keygate, https://api.github.com/repos/getlago/lago, https://api.github.com/repos/openfga/openfga
 - Apache Casbin: https://casbin.apache.org/
 - Estudio de precios de software mexicano: https://www.mexsaas.com/blog/cuanto-cuesta-un-software-para-pymes
