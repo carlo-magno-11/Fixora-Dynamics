@@ -658,3 +658,5 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
   .mobile-more-menu { grid-template-columns: 1fr; }
   .mobile-more-heading { grid-column: 1; }
 }
+
+.draft-status { margin: -7px 0 13px; color: #748078; font-size: 10px; line-height: 1.55; }
