@@ -660,3 +660,18 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
 }
 
 .draft-status { margin: -7px 0 13px; color: #748078; font-size: 10px; line-height: 1.55; }
+
+
+.admin-support-inbox { display: grid; gap: 8px; margin: 4px 0 12px; }
+.admin-support-ticket { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 13px; border: 1px solid var(--line); border-radius: 6px; background: #fffefa; }
+.admin-support-ticket > div { display: grid; min-width: 0; gap: 5px; }
+.admin-support-ticket strong { color: var(--ink); font-size: 11px; overflow-wrap: anywhere; }
+.admin-support-ticket small { color: var(--muted); font-size: 9px; line-height: 1.5; overflow-wrap: anywhere; }
+.admin-support-ticket code { font-size: 9px; overflow-wrap: anywhere; }
+.admin-support-filter { display: grid; flex: 0 0 160px; gap: 5px; color: var(--ink); font-size: 10px; font-weight: 700; }
+.admin-support-filter select { width: 100%; min-height: 38px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; background: white; color: var(--ink); font: inherit; font-size: 10px; }
+@media (max-width: 520px) {
+  .admin-support-ticket { align-items: flex-start; flex-direction: column; }
+  .admin-support-ticket button { width: 100%; }
+  .admin-support-filter { width: 100%; max-width: none; flex-basis: auto; }
+}
