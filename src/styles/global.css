@@ -563,3 +563,15 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
 .admin-operation-panel .admin-confirm-check { display: flex; align-items: flex-start; gap: 9px; color: var(--muted); font-size: 10px; font-weight: 500; line-height: 1.6; }
 .admin-operation-panel .admin-confirm-check input { width: 16px; min-width: 16px; min-height: 16px; margin: 1px 0 0; padding: 0; accent-color: #8b7955; }
 .support-ticket-reference { display: block; margin-top: 4px; color: var(--muted); font-size: 9px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; overflow-wrap: anywhere; }
+
+
+.admin-support-inbox { display: grid; gap: 8px; margin: 4px 0 12px; }
+.admin-support-ticket { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 13px; border: 1px solid var(--line); border-radius: 6px; background: #fffefa; }
+.admin-support-ticket > div { display: grid; min-width: 0; gap: 5px; }
+.admin-support-ticket strong { color: var(--ink); font-size: 11px; overflow-wrap: anywhere; }
+.admin-support-ticket small { color: var(--muted); font-size: 9px; line-height: 1.5; overflow-wrap: anywhere; }
+.admin-support-ticket code { font-size: 9px; overflow-wrap: anywhere; }
+@media (max-width: 520px) {
+  .admin-support-ticket { align-items: flex-start; flex-direction: column; }
+  .admin-support-ticket button { width: 100%; }
+}
