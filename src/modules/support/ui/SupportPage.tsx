@@ -22,7 +22,7 @@ export function SupportPage({ businessId }: { businessId?: string }) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [subject, setSubject] = useState("");
-  const [category, setCategory] = useState("question");
+  const [category, setCategory] = useState("technical");
   const [initialBody, setInitialBody] = useState("");
   const [reply, setReply] = useState("");
   const [loading, setLoading] = useState(true);
