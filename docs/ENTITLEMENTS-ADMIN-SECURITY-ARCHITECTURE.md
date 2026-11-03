@@ -19,7 +19,7 @@ Limitaciones observadas:
 
 - La activación de licencias está deshabilitada por defecto con VITE_FIXORA_LICENSE_ACTIVATION_ENABLED; no debe activarse hasta tener secretos y Edge Functions desplegados y probados.
 - La verificación Etsy actual acepta un único SKU de General; no reconoce SKUs de kits, paquetes ni derechos múltiples.
-- La rama de seguridad y la rama de gastos están divergidas; no integrar esta propuesta hasta reconciliar PR #8 con la base de trabajo de PR #2/#9/#10.
+- La línea de seguridad de PR #8 fue integrada en `integration/fixora-mainline-20261103` el 3-11-2026. Su código y pruebas forman parte de la rama central; las migraciones y Edge Functions todavía no se han desplegado en Supabase remoto.
 - La UI de administración no es un límite de seguridad. Toda acción sensible debe volver a verificar identidad, AAL2, estado y permiso en servidor.
 
 ## 2. Decisión de arquitectura: reutilizar y ampliar, no copiar un SaaS de licencias
@@ -118,7 +118,7 @@ Controles obligatorios:
 
 Fase A — lectura y reconciliación:
 1. Inspeccionar todas las migraciones y RPC actuales de compras, licencias, dispositivos, negocios y roles.
-2. Comparar PR #8 con PR #2 y la rama de gastos; resolver divergencia sin reset/force-push ni sobrescribir el trabajo concurrente.
+2. Revisar la integración ya realizada de PR #8 en la rama central; mantener el historial y no usar reset/force-push ni sobrescribir el trabajo concurrente.
 3. Crear matriz SKU → entitlements exactos → vigencia desde primera activación → límite de dispositivos → pruebas.
 4. Mantener el máximo confirmado de tres dispositivos activos por licencia. No implementar una cuota global por usuario/cuenta ni contar dispositivos entre licencias sin una nueva decisión comercial explícita.
 
