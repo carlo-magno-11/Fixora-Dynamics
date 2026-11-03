@@ -17,7 +17,7 @@ Estado: propuesta para decisión de producto; no implementada. Fecha: 2026-11-03
 - La licencia pertenece al usuario comprador.
 - Acceso válido para ese usuario en sus espacios de trabajo.
 - Miembros invitados no heredan la licencia.
-- Cuota de dispositivos global por cuenta, no por cada licencia.
+- Cuota de tres dispositivos activos por licencia, conforme al requisito comercial ya establecido para Fixora.
 - Menor cambio estructural, pero el negocio no compra un derecho compartido para su equipo.
 
 ### B. Licencia por negocio (modelo más coherente para equipos)
@@ -36,7 +36,7 @@ Estado: propuesta para decisión de producto; no implementada. Fecha: 2026-11-03
 
 No habilitar colaboración comercial todavía. Mantener licencia por usuario comprador y acceso individual; no propagar derechos a business_memberships. Para evitar que las compras adicionales multipliquen dispositivos, definir un máximo de tres instalaciones activas globales por usuario entre todas sus licencias, contando instalaciones distintas con hash HMAC.
 
-La cuota global debe aplicarse dentro de una transacción serializada por user_id (por ejemplo, advisory lock transaccional o fila de cuota bloqueada), con índice único que impida duplicados y prueba de 10 activaciones simultáneas. No confiar en conteos hechos solo por TypeScript.
+El límite por licencia debe aplicarse dentro de la transacción que bloquea la fila de licencia, con índice único para evitar dispositivos duplicados y pruebas concurrentes que demuestren que nunca se superan tres dispositivos activos en una licencia. No confiar en conteos hechos solo por TypeScript.
 
 Si la investigación comercial confirma que un negocio necesita compartir Fixora con colaboradores, diseñar ADR nuevo para licencias por negocio antes de vender ese plan. No cambiar el modelo a mitad de una licencia activa.
 
@@ -52,8 +52,8 @@ Si la investigación comercial confirma que un negocio necesita compartir Fixora
 ## Decisiones pendientes de confirmación
 
 1. ¿Licencia individual o por negocio? Recomendación inicial: individual.
-2. ¿Tres dispositivos globales por usuario o por licencia? Recomendación: globales por usuario.
+2. ¿Tres dispositivos globales por usuario o por licencia? **Decisión confirmada: máximo tres dispositivos activos por licencia.**
 3. ¿Los miembros invitados tendrán acceso en una fase futura? Recomendación: no en MVP.
 4. ¿Se permitirá transferir una licencia a otra cuenta/negocio? Recomendación: soporte manual auditado, no self-service en MVP.
 
-No ejecutar migraciones hasta aprobar estas decisiones.
+La regla de dispositivos queda fijada en tres por licencia. Las decisiones sobre licencia individual frente a licencia por negocio, herencia a miembros y transferencias siguen pendientes. No ejecutar migraciones hasta resolver las decisiones que afecten el esquema.
