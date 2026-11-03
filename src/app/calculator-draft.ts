@@ -65,8 +65,22 @@ export function readCalculatorDraft(storage: KeyValueStorage): CalculatorDraft |
       savedAt: value.savedAt,
       name: value.name.slice(0, 80),
       currency: value.currency,
-      input: Object.fromEntries(pricingFields.map((field) => [field, input[field]])) as PricingInput,
-      breakEvenInput: Object.fromEntries(breakEvenFields.map((field) => [field, breakEvenInput[field]])) as BreakEvenInput,
+      input: {
+        materials: input.materials,
+        laborMinutes: input.laborMinutes,
+        hourlyRate: input.hourlyRate,
+        directExpenses: input.directExpenses,
+        wasteRate: input.wasteRate,
+        fixedExpensesPerUnit: input.fixedExpensesPerUnit,
+        variableFeeRate: input.variableFeeRate,
+        targetMarginRate: input.targetMarginRate,
+        discountRate: input.discountRate,
+      },
+      breakEvenInput: {
+        fixedCosts: breakEvenInput.fixedCosts,
+        sellingPrice: breakEvenInput.sellingPrice,
+        variableCostPerUnit: breakEvenInput.variableCostPerUnit,
+      },
       ...(value.selectedCatalogItem ? { selectedCatalogItem: value.selectedCatalogItem } : {}),
     };
   } catch {
