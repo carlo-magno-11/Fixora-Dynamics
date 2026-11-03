@@ -21,6 +21,9 @@ export function CloudExpensesPage({ businessId, currency, formatMoney, service }
 }) {
   const requestId = useRef(0);
   const previousBusinessId = useRef(businessId);
+  const activeBusinessId = useRef(businessId);
+  activeBusinessId.current = businessId;
+  const saveRequestId = useRef(0);
   const [loadedBusinessId, setLoadedBusinessId] = useState<string | null>(null);
   const [fixed, setFixed] = useState<FixedExpense[]>([]);
   const [variable, setVariable] = useState<VariableExpense[]>([]);
@@ -34,6 +37,8 @@ export function CloudExpensesPage({ businessId, currency, formatMoney, service }
 
   const loadData = useCallback(async () => {
     const currentRequest = ++requestId.current;
+    saveRequestId.current += 1;
+    setSaving(false);
     if (previousBusinessId.current !== businessId) {
       previousBusinessId.current = businessId;
       setFixed([]);
@@ -115,6 +120,8 @@ export function CloudExpensesPage({ businessId, currency, formatMoney, service }
 
   async function saveExpenses() {
     if (loadedBusinessId !== businessId || loading || !summary.result) return;
+    const currentSaveRequest = ++saveRequestId.current;
+    const saveBusinessId = businessId;
     setSaving(true);
     setMessage("");
     setErrorMessage("");
@@ -126,17 +133,19 @@ export function CloudExpensesPage({ businessId, currency, formatMoney, service }
         period,
         expectedVersion: version,
       });
+      if (activeBusinessId.current !== saveBusinessId || saveRequestId.current !== currentSaveRequest) return;
       setMessage("Gastos y asignación guardados en Supabase. Los cambios se aplicaron como una sola operación.");
       const refreshed = await loadData();
-      if (!refreshed) {
+      if (!refreshed && activeBusinessId.current === saveBusinessId) {
         setMessage("Los cambios se guardaron, pero no pudimos actualizar la vista. Pulsa Actualizar para volver a consultar.");
       }
     } catch (error) {
+      if (activeBusinessId.current !== saveBusinessId || saveRequestId.current !== currentSaveRequest) return;
       const message = error instanceof Error ? error.message : "No fue posible guardar los gastos.";
       if (message.startsWith("Otro integrante actualizó")) await loadData();
-      setErrorMessage(message);
+      if (activeBusinessId.current === saveBusinessId) setErrorMessage(message);
     } finally {
-      setSaving(false);
+      if (activeBusinessId.current === saveBusinessId && saveRequestId.current === currentSaveRequest) setSaving(false);
     }
   }
 
