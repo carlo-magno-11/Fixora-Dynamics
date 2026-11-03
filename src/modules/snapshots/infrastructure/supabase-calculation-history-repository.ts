@@ -1,9 +1,9 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { CatalogItemSnapshot } from "../domain/calculation-snapshot";
+import type { CatalogItemSnapshot, PricingSnapshot } from "../domain/calculation-snapshot";
 import type { SavedCalculation } from "../domain/saved-calculation";
 import { isSavedCalculation } from "../domain/saved-calculation";
 import type { PricingInput, PricingResult } from "../../pricing/domain/pricing";
-import type { Database } from "../../../shared/infrastructure/supabase/database.types";
+import type { Database, Json } from "../../../shared/infrastructure/supabase/database.types";
 
 type SnapshotRow = Database["public"]["Tables"]["fixora_calculation_snapshots"]["Row"];
 
@@ -35,6 +35,7 @@ export function mapSnapshotRow(row: SnapshotRow): SavedCalculation | null {
 export type CalculationHistoryRepository = {
   firstPage(businessId: string, pageSize?: number): Promise<SnapshotPage>;
   nextPage(businessId: string, cursor: SnapshotCursor, pageSize?: number): Promise<SnapshotPage>;
+  saveSnapshot(businessId: string, snapshot: PricingSnapshot): Promise<SavedCalculation>;
 };
 
 function mapPage(rows: readonly SnapshotRow[], pageSize: number): SnapshotPage {
@@ -63,7 +64,7 @@ export function createSupabaseCalculationHistoryRepository(
     const unavailable = async (): Promise<never> => {
       throw new Error("La conexión cloud no está disponible. Vuelve a iniciar sesión e inténtalo de nuevo.");
     };
-    return { firstPage: unavailable, nextPage: unavailable };
+    return { firstPage: unavailable, nextPage: unavailable, saveSnapshot: unavailable };
   }
 
   return {
@@ -90,6 +91,31 @@ export function createSupabaseCalculationHistoryRepository(
         .limit(pageSize);
       if (error) throwHistoryError(error);
       return mapPage((data ?? []) as SnapshotRow[], pageSize);
+    },
+
+    async saveSnapshot(businessId, snapshot) {
+      const { data, error } = await client
+        .from("fixora_calculation_snapshots")
+        .insert({
+          id: snapshot.id,
+          business_id: businessId,
+          created_at: snapshot.createdAt,
+          name: snapshot.name,
+          currency_code: snapshot.currency,
+          schema_version: snapshot.schemaVersion,
+          formula_version: snapshot.formulaVersion,
+          pricing_input: JSON.parse(JSON.stringify(snapshot.pricingInput)) as Json,
+          pricing_result: JSON.parse(JSON.stringify(snapshot.pricingResult)) as Json,
+          catalog_item_snapshot: snapshot.catalogItem
+            ? JSON.parse(JSON.stringify(snapshot.catalogItem)) as Json
+            : null,
+        })
+        .select("id, business_id, created_by, created_at, name, currency_code, schema_version, formula_version, pricing_input, pricing_result, catalog_item_snapshot")
+        .single();
+      if (error) throwHistoryError(error);
+      const record = mapSnapshotRow(data as SnapshotRow);
+      if (!record) throw new Error("El cálculo se guardó, pero la respuesta no pasó la validación del historial.");
+      return record;
     },
   };
 }
