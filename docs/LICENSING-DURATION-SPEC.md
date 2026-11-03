@@ -34,14 +34,14 @@ Para días, usar suma UTC exacta en milisegundos: activationInstant + days × 86
 
 Para meses, conservar el algoritmo anual existente que clampa el día al último día válido del mes destino. No usar una suma fija de 365 días.
 
-La función de política debe recibir el plazo del producto desde una fuente confiable; no deducirlo del SKU o de una variable del cliente.
+La función de política debe recibir el plazo guardado en el snapshot confiable de la licencia; no deducirlo del SKU ni de una variable del cliente. Cambiar el catálogo después de emitir una licencia no debe alterar lo comprado.
 
 ## SQL transaccional
 
 En la activación:
 1. Bloquear la licencia y el pedido.
 2. Comprobar compra aprobada, sin reembolso/disputa y producto activo.
-3. Si la licencia está pending, leer duración del producto y calcular expires_at en PostgreSQL.
+3. Al emitir la licencia, copiar term_days/term_months del producto a un snapshot inmutable en fixora_licenses. Al activarla por primera vez, calcular expires_at desde ese snapshot en PostgreSQL.
 4. Persistir activated_at y expires_at una sola vez.
 5. Activar entitlements con starts_at=activated_at y ends_at=expires_at salvo retención.
 6. Registrar evento de activación.
