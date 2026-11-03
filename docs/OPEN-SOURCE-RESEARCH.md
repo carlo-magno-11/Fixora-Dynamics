@@ -114,3 +114,26 @@ Se amplió la revisión con repositorios públicos de más de 1,000 estrellas. L
 - [React Hook Form](https://github.com/react-hook-form/react-hook-form), [Zod](https://github.com/colinhacks/zod), [PapaParse](https://github.com/mholt/PapaParse).
 - [React PDF](https://github.com/diegomura/react-pdf), [pdfme](https://github.com/pdfme/pdfme), [TanStack Query](https://github.com/TanStack/query).
 - Star snapshots corroborated against GitHub repository pages and public repository indexes on 2 November 2026; values are rounded and can change.
+
+
+## Referencias de producto financiero y facturación (2 de noviembre de 2026)
+
+Además de librerías, se revisaron aplicaciones completas con más de 1,000 estrellas para estudiar flujos reales de pequeños negocios. Se consideran referencias de producto/UX, no dependencias a integrar.
+
+| Proyecto | Estrellas aprox. | Licencia | Qué estudiar | Restricción/decisión |
+|---|---:|---|---|---|
+| [Firefly III](https://github.com/firefly-iii/firefly-iii) | 25.1k | AGPL-3.0 | Categorías, presupuestos, transacciones, cash flow, etiquetas y privacidad de finanzas personales. | Inspiración de flujos únicamente; no copiar código AGPL ni convertir Fixora en una app de finanzas personales. |
+| [Akaunting](https://github.com/akaunting/akaunting) | 10.3k | BSL 1.1 / Business Source License | Modularidad, gastos, facturación, panel de negocio y extensiones. | Su README declara BSL; no tratarlo como MIT ni copiar código sin revisión de grant/fecha de cambio de licencia. |
+| [Invoice Ninja](https://github.com/invoiceninja/invoiceninja) | 10.4k | Elastic License 2.0 | Flujo de presupuestos, facturas, pagos, proyectos y seguimiento de tiempo. | Source-available con restricciones para ofrecer servicios alojados; usar como benchmark funcional, no reutilizar código sin análisis legal. |
+| [Invoify](https://github.com/al1abb/invoify) | 6.4k | MIT | Constructor de facturas TypeScript, vista previa, plantillas y exportación PDF. | Candidato para estudiar o reutilizar piezas MIT tras revisar versión, avisos y dependencias; su base Next.js no debe introducirse como framework en Fixora. |
+
+### Qué aportan a Fixora Essentials
+
+- Separar el **motor de coste/precio** de los módulos de facturación, gastos y flujo de caja. Fixora no debe presentarse como software contable/fiscal ni sustituir un contador.
+- Diseñar un documento comercial con datos consistentes: negocio, cliente, concepto, cantidades, moneda, subtotal, descuentos, impuestos configurables cuando aplique, total y condiciones.
+- Añadir categorías y reportes sencillos sin perder el enfoque central de saber cuánto cuesta producir/vender y cuánto queda de margen.
+- Mantener una línea de tiempo/auditoría para cambios relevantes y exportación del historial del usuario.
+
+### Regla de licencias
+
+El número de estrellas no concede permiso de reutilización. MIT es permisiva con atribución y conservación de avisos; AGPL, BSL y Elastic tienen condiciones distintas y deben revisarse por versión y caso de distribución. Para Fixora, la decisión por defecto es **inspirarse en patrones de producto y reutilizar solo dependencias/código con licencia compatible comprobada**, sin copiar módulos completos de Akaunting, Invoice Ninja o Firefly III.
