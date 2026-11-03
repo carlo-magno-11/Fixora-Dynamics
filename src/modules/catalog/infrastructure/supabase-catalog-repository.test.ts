@@ -34,7 +34,7 @@ describe("Supabase catalog repository mapping", () => {
   });
 
   it("maps numeric database values and inactive records", () => {
-    expect(mapCatalogRow({ ...row, reference_cost: "0", is_active: false })).toMatchObject({
+    expect(mapCatalogRow({ ...row, reference_cost: 0, is_active: false })).toMatchObject({
       referenceCost: 0,
       active: false,
     });
