@@ -251,6 +251,8 @@ En la rama de integración ya existe el primer módulo puro de dominio:
 - `src/modules/retail/domain/retail-costing.ts`
 - `src/modules/retail/domain/retail-costing.test.ts`
 
-Calcula coste del lote puesto en almacén, coste de adquisición por unidad vendible, descuento, base configurable de comisión (precio antes o después del descuento), ingreso neto, contribución antes de gastos fijos, asignación fija, contribución estimada después de gastos fijos, margen y recargo. Usa Decimal.js y redondeo monetario explícito; permite mostrar contribuciones negativas y marca el margen como no disponible cuando el ingreso neto es cero o negativo.
+Calcula coste del lote puesto en almacén, coste de adquisición por unidad vendible, descuento, base configurable de comisión (precio antes o después del descuento), ingreso neto, contribución antes de gastos fijos, asignación fija, contribución estimada después de gastos fijos, margen y recargo. Usa Decimal.js, conserva hasta ocho decimales en costes unitarios antes del formato visual y redondea importes monetarios de salida; permite mostrar contribuciones negativas y marca el margen como no disponible cuando el ingreso neto es cero o negativo.
+
+- La cuenta ahora conserva y presenta todas las licencias devueltas por el RPC, mostrando el límite de dispositivos por licencia; no colapsa el resultado al primer registro.
 
 Este avance es únicamente lógica de dominio. Todavía no incluye interfaz, movimientos persistidos de inventario, tablas, RPC, RLS, entitlement `kit.retail`, SKU comercial ni activación de ventas. Esos elementos se implementarán después de validar el dominio y cerrar las decisiones de titularidad y autorización.
