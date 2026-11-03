@@ -3,7 +3,7 @@ BEGIN;
 
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 
-SELECT plan(29);
+SELECT plan(30);
 
 SELECT has_table('fixora_private', 'fixora_products', 'License product catalog exists');
 SELECT has_table('fixora_private', 'fixora_purchase_orders', 'Purchase orders exist');
@@ -77,6 +77,8 @@ SELECT ok(EXISTS (SELECT 1 FROM fixora_private.fixora_products
   WHERE product_sku = 'FIXORA-ESSENTIALS-ANNUAL'), 'Annual Essentials product is seeded');
 SELECT has_column('fixora_private', 'fixora_products', 'term_days',
   'Product catalog supports exact-day terms');
+SELECT has_column('fixora_private', 'fixora_licenses', 'term_days',
+  'Issued licenses snapshot exact-day terms');
 SELECT ok((SELECT term_months = 12 AND term_days IS NULL
   FROM fixora_private.fixora_products
   WHERE product_sku = 'FIXORA-ESSENTIALS-ANNUAL'),
@@ -155,6 +157,12 @@ BEGIN
   v_license_id := fixora_private.issue_license_for_verified_purchase(
     v_order_id, 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1'
   );
+  IF NOT EXISTS (
+    SELECT 1 FROM fixora_private.fixora_licenses
+    WHERE id = v_license_id AND term_months = 12 AND term_days IS NULL
+  ) THEN
+    RAISE EXCEPTION 'Annual duration was not snapshotted when the license was issued';
+  END IF;
   v_idempotent_license_id := fixora_private.issue_license_for_verified_purchase(
     v_order_id, 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1'
   );
@@ -186,6 +194,16 @@ BEGIN
   v_trial_license_id := fixora_private.issue_license_for_verified_purchase(
     v_trial_order_id, 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb2'
   );
+  IF NOT EXISTS (
+    SELECT 1 FROM fixora_private.fixora_licenses
+    WHERE id = v_trial_license_id AND term_months IS NULL AND term_days = 30
+  ) THEN
+    RAISE EXCEPTION '30-day duration was not snapshotted when the license was issued';
+  END IF;
+
+  UPDATE fixora_private.fixora_products
+  SET term_days = 45
+  WHERE product_sku = 'FIXORA-ESSENTIALS-30D-TEST';
   v_trial_code := fixora_private.create_activation_code(v_trial_license_id);
   v_trial_code_hash := extensions.digest(pg_catalog.convert_to(v_trial_code, 'UTF8'), 'sha256');
 
