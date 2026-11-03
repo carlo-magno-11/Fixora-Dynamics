@@ -1,9 +1,7 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { SavedCalculation } from "../domain/saved-calculation";
 import { calculationsToCsv } from "../domain/calculation-export";
-import { createSupabaseCalculationHistoryRepository } from "../infrastructure/supabase-calculation-history-repository";
-import type { SnapshotCursor } from "../infrastructure/supabase-calculation-history-repository";
-import { getSupabaseClient } from "../../../shared/infrastructure/supabase/client";
+import type { CloudCalculationHistoryApplicationService, SnapshotCursor } from "../application/cloud-calculation-history-service";
 
 const PAGE_SIZE = 100;
 
@@ -28,13 +26,13 @@ function downloadCsv(records: readonly SavedCalculation[]) {
   URL.revokeObjectURL(url);
 }
 
-export function CloudHistoryPage({ businessId, formatMoney, onOpenCalculation, onRecordsLoaded }: {
+export function CloudHistoryPage({ businessId, formatMoney, onOpenCalculation, onRecordsLoaded, service }: {
   businessId: string;
+  service: CloudCalculationHistoryApplicationService;
   formatMoney: (value: number, currency: "MXN" | "USD") => string;
   onOpenCalculation: (record: SavedCalculation) => void;
   onRecordsLoaded: (records: SavedCalculation[]) => void;
 }) {
-  const repository = useMemo(() => createSupabaseCalculationHistoryRepository(getSupabaseClient()), []);
   const requestId = useRef(0);
   const [records, setRecords] = useState<SavedCalculation[]>([]);
   const [loading, setLoading] = useState(true);
@@ -54,7 +52,7 @@ export function CloudHistoryPage({ businessId, formatMoney, onOpenCalculation, o
     setInvalidCount(0);
     setErrorMessage("");
     try {
-      const page = await repository.firstPage(businessId, PAGE_SIZE);
+      const page = await service.firstPage(businessId, PAGE_SIZE);
       if (currentRequest !== requestId.current) return;
       setRecords(page.records);
       setCursor(page.cursor);
@@ -67,7 +65,7 @@ export function CloudHistoryPage({ businessId, formatMoney, onOpenCalculation, o
     } finally {
       if (currentRequest === requestId.current) setLoading(false);
     }
-  }, [businessId, onRecordsLoaded, repository]);
+  }, [businessId, onRecordsLoaded, service]);
 
   useEffect(() => {
     void loadFirstPage();
@@ -80,7 +78,7 @@ export function CloudHistoryPage({ businessId, formatMoney, onOpenCalculation, o
     setLoadingMore(true);
     setErrorMessage("");
     try {
-      const page = await repository.nextPage(businessId, cursor, PAGE_SIZE);
+      const page = await service.nextPage(businessId, cursor, PAGE_SIZE);
       if (currentRequest !== requestId.current) return;
       const combined = [...records, ...page.records];
       setRecords(combined);
@@ -94,7 +92,7 @@ export function CloudHistoryPage({ businessId, formatMoney, onOpenCalculation, o
     } finally {
       if (currentRequest === requestId.current) setLoadingMore(false);
     }
-  }, [businessId, cursor, hasMore, loading, loadingMore, onRecordsLoaded, records, repository]);
+  }, [businessId, cursor, hasMore, loading, loadingMore, onRecordsLoaded, records, service]);
 
   return (
     <div className="secondary-page">
