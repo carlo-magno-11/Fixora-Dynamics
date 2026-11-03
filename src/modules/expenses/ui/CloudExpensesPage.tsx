@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ExpensePeriod, FixedExpense, VariableExpense } from "../domain/expenses";
 import { summarizeExpenses } from "../domain/expenses";
-import { createSupabaseExpensesRepository } from "../infrastructure/supabase-expenses-repository";
-import { getSupabaseClient } from "../../../shared/infrastructure/supabase/client";
+import type { CloudExpensesApplicationService } from "../application/cloud-expenses-service";
 import { NumericInput } from "../../../shared/ui/NumericInput";
 
 type CurrencyCode = "MXN" | "USD";
@@ -14,12 +13,12 @@ const periodLabels: Record<ExpensePeriod, string> = {
   year: "Anual",
 };
 
-export function CloudExpensesPage({ businessId, currency, formatMoney }: {
+export function CloudExpensesPage({ businessId, currency, formatMoney, service }: {
   businessId: string;
+  service: CloudExpensesApplicationService;
   currency: CurrencyCode;
   formatMoney: (value: number, currency: CurrencyCode) => string;
 }) {
-  const repository = useMemo(() => createSupabaseExpensesRepository(getSupabaseClient()), []);
   const requestId = useRef(0);
   const [fixed, setFixed] = useState<FixedExpense[]>([]);
   const [variable, setVariable] = useState<VariableExpense[]>([]);
@@ -36,7 +35,7 @@ export function CloudExpensesPage({ businessId, currency, formatMoney }: {
     setLoading(true);
     setErrorMessage("");
     try {
-      const state = await repository.load(businessId);
+      const state = await service.load(businessId);
       if (currentRequest !== requestId.current) return true;
       setFixed(state.fixed);
       setVariable(state.variable);
@@ -51,7 +50,7 @@ export function CloudExpensesPage({ businessId, currency, formatMoney }: {
     } finally {
       if (currentRequest === requestId.current) setLoading(false);
     }
-  }, [businessId, repository]);
+  }, [businessId, service]);
 
   useEffect(() => {
     void loadData();
@@ -104,7 +103,7 @@ export function CloudExpensesPage({ businessId, currency, formatMoney }: {
     setMessage("");
     setErrorMessage("");
     try {
-      await repository.save(businessId, {
+      await service.save(businessId, {
         fixed,
         variable,
         expectedUnits,
