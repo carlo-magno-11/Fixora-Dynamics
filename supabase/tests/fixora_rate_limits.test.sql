@@ -85,14 +85,14 @@ SELECT throws_ok(
 );
 
 SELECT throws_ok(
-  $SELECT * FROM public.fixora_server_consume_rate_limit(pg_catalog.decode(pg_catalog.repeat('e', 64), 'hex'), NULL, 60)$,
+  'SELECT * FROM public.fixora_server_consume_rate_limit(pg_catalog.decode(pg_catalog.repeat(''e'', 64), ''hex''), NULL, 60)',
   '22023',
   NULL,
   'Null limits fail closed'
 );
 
 SELECT throws_ok(
-  $SELECT * FROM public.fixora_server_consume_rate_limit(pg_catalog.decode(pg_catalog.repeat('f', 64), 'hex'), 10, NULL)$,
+  'SELECT * FROM public.fixora_server_consume_rate_limit(pg_catalog.decode(pg_catalog.repeat(''f'', 64), ''hex''), 10, NULL)',
   '22023',
   NULL,
   'Null windows fail closed'
