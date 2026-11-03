@@ -141,6 +141,7 @@ DECLARE
   v_count integer;
   v_event_hash bytea := extensions.digest(pg_catalog.convert_to('provider-event-1', 'UTF8'), 'sha256');
 BEGIN
+  PERFORM pg_catalog.set_config('TimeZone', 'America/Los_Angeles', true);
   PERFORM pg_catalog.set_config('role', 'service_role', true);
 
   INSERT INTO fixora_private.fixora_purchase_orders (
@@ -216,7 +217,7 @@ BEGIN
   );
 
   IF v_trial_activation.expires_at IS DISTINCT FROM
-      v_trial_activation.activated_at + interval '30 days' THEN
+      v_trial_activation.activated_at + interval '720 hours' THEN
     RAISE EXCEPTION '30-day license did not expire exactly 720 hours after activation';
   END IF;
 
