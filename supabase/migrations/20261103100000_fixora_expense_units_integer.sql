@@ -1,4 +1,8 @@
-do $
+alter table public.fixora_expense_settings
+  alter column expected_units type numeric
+  using expected_units::numeric;
+
+do $migration$
 begin
   if exists (
     select 1
@@ -11,7 +15,7 @@ begin
       using errcode = '23514';
   end if;
 end;
-$;
+$migration$;
 
 alter table public.fixora_expense_settings
   add constraint fixora_expense_settings_expected_units_safe_integer_check
