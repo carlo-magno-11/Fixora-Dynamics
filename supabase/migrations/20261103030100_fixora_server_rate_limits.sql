@@ -76,7 +76,7 @@ BEGIN
   v_retry_after := GREATEST(
     1,
     pg_catalog.ceil(
-      pg_catalog.extract(
+      extract(
         epoch FROM (
           v_window_start
           + pg_catalog.make_interval(secs => p_window_seconds)
@@ -89,7 +89,7 @@ BEGIN
   RETURN QUERY
   SELECT
     v_hit_count <= p_limit,
-    pg_catalog.greatest(p_limit - v_hit_count, 0),
+    GREATEST(p_limit - v_hit_count, 0),
     v_retry_after;
 END;
 $function$;
