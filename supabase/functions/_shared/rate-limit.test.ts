@@ -54,5 +54,5 @@ Deno.test("rate limit fails closed when the RPC returns an invalid payload", asy
     5,
     60,
   );
-  assertEquals(response?.status, 503);
+  assertEquals(response?.status, 503, "invalid payload fails closed");
 });
