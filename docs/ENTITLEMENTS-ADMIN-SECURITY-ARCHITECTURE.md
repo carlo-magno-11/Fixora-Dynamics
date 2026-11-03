@@ -28,7 +28,7 @@ No incorporar un segundo servidor de licencias al MVP. El repositorio ya usa Sup
 
 Proyectos estudiados:
 
-- **Keygate**: proyecto open source de gestión de licencias, activaciones por dispositivo/usuario, límites atómicos, portal, pagos y webhooks. Es una referencia útil para comparar casos límite; no adoptarlo aún como dependencia ni confiar en él sin auditar código, licencia, actividad, despliegue y modelo de seguridad.
+- **Keygate**: servidor open source de licencias con activaciones por dispositivo/usuario, límites atómicos, idempotencia, auditoría y pagos Stripe. Su repositorio declara licencia **AGPL-3.0**. Es una referencia de diseño, no una dependencia recomendada: alojarlo o modificarlo como parte del servicio puede tener consecuencias de cumplimiento AGPL que deben revisarse jurídicamente. No copiar ni integrar código sin revisión de licencia, dependencias y seguridad.
 - **Lago**: sistema open source de billing y entitlements orientado a operaciones más complejas; sobredimensionado para el primer lanzamiento de Fixora.
 - **OpenFGA**: motor de autorización de grano fino inspirado en Zanzibar; potente, pero innecesario para los roles/permisos actuales si Postgres/RLS y las funciones de servidor están bien probadas.
 - **Supabase RBAC + RLS**: patrón más coherente con la arquitectura existente. Mantener roles administrativos separados de los derechos de compra de un cliente.
@@ -161,6 +161,7 @@ Fase D — validación:
 - Supabase Row Level Security: https://supabase.com/docs/guides/database/postgres/row-level-security
 - Keygate (referencia de licencias y activaciones): https://github.com/tabloy/keygate
 - Keygate docs: https://keygate.app/docs
+- Keygate LICENSE (AGPL-3.0): https://github.com/tabloy/keygate/blob/main/LICENSE
 - Lago entitlements: https://getlago.com/platform/entitlements
 - OpenFGA: https://github.com/openfga/openfga
 - Apache Casbin: https://casbin.apache.org/
