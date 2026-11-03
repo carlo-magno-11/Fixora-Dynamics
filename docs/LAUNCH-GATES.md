@@ -20,6 +20,7 @@ Estado al 3 de noviembre de 2026. Este documento separa evidencia existente de t
 ## 1. Base de aplicación
 - [x] Fundamento web y autenticación cloud presentes en PR #2.
 - [x] Cambios de edición numérica presentes en PR #7.
+- [x] La calculadora General permite elegir la base de comisión del canal y conserva el criterio en borradores, snapshots y CSV.
 - [x] Rediseño de marca y paleta personalizable en PR #9/#10, todavía draft.
 - [ ] Revisión visual manual en escritorio, móvil y tamaños intermedios.
 - [ ] Prueba de accesibilidad con teclado/lector y contraste.
