@@ -167,6 +167,8 @@ export function App({
   const currentDraftScope = useRef(calculatorDraftScope);
   currentDraftScope.current = calculatorDraftScope;
   const [cloudDraftCandidate, setCloudDraftCandidate] = useState<CalculatorDraft | null>(null);
+  const [cloudDraftCandidateScope, setCloudDraftCandidateScope] = useState(calculatorDraftScope);
+  const [cloudDraftChoiceScope, setCloudDraftChoiceScope] = useState(calculatorDraftScope);
   const [cloudDraftNeedsChoice, setCloudDraftNeedsChoice] = useState(false);
   const [cloudDraftReady, setCloudDraftReady] = useState(authMode !== "cloud");
   const [cloudDraftVersion, setCloudDraftVersion] = useState(0);
@@ -264,6 +266,8 @@ export function App({
     setCloudDraftReady(authMode !== "cloud");
     setCloudDraftVersion(0);
     setCloudDraftCandidate(null);
+    setCloudDraftCandidateScope(calculatorDraftScope);
+    setCloudDraftChoiceScope(calculatorDraftScope);
     setCloudDraftNeedsChoice(false);
     setCloudDraftNeedsReload(false);
     setCloudDraftSaving(false);
@@ -307,6 +311,8 @@ export function App({
     setCloudDraftReady(false);
     setCloudDraftNeedsChoice(false);
     setCloudDraftCandidate(null);
+    setCloudDraftCandidateScope(calculatorDraftScope);
+    setCloudDraftChoiceScope(calculatorDraftScope);
     setCloudDraftNeedsReload(false);
     void cloudCalculatorDraftService.load(businessId).then((remote) => {
       if (!active) return;
@@ -318,6 +324,8 @@ export function App({
       const local = readCalculatorDraft(storage);
       if (remote.draft && local) {
         setCloudDraftCandidate(remote.draft);
+        setCloudDraftCandidateScope(calculatorDraftScope);
+        setCloudDraftChoiceScope(calculatorDraftScope);
         setCloudDraftNeedsChoice(true);
         setDraftStatus("Hay una copia local y otra cloud. Elige cuál conservar; Fixora no las mezclará automáticamente.");
         return;
@@ -330,6 +338,7 @@ export function App({
         return;
       }
       if (local) {
+        setCloudDraftChoiceScope(calculatorDraftScope);
         setCloudDraftNeedsChoice(true);
         setDraftStatus("Encontramos un borrador local que aún no está en la nube. Puedes sincronizarlo explícitamente.");
         return;
@@ -348,7 +357,7 @@ export function App({
   }, [authMode, businessId, calculatorDraftScope, cloudCalculatorDraftService, cloudDraftReloadToken, draftHydratedScope, storage]);
 
   async function chooseCloudDraft() {
-    if (!cloudDraftCandidate) return;
+    if (!cloudDraftCandidate || cloudDraftCandidateScope !== calculatorDraftScope) return;
     const local = readCalculatorDraft(storage);
     if (local) {
       try {
@@ -390,7 +399,7 @@ export function App({
   }
 
   async function chooseLocalDraft() {
-    if (!businessId) return;
+    if (!businessId || cloudDraftChoiceScope !== calculatorDraftScope) return;
     const local = readCalculatorDraft(storage);
     if (!local) {
       setDraftStatus("No encontramos un borrador local válido para sincronizar.");
@@ -774,7 +783,7 @@ export function App({
                   <button className="outline-button" type="button" disabled={cloudDraftSaving} onClick={() => setCloudDraftReloadToken((value) => value + 1)}>Recargar versión cloud</button>
                 </div>
               )}
-              {authMode === "cloud" && cloudDraftNeedsChoice && (
+              {authMode === "cloud" && cloudDraftNeedsChoice && cloudDraftChoiceScope === calculatorDraftScope && (
                 <div className="guide-callout" role="group" aria-label="Elegir borrador para sincronizar">
                   <strong>Elige qué versión conservar</strong>
                   <p>Los borradores son privados por usuario y negocio. No combinaremos dos versiones ni eliminaremos la copia local automáticamente.</p>
