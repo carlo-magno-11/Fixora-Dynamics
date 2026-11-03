@@ -152,7 +152,10 @@ export function App({
     [storage],
   );
   const { historyRepository, snapshotService, catalogService, expensesService, cloudCatalogService, cloudExpensesService, cloudHistoryService, cloudCalculatorDraftService } = appServices;
-  const [restoredDraft] = useState(() => readCalculatorDraft(calculatorDraftStorage));
+  const [restoredDraft] = useState(() => (
+    readCalculatorDraft(calculatorDraftStorage)
+    ?? (businessId ? readCalculatorDraft(storage) : null)
+  ));
   const [input, setInput] = useState<PricingInput>(() => restoredDraft?.input ?? initial);
   const [currency, setCurrency] = useState<CurrencyCode>(() => restoredDraft?.currency ?? initialCurrency ?? "MXN");
   const [view, setView] = useState<View>("essentials");
@@ -258,7 +261,8 @@ export function App({
     if (previousDraftScope.current === calculatorDraftScope) return;
     previousDraftScope.current = calculatorDraftScope;
     setDraftHydratedScope("");
-    const draft = readCalculatorDraft(calculatorDraftStorage);
+    const draft = readCalculatorDraft(calculatorDraftStorage)
+      ?? (businessId ? readCalculatorDraft(storage) : null);
     setInput(draft?.input ?? initial);
     setCurrency(draft?.currency ?? initialCurrency ?? "MXN");
     setBreakEvenInput(draft?.breakEvenInput ?? initialBreakEven);
@@ -285,7 +289,7 @@ export function App({
     lastCloudDraftFingerprint.current = "";
     setDraftStatus(draft ? "Se recuperó el borrador local de este usuario y negocio." : "");
     setDraftHydratedScope(calculatorDraftScope);
-  }, [authMode, calculatorDraftScope, historyRepository, initialBusinessType, initialCurrency, storage]);
+  }, [authMode, businessId, calculatorDraftScope, calculatorDraftStorage, historyRepository, initialBusinessType, initialCurrency, storage]);
 
   useEffect(() => {
     if (draftHydratedScope !== calculatorDraftScope) return;
