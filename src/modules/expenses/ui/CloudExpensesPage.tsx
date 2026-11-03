@@ -1,12 +1,10 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ExpensePeriod, FixedExpense, VariableExpense } from "../domain/expenses";
 import { summarizeExpenses } from "../domain/expenses";
-import type { Database, Json } from "../../../shared/infrastructure/supabase/database.types";
+import { createSupabaseExpensesRepository } from "../infrastructure/supabase-expenses-repository";
 import { getSupabaseClient } from "../../../shared/infrastructure/supabase/client";
 import { NumericInput } from "../../../shared/ui/NumericInput";
 
-type ExpenseRow = Database["public"]["Tables"]["fixora_expenses"]["Row"];
-type ExpenseSettings = Database["public"]["Tables"]["fixora_expense_settings"]["Row"];
 type CurrencyCode = "MXN" | "USD";
 
 const periodLabels: Record<ExpensePeriod, string> = {
@@ -21,7 +19,8 @@ export function CloudExpensesPage({ businessId, currency, formatMoney }: {
   currency: CurrencyCode;
   formatMoney: (value: number, currency: CurrencyCode) => string;
 }) {
-  const supabase = useMemo(() => getSupabaseClient(), []);
+  const repository = useMemo(() => createSupabaseExpensesRepository(getSupabaseClient()), []);
+  const requestId = useRef(0);
   const [fixed, setFixed] = useState<FixedExpense[]>([]);
   const [variable, setVariable] = useState<VariableExpense[]>([]);
   const [expectedUnits, setExpectedUnits] = useState(100);
@@ -33,55 +32,30 @@ export function CloudExpensesPage({ businessId, currency, formatMoney }: {
   const [errorMessage, setErrorMessage] = useState("");
 
   const loadData = useCallback(async () => {
-    if (!supabase) {
-      setErrorMessage("No se pudo inicializar la conexión con Supabase.");
-      setLoading(false);
-      return;
-    }
+    const currentRequest = ++requestId.current;
     setLoading(true);
     setErrorMessage("");
-    const [expensesResult, settingsResult] = await Promise.all([
-      supabase
-        .from("fixora_expenses")
-        .select("id, business_id, expense_type, name, amount, is_active, created_by, created_at, updated_at")
-        .eq("business_id", businessId)
-        .eq("is_active", true)
-        .order("created_at", { ascending: true })
-        .limit(200),
-      supabase
-        .from("fixora_expense_settings")
-        .select("business_id, expected_units, period, version, updated_by, created_at, updated_at")
-        .eq("business_id", businessId)
-        .maybeSingle(),
-    ]);
-    setLoading(false);
-    if (expensesResult.error || settingsResult.error) {
-      setErrorMessage(expensesResult.error?.message ?? settingsResult.error?.message ?? "No fue posible cargar los gastos.");
-      return;
+    try {
+      const state = await repository.load(businessId);
+      if (currentRequest !== requestId.current) return true;
+      setFixed(state.fixed);
+      setVariable(state.variable);
+      setExpectedUnits(state.expectedUnits);
+      setPeriod(state.period);
+      setVersion(state.version);
+      return true;
+    } catch (error) {
+      if (currentRequest !== requestId.current) return false;
+      setErrorMessage(error instanceof Error ? error.message : "No fue posible cargar los gastos.");
+      return false;
+    } finally {
+      if (currentRequest === requestId.current) setLoading(false);
     }
-    const settings = settingsResult.data as ExpenseSettings | null;
-    if (!settings) {
-      setErrorMessage("El negocio no tiene configuración de gastos. Contacta a soporte para revisar su inicialización.");
-      return;
-    }
-    const rows = (expensesResult.data ?? []) as ExpenseRow[];
-    setFixed(rows.filter((row) => row.expense_type === "fixed").map((row) => ({
-      id: row.id,
-      name: row.name,
-      amount: Number(row.amount),
-    })));
-    setVariable(rows.filter((row) => row.expense_type === "variable").map((row) => ({
-      id: row.id,
-      name: row.name,
-      costPerUnit: Number(row.amount),
-    })));
-    setExpectedUnits(Math.max(1, Math.floor(Number(settings.expected_units))));
-    setPeriod(settings.period as ExpensePeriod);
-    setVersion(Number(settings.version));
-  }, [businessId, supabase]);
+  }, [businessId, repository]);
 
   useEffect(() => {
     void loadData();
+    return () => { requestId.current += 1; };
   }, [loadData]);
 
   const summary = useMemo(() => {
@@ -125,36 +99,27 @@ export function CloudExpensesPage({ businessId, currency, formatMoney }: {
   }
 
   async function saveExpenses() {
-    if (!supabase || !summary.result) return;
+    if (!summary.result) return;
     setSaving(true);
     setMessage("");
     setErrorMessage("");
-    const fixedPayload = fixed.map((item) => item.id.startsWith("new:")
-      ? { name: item.name, amount: item.amount }
-      : { id: item.id, name: item.name, amount: item.amount }) as unknown as Json;
-    const variablePayload = variable.map((item) => item.id.startsWith("new:")
-      ? { name: item.name, amount: item.costPerUnit }
-      : { id: item.id, name: item.name, amount: item.costPerUnit }) as unknown as Json;
     try {
-      const { error } = await supabase.rpc("fixora_save_expenses", {
-        p_business_id: businessId,
-        p_expected_units: expectedUnits,
-        p_period: period,
-        p_expected_version: version,
-        p_fixed: fixedPayload,
-        p_variable: variablePayload,
+      await repository.save(businessId, {
+        fixed,
+        variable,
+        expectedUnits,
+        period,
+        expectedVersion: version,
       });
-      if (error) {
-        if (error.code === "40001") {
-          await loadData();
-          throw new Error("Otro integrante actualizó estos gastos. Recargamos la versión más reciente; revisa los datos antes de volver a guardar.");
-        }
-        throw error;
-      }
-      await loadData();
       setMessage("Gastos y asignación guardados en Supabase. Los cambios se aplicaron como una sola operación.");
+      const refreshed = await loadData();
+      if (!refreshed) {
+        setMessage("Los cambios se guardaron, pero no pudimos actualizar la vista. Pulsa Actualizar para volver a consultar.");
+      }
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "No fue posible guardar los gastos.");
+      const message = error instanceof Error ? error.message : "No fue posible guardar los gastos.";
+      if (message.startsWith("Otro integrante actualizó")) await loadData();
+      setErrorMessage(message);
     } finally {
       setSaving(false);
     }
