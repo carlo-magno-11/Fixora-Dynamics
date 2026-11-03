@@ -29,6 +29,66 @@ ALTER TABLE fixora_private.fixora_products
   ADD CONSTRAINT fixora_product_exactly_one_term_check
     CHECK ((term_months IS NOT NULL) <> (term_days IS NOT NULL));
 
+create or replace function fixora_private.create_activation_code(
+  p_license_id uuid
+)
+returns text
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_license fixora_private.fixora_licenses%rowtype;
+  v_order fixora_private.fixora_purchase_orders%rowtype;
+  v_code text;
+  v_code_hash bytea;
+  v_now timestamptz := pg_catalog.clock_timestamp();
+  v_code_expires_at timestamptz;
+begin
+  select * into v_license
+  from fixora_private.fixora_licenses
+  where id = p_license_id
+  for update;
+
+  if not found or v_license.status not in ('pending', 'active') then
+    raise exception 'License is not eligible for activation code' using errcode = '23514';
+  end if;
+
+  if v_license.expires_at is not null and v_license.expires_at <= pg_catalog.now() then
+    raise exception 'License has expired' using errcode = '23514';
+  end if;
+
+  select * into v_order
+  from fixora_private.fixora_purchase_orders
+  where id = v_license.purchase_order_id
+  for update;
+
+  if v_order.payment_status <> 'approved' or v_order.refund_status <> 'none'
+    or v_order.verified_at is null or v_order.verification_method is null then
+    raise exception 'Purchase is no longer eligible' using errcode = '23514';
+  end if;
+
+  v_code_expires_at := v_now + pg_catalog.make_interval(secs => 2592000);
+  v_code := pg_catalog.encode(extensions.gen_random_bytes(32), 'hex');
+  v_code_hash := extensions.digest(pg_catalog.convert_to(v_code, 'UTF8'), 'sha256');
+
+  insert into fixora_private.fixora_activation_code_hashes (
+    license_id, code_hash, expires_at
+  )
+  values (p_license_id, v_code_hash, v_code_expires_at);
+
+  insert into fixora_private.fixora_license_events (
+    license_id, event_type, metadata
+  )
+  values (
+    p_license_id, 'activation_code_created',
+    jsonb_build_object('expires_at', v_code_expires_at)
+  );
+
+  return v_code;
+end;
+$$;
+
 create or replace function fixora_private.issue_license_for_verified_purchase(
   p_purchase_order_id uuid,
   p_user_id uuid default null
