@@ -185,12 +185,18 @@ export function App({
     setLocalBackupDraftScope(calculatorDraftScope);
     if (!businessId) return;
     try {
-      const raw = calculatorDraftStorage.getItem(`fixora.calculator-draft.local-backup.v1:${businessId}`);
-      setLocalBackupDraft(raw ? parseCalculatorDraftValue(JSON.parse(raw) as unknown) : null);
+      const backupKey = `fixora.calculator-draft.local-backup.v1:${businessId}`;
+      const raw = calculatorDraftStorage.getItem(backupKey)
+        ?? storage.getItem(backupKey);
+      const parsed = raw ? parseCalculatorDraftValue(JSON.parse(raw) as unknown) : null;
+      setLocalBackupDraft(parsed);
+      if (raw && !calculatorDraftStorage.getItem(backupKey)) {
+        calculatorDraftStorage.setItem(backupKey, raw);
+      }
     } catch {
       setLocalBackupDraft(null);
     }
-  }, [businessId, calculatorDraftScope, calculatorDraftStorage]);
+  }, [businessId, calculatorDraftScope, calculatorDraftStorage, storage]);
   const [cloudDraftNeedsReload, setCloudDraftNeedsReload] = useState(false);
   const [cloudDraftReloadToken, setCloudDraftReloadToken] = useState(0);
   const lastCloudDraftFingerprint = useRef("");
