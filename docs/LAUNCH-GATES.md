@@ -85,3 +85,19 @@ Estado al 3 de noviembre de 2026. Este documento separa evidencia existente de t
 
 ## Regla de salida
 No declarar “listo para producción” por tener CI verde. La salida requiere CI, reconstrucción de DB desde cero, pgTAP/negativos, Edge Function tests, staging HTTPS, E2E con MFA y pagos sandbox, revisión visual/accesibilidad, guías y términos aprobados, y autorización expresa para desplegar.
+
+
+## Reinspección remota adicional — 2026-11-03
+
+Consulta de solo lectura al proyecto de pruebas `eyesite-security-test` (`dclaebknyalimmtgppeg`), 2026-11-03:
+
+- El catálogo de productos está en `fixora_private.fixora_products`, no en `public`. El SKU activo único sigue siendo `FIXORA-ESSENTIALS-ANNUAL`, con `term_months=12`, `max_active_devices=3` y entitlement genérico `kits.access`.
+- No hay pedidos, licencias, negocios, membresías administrativas ni tickets operativos. Hay 18 asignaciones de permisos de rol y 0 usuarios Auth; por tanto, aún no se puede ejecutar una prueba de MFA/AAL2 con cuentas reales.
+- La función remota `fixora_private.redeem_activation_code` calcula el vencimiento usando `make_interval(months => v_product.term_months)`; todavía no admite duración en días.
+- La misma función cuenta dispositivos filtrando por `license_id`; el límite de tres sigue siendo por licencia, no global por cuenta.
+- `public.fixora_get_license_access` devuelve los entitlements activos tal como fueron emitidos; el catálogo actual aún incluye `kits.access`, por lo que no existe aislamiento comercial completo por kit.
+- El bucket heredado `eyesite-media` continúa público y vacío (0 objetos). No se modificó: su eliminación o privatización requiere confirmar primero que ningún flujo Fixora lo usa y hacerlo por Storage API/Dashboard.
+- Security Advisor: 0 hallazgos. Performance Advisor: 10 avisos de índices sin uso y 1 aviso informativo de asignación de conexiones Auth; no se eliminaron índices.
+- La migración de rate limiting `20261103030100` y la Edge Function `admin-support-inbox` siguen ausentes del proyecto remoto. Las ocho funciones desplegadas mantienen `verify_jwt=true`.
+
+Conclusión: la política de 30 días, los entitlements específicos por kit y la cuota global de dispositivos siguen siendo requisitos de implementación, no funciones activas. No se ejecutó SQL de escritura, migración, despliegue ni cambio de Storage.
