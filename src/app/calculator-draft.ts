@@ -59,6 +59,11 @@ export function readCalculatorDraft(storage: KeyValueStorage): CalculatorDraft |
     const input = value.input;
     const breakEvenInput = value.breakEvenInput;
     if (!hasFiniteFields(input, pricingFields) || !hasFiniteFields(breakEvenInput, breakEvenFields)) return null;
+    if (
+      input.variableFeeBasis !== undefined &&
+      input.variableFeeBasis !== "discounted_price" &&
+      input.variableFeeBasis !== "pre_discount"
+    ) return null;
     if (value.selectedCatalogItem !== undefined && !isCatalogSnapshot(value.selectedCatalogItem)) return null;
     return {
       version: 1,
@@ -75,6 +80,9 @@ export function readCalculatorDraft(storage: KeyValueStorage): CalculatorDraft |
         variableFeeRate: input.variableFeeRate,
         targetMarginRate: input.targetMarginRate,
         discountRate: input.discountRate,
+        ...(input.variableFeeBasis !== undefined
+          ? { variableFeeBasis: input.variableFeeBasis }
+          : {}),
       },
       breakEvenInput: {
         fixedCosts: breakEvenInput.fixedCosts,
