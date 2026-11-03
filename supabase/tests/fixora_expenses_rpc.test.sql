@@ -3,7 +3,7 @@ BEGIN;
 
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 
-SELECT plan(20);
+SELECT plan(21);
 
 SELECT ok(
   to_regprocedure('public.fixora_save_expenses(uuid,numeric,text,bigint,jsonb,jsonb)') IS NOT NULL,
@@ -164,12 +164,24 @@ SELECT throws_ok(
 );
 
 SELECT throws_ok(
-  $UPDATE public.fixora_expense_settings
+  $sql$UPDATE public.fixora_expense_settings
     SET expected_units = 1.5, version = version + 1
-    WHERE business_id = current_setting('app.fixora_test_business_id')::uuid$,
+    WHERE business_id = current_setting('app.fixora_test_business_id')::uuid$sql$,
   '22023',
   NULL,
   'Direct table updates cannot bypass integer expected unit validation'
+);
+
+SELECT throws_ok(
+  $sql$SELECT public.fixora_save_expenses(
+    current_setting('app.fixora_test_business_id')::uuid,
+    300, 'quarter', 3,
+    (SELECT pg_catalog.jsonb_agg(pg_catalog.jsonb_build_object('name', 'Line ' || g, 'amount', 1)) FROM generate_series(1, 101) AS g),
+    '[]'::jsonb
+  )$sql$,
+  '22023',
+  NULL,
+  'Expense RPC rejects more than one hundred lines per type'
 );
 
 RESET ROLE;
