@@ -56,10 +56,11 @@ El núcleo actual no cubre por sí solo inventario por movimientos, recetas y re
 - Contribución estimada = ingreso neto después de descuento/comisión - adquisición - variables.
 - Margen sobre ingreso y recargo sobre coste se muestran como métricas distintas.
 - El punto de equilibrio reutiliza el motor General con gastos fijos del mismo periodo.
+- Alcance inicial: la comisión porcentual se calcula sobre precio original o descontado; impuestos, ingreso de envío cobrado al cliente y comisiones sobre envío/impuestos no se modelan por separado. Las tarifas fijas por pedido deben asignarse manualmente por unidad y las tasas del canal se capturan por el usuario; no se hardcodean tarifas Etsy.
 
 **Inventario**
 - Diseñar un registro de movimientos (entrada, venta/salida, devolución vendible, merma, ajuste y transferencia si se autoriza).
-- No depender únicamente de un campo editable `stock_quantity`; cada movimiento debe dejar referencia, fecha, cantidad, motivo y actor.
+- No depender únicamente de un campo editable `stock_quantity`; cada movimiento debe dejar referencia, fecha, cantidad, motivo y actor. Ajustes, mermas y disposición de devoluciones requieren motivo obligatorio.
 - Las devoluciones no vuelven automáticamente a inventario vendible.
 - La cantidad disponible se deriva de movimientos confirmados o se mantiene como proyección reconciliable, con pruebas de concurrencia.
 - No añadir compras/proveedores complejos al MVP si el piloto puede validarse con lotes y movimientos simples.
