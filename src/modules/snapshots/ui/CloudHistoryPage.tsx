@@ -82,11 +82,9 @@ export function CloudHistoryPage({ businessId, formatMoney, onOpenCalculation, o
     try {
       const page = await repository.nextPage(businessId, cursor, PAGE_SIZE);
       if (currentRequest !== requestId.current) return;
-      setRecords((current) => {
-        const combined = [...current, ...page.records];
-        onRecordsLoaded(combined);
-        return combined;
-      });
+      const combined = [...records, ...page.records];
+      setRecords(combined);
+      onRecordsLoaded(combined);
       setCursor(page.cursor);
       setHasMore(page.hasMore);
       setInvalidCount((count) => count + page.invalidCount);
@@ -96,7 +94,7 @@ export function CloudHistoryPage({ businessId, formatMoney, onOpenCalculation, o
     } finally {
       if (currentRequest === requestId.current) setLoadingMore(false);
     }
-  }, [businessId, cursor, hasMore, loading, loadingMore, onRecordsLoaded, repository]);
+  }, [businessId, cursor, hasMore, loading, loadingMore, onRecordsLoaded, records, repository]);
 
   return (
     <div className="secondary-page">
