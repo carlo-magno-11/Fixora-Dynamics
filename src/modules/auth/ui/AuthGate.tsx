@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import type { FormEvent, ReactNode } from "react";
 import type { Session } from "@supabase/supabase-js";
 import type { Database } from "../../../shared/infrastructure/supabase/database.types";
+import { FixoraMark } from "../../../shared/ui/FixoraMark";
 import {
   FIXORA_AUTH_MODE,
   getSupabaseClient,
@@ -439,7 +440,7 @@ function AuthShell({ children }: { children: ReactNode }) {
   return (
     <main className="auth-shell">
       <section className="auth-card">
-        <a className="brand auth-brand" href="/" aria-label="Fixora Dynamics, inicio"><span className="brand-mark">F</span><span className="brand-word">FIXORA <b>DYNAMICS</b></span></a>
+        <a className="brand auth-brand" href="/" aria-label="Fixora Dynamics, inicio"><FixoraMark className="brand-mark-svg" size={40} /><span className="brand-word">FIXORA <b>DYNAMICS</b></span></a>
         {children}
         <p className="auth-footer">FIXORA DYNAMICS · CLARIDAD PARA CONSTRUIR NEGOCIOS SOSTENIBLES</p>
       </section>

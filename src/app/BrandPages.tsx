@@ -3,6 +3,7 @@ import { MfaSettings } from "../modules/auth/ui/MfaSettings";
 import { LicenseActivationPanel } from "../modules/licensing/ui/LicenseActivationPanel";
 import { AdminInviteAcceptancePanel } from "../modules/admin/ui/AdminInviteAcceptancePanel";
 import type { Database } from "../shared/infrastructure/supabase/database.types";
+import { FixoraMark } from "../shared/ui/FixoraMark";
 
 type LicenseAccess = Database["public"]["Functions"]["fixora_get_license_access"]["Returns"][number];
 
@@ -19,7 +20,7 @@ export function AboutPage({ locale }: PageProps) {
           <h1>{copy.aboutTitle}</h1>
           <p className="page-lead">{copy.aboutBody}</p>
         </div>
-        <div className="brand-hero-mark" aria-hidden="true"><span>F</span><small>· D</small></div>
+        <div className="brand-hero-mark"><FixoraMark size={104} variant="inverse" /><small>FIXORA DYNAMICS</small></div>
       </section>
       <section className="brand-product-card">
         <span className="eyebrow">NUESTRO PRIMER PRODUCTO</span>
