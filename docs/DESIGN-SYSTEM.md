@@ -25,7 +25,7 @@ Fixora Dynamics es una empresa de software que ayuda a profesionales independien
 | Porcelain | `#FCFBF7` | Superficies y formularios |
 | Limestone | `#F1F0E9` | Fondo de aplicación |
 | Ink | `#203638` | Texto principal |
-| Muted Slate | `#74817C` | Texto secundario |
+| Muted Slate | `#637168` | Texto secundario |
 | Terracotta | `#A85F50` | Error y alerta; no decoración |
 
 ### Proporción recomendada
