@@ -51,6 +51,7 @@ No forzar una conversión de todos los contratos locales a Promise si no aporta 
 - Guardar el conjunto mediante `fixora_save_expenses`, enviando la versión esperada.
 - Mostrar conflicto de versión y recargar sin sobrescribir cambios concurrentes.
 - Mantener la transacción indivisible: configuración, archivado de filas retiradas y altas/actualizaciones.
+- La cantidad estimada de unidades debe ser un entero positivo seguro; el dominio, una constraint y un trigger impiden valores fraccionarios, no finitos o fuera del rango que la aplicación puede representar.
 - Las pruebas deben cubrir dos escritores con la misma versión, IDs de otro negocio/tipo, IDs repetidos, arrays grandes, valores no finitos y rollback completo.
 
 ### Snapshots e historial
@@ -110,7 +111,7 @@ No forzar una conversión de todos los contratos locales a Promise si no aporta 
 - Mapeo de configuración valida periodo, unidades y versión segura.
 - La UI permite recargar y conserva el control optimista de concurrencia.
 - El número de unidades estimadas debe ser entero positivo seguro; la migración añade constraint validada y trigger para impedir que escrituras directas o el RPC almacenen valores que la aplicación no pueda leer.
-- Pendiente: pruebas de RPC para IDs cruzados, duplicados, límites, importes inválidos, rollback y dos escritores simultáneos.
+- Pendiente: confirmar CI/pgTAP de la nueva migración y pruebas E2E de RPC para IDs cruzados, duplicados, límites, importes inválidos, rollback y dos escritores simultáneos.
 
 ### G3 — snapshots/historial cloud
 
