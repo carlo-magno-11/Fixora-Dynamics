@@ -6,6 +6,8 @@ import { NumericInput } from "../../../shared/ui/NumericInput";
 
 type CurrencyCode = "MXN" | "USD";
 
+const MAX_EXPENSE_LINES = 100;
+
 const periodLabels: Record<ExpensePeriod, string> = {
   week: "Semanal",
   month: "Mensual",
@@ -114,11 +116,19 @@ export function CloudExpensesPage({ businessId, currency, formatMoney, service }
   }
 
   function addFixedExpense() {
+    if (fixed.length >= MAX_EXPENSE_LINES) {
+      setErrorMessage("Puedes registrar hasta 100 gastos fijos por negocio.");
+      return;
+    }
     markChanged();
     setFixed((current) => [...current, { id: `new:${crypto.randomUUID()}`, name: "", amount: 0 }]);
   }
 
   function addVariableExpense() {
+    if (variable.length >= MAX_EXPENSE_LINES) {
+      setErrorMessage("Puedes registrar hasta 100 costes variables por negocio.");
+      return;
+    }
     markChanged();
     setVariable((current) => [...current, { id: `new:${crypto.randomUUID()}`, name: "", costPerUnit: 0 }]);
   }
@@ -177,7 +187,7 @@ export function CloudExpensesPage({ businessId, currency, formatMoney, service }
         <>
           <div className="expenses-grid">
             <section className="surface-card">
-              <div className="section-heading"><div className="section-number">01</div><div><h2>Gastos fijos del periodo</h2><p>Importes que no dependen directamente de cuántas unidades vendas.</p></div></div>
+              <div className="section-heading"><div className="section-number">01</div><div><h2>Gastos fijos del periodo</h2><p>Importes que no dependen directamente de cuántas unidades vendas. Máximo: 100 líneas.</p></div></div>
               {fixed.map((item) => (
                 <div className="expense-entry" key={item.id}>
                   <label className="field"><span>Concepto</span><input value={item.name} maxLength={120} placeholder="Ej. renta del local" onChange={(event) => updateFixed(item.id, "name", event.target.value)} /></label>
@@ -185,10 +195,10 @@ export function CloudExpensesPage({ businessId, currency, formatMoney, service }
                   <button className="delete-button" aria-label={`Retirar ${item.name || "gasto fijo"}`} onClick={() => { markChanged(); setFixed((current) => current.filter((entry) => entry.id !== item.id)); }}>×</button>
                 </div>
               ))}
-              <button className="outline-button" onClick={addFixedExpense}>+ Añadir gasto fijo</button>
+              <button className="outline-button" disabled={fixed.length >= MAX_EXPENSE_LINES} onClick={addFixedExpense}>+ Añadir gasto fijo</button>
             </section>
             <section className="surface-card">
-              <div className="section-heading"><div className="section-number">02</div><div><h2>Costes variables por unidad</h2><p>Importes que se generan con cada producto o servicio vendido.</p></div></div>
+              <div className="section-heading"><div className="section-number">02</div><div><h2>Costes variables por unidad</h2><p>Importes que se generan con cada producto o servicio vendido. Máximo: 100 líneas.</p></div></div>
               {variable.map((item) => (
                 <div className="expense-entry" key={item.id}>
                   <label className="field"><span>Concepto</span><input value={item.name} maxLength={120} placeholder="Ej. empaque por unidad" onChange={(event) => updateVariable(item.id, "name", event.target.value)} /></label>
@@ -196,7 +206,7 @@ export function CloudExpensesPage({ businessId, currency, formatMoney, service }
                   <button className="delete-button" aria-label={`Retirar ${item.name || "coste variable"}`} onClick={() => { markChanged(); setVariable((current) => current.filter((entry) => entry.id !== item.id)); }}>×</button>
                 </div>
               ))}
-              <button className="outline-button" onClick={addVariableExpense}>+ Añadir coste variable</button>
+              <button className="outline-button" disabled={variable.length >= MAX_EXPENSE_LINES} onClick={addVariableExpense}>+ Añadir coste variable</button>
             </section>
           </div>
           <section className="surface-card expense-allocation">
