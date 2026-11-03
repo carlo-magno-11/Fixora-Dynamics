@@ -369,9 +369,18 @@ BEGIN
   END IF;
 
   PERFORM pg_catalog.set_config('request.jwt.claim.sub', 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb2', true);
-  SELECT count(*) INTO v_count FROM public.fixora_get_license_access();
+  SELECT count(*) INTO v_count
+  FROM public.fixora_get_license_access()
+  WHERE license_id = v_license_id;
   IF v_count <> 0 THEN
     RAISE EXCEPTION 'License access RPC exposed another user license';
+  END IF;
+
+  SELECT count(*) INTO v_count
+  FROM public.fixora_get_license_access()
+  WHERE license_id = v_trial_license_id;
+  IF v_count <> 1 THEN
+    RAISE EXCEPTION 'License access RPC did not return the authenticated user own trial license';
   END IF;
 
   PERFORM pg_catalog.set_config('role', 'service_role', true);
