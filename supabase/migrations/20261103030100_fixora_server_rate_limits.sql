@@ -42,7 +42,7 @@ BEGIN
 
   v_window_start := pg_catalog.to_timestamp(
     pg_catalog.floor(
-      pg_catalog.extract(epoch FROM v_now) / p_window_seconds
+      extract(epoch FROM v_now) / p_window_seconds
     ) * p_window_seconds
   );
 
@@ -73,7 +73,7 @@ BEGIN
     updated_at = EXCLUDED.updated_at
   RETURNING hit_count INTO v_hit_count;
 
-  v_retry_after := pg_catalog.greatest(
+  v_retry_after := GREATEST(
     1,
     pg_catalog.ceil(
       pg_catalog.extract(
