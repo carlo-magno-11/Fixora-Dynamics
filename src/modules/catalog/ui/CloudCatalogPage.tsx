@@ -1,17 +1,15 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
-import { createCatalogItem, updateCatalogItem } from "../domain/catalog";
 import type { CatalogCurrency, CatalogDraft, CatalogItem, CatalogItemKind } from "../domain/catalog";
-import { createSupabaseCatalogRepository } from "../infrastructure/supabase-catalog-repository";
-import { getSupabaseClient } from "../../../shared/infrastructure/supabase/client";
+import type { CloudCatalogApplicationService } from "../application/cloud-catalog-service";
 
-export function CloudCatalogPage({ businessId, currency, formatMoney, onUseInCalculator }: {
+export function CloudCatalogPage({ businessId, currency, formatMoney, onUseInCalculator, service }: {
   businessId: string;
+  service: CloudCatalogApplicationService;
   currency: CatalogCurrency;
   formatMoney: (value: number, currency: CatalogCurrency) => string;
   onUseInCalculator: (item: CatalogItem) => void;
 }) {
-  const repository = useMemo(() => createSupabaseCatalogRepository(getSupabaseClient()), []);
   const requestId = useRef(0);
   const [items, setItems] = useState<CatalogItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -31,7 +29,7 @@ export function CloudCatalogPage({ businessId, currency, formatMoney, onUseInCal
     setLoading(true);
     setErrorMessage("");
     try {
-      const records = await repository.listActive(businessId);
+      const records = await service.listActive(businessId);
       if (currentRequest !== requestId.current) return;
       setItems(records);
     } catch (error) {
@@ -40,7 +38,7 @@ export function CloudCatalogPage({ businessId, currency, formatMoney, onUseInCal
     } finally {
       if (currentRequest === requestId.current) setLoading(false);
     }
-  }, [businessId, repository]);
+  }, [businessId, service]);
 
   useEffect(() => {
     void loadItems();
@@ -77,13 +75,11 @@ export function CloudCatalogPage({ businessId, currency, formatMoney, onUseInCal
     const draft: CatalogDraft = { name, kind, unit, sku, currency: draftCurrency, referenceCost };
     try {
       if (editingId) {
-        const validated = updateCatalogItem(editingId, draft, items);
-        const updated = await repository.update(businessId, editingId, validated);
+        const updated = await service.update(businessId, editingId, draft, items);
         setItems((current) => current.map((item) => item.id === editingId ? updated : item));
         setMessage("Cambios guardados en el catálogo cloud.");
       } else {
-        const validated = createCatalogItem(draft, items, crypto.randomUUID());
-        const created = await repository.create(businessId, validated);
+        const created = await service.create(businessId, draft, items);
         setItems((current) => [created, ...current]);
         setMessage("Elemento añadido al catálogo cloud.");
       }
@@ -100,7 +96,7 @@ export function CloudCatalogPage({ businessId, currency, formatMoney, onUseInCal
     setMessage("");
     setErrorMessage("");
     try {
-      await repository.archive(businessId, item.id);
+      await service.archive(businessId, item.id);
       setItems((current) => current.filter((entry) => entry.id !== item.id));
       setMessage("Elemento archivado. No se eliminó del historial del negocio.");
       if (editingId === item.id) resetForm();
