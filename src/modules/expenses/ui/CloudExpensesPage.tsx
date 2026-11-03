@@ -3,6 +3,7 @@ import type { ExpensePeriod, FixedExpense, VariableExpense } from "../domain/exp
 import { summarizeExpenses } from "../domain/expenses";
 import type { Database, Json } from "../../../shared/infrastructure/supabase/database.types";
 import { getSupabaseClient } from "../../../shared/infrastructure/supabase/client";
+import { NumericInput } from "../../../shared/ui/NumericInput";
 
 type ExpenseRow = Database["public"]["Tables"]["fixora_expenses"]["Row"];
 type ExpenseSettings = Database["public"]["Tables"]["fixora_expense_settings"]["Row"];
@@ -173,7 +174,7 @@ export function CloudExpensesPage({ businessId, currency, formatMoney }: {
               {fixed.map((item) => (
                 <div className="expense-entry" key={item.id}>
                   <label className="field"><span>Concepto</span><input value={item.name} maxLength={120} placeholder="Ej. renta del local" onChange={(event) => updateFixed(item.id, "name", event.target.value)} /></label>
-                  <label className="field"><span>Importe ({currency})</span><input type="number" min="0" step="0.01" value={item.amount} onChange={(event) => updateFixed(item.id, "amount", event.target.value)} /></label>
+                  <label className="field"><span>Importe ({currency})</span><NumericInput min={0} step={0.01} value={item.amount} onValueChange={(value) => updateFixed(item.id, "amount", String(value))} /></label>
                   <button className="delete-button" aria-label={`Retirar ${item.name || "gasto fijo"}`} onClick={() => { markChanged(); setFixed((current) => current.filter((entry) => entry.id !== item.id)); }}>×</button>
                 </div>
               ))}
@@ -184,7 +185,7 @@ export function CloudExpensesPage({ businessId, currency, formatMoney }: {
               {variable.map((item) => (
                 <div className="expense-entry" key={item.id}>
                   <label className="field"><span>Concepto</span><input value={item.name} maxLength={120} placeholder="Ej. empaque por unidad" onChange={(event) => updateVariable(item.id, "name", event.target.value)} /></label>
-                  <label className="field"><span>Coste ({currency})</span><input type="number" min="0" step="0.01" value={item.costPerUnit} onChange={(event) => updateVariable(item.id, "costPerUnit", event.target.value)} /></label>
+                  <label className="field"><span>Coste ({currency})</span><NumericInput min={0} step={0.01} value={item.costPerUnit} onValueChange={(value) => updateVariable(item.id, "costPerUnit", String(value))} /></label>
                   <button className="delete-button" aria-label={`Retirar ${item.name || "coste variable"}`} onClick={() => { markChanged(); setVariable((current) => current.filter((entry) => entry.id !== item.id)); }}>×</button>
                 </div>
               ))}
@@ -197,7 +198,7 @@ export function CloudExpensesPage({ businessId, currency, formatMoney }: {
             <p className="field-hint">La moneda se administra en la configuración del negocio. Cambiarla no convierte importes anteriores.</p>
             <label className="field expected-units-field"><span>Periodo de registro</span><select value={period} onChange={(event) => { markChanged(); setPeriod(event.target.value as ExpensePeriod); }}>{Object.entries(periodLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
             <p className="field-hint">Cambiar el periodo no convierte automáticamente los importes. Ajusta cada gasto al periodo seleccionado.</p>
-            <label className="field expected-units-field"><span>Unidades estimadas en el periodo</span><input type="number" min="1" step="1" value={expectedUnits} onChange={(event) => { markChanged(); setExpectedUnits(Math.max(1, Math.floor(Number(event.target.value) || 1))); }} /></label>
+            <label className="field expected-units-field"><span>Unidades estimadas en el periodo</span><NumericInput min={1} step={1} value={expectedUnits} onValueChange={(value) => { markChanged(); setExpectedUnits(value); }} /></label>
             {summary.error ? <p className="error-state" role="alert">{summary.error}</p> : summary.result && (
               <div className="expense-summary">
                 <div><span>Gastos fijos del periodo ({periodLabels[period].toLowerCase()})</span><strong>{formatMoney(summary.result.fixedCostsForPeriod, currency)}</strong></div>
