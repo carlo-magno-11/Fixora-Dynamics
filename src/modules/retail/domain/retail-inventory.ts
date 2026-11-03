@@ -66,10 +66,11 @@ export function calculateRetailInventoryBalance(
     if (!movement || typeof movement !== "object") {
       throw new RangeError("Cada movimiento de inventario debe ser un objeto válido.");
     }
-    if (typeof movement.id !== "string" || !movement.id.trim() || ids.has(movement.id)) {
+    const movementId = typeof movement.id === "string" ? movement.id.trim() : "";
+    if (!movementId || ids.has(movementId)) {
       throw new RangeError("Cada movimiento debe tener un identificador único.");
     }
-    ids.add(movement.id);
+    ids.add(movementId);
 
     if (typeof movement.productSku !== "string" || movement.productSku.trim() !== normalizedSku) {
       throw new RangeError("Todos los movimientos deben pertenecer al SKU solicitado.");
