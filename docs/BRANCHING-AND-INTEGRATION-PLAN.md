@@ -4,71 +4,86 @@ Fecha: 3 de noviembre de 2026
 Rama de trabajo vigente: `integration/fixora-mainline-20261103`  
 Estado: integración en curso; no es una declaración de release ni de producción.
 
-## 1. Regla operativa desde ahora
+## 1. Regla operativa
 
-Toda modificación nueva de producto, código, pruebas y documentación se realizará en `integration/fixora-mainline-20261103`. Las ramas de funcionalidad anteriores se conservan como evidencia y fuentes de cambios, pero no se usarán para iniciar nuevas líneas de trabajo ni se actualizarán en paralelo.
+Toda modificación nueva de producto, código, pruebas y documentación se realiza en `integration/fixora-mainline-20261103`. Las ramas anteriores se conservan como evidencia histórica, pero no se abren nuevas líneas de trabajo en paralelo. Antes de cada escritura se consulta el HEAD y el contenido actual de la rama para evitar sobrescribir el trabajo concurrente.
 
-La rama se creó desde el commit `1e51c55a6ce2ed6548b7f159eda963d5ec568b94`, que ya contiene la cadena de trabajo de Essentials, identidad web, edición numérica, rediseño visual, paleta, especificación comercial, guías y soporte de duración exacta por días. Incluye también la corrección del test de aislamiento de licencias descrita en el PR #13.
+## 2. Mapa de trabajo
 
-## 2. Mapa de trabajo existente
-
-| Área | Referencia existente | Tratamiento |
+| Área | Referencia existente | Estado |
 |---|---|---|
-| Fundación y producto general | PR #1 | Base funcional heredada |
-| Identidad web y cloud | PR #2 | Base funcional heredada |
-| Bandeja de soporte | PR #3–#6; variante R4 en PR #8 como base | Integrar tras revisión de conflictos |
-| Edición de importes | PR #7 | Incluida en la cadena actual |
-| Identidad visual | PR #9 | Incluida en la cadena actual |
-| Paleta configurable | PR #10 | Incluida en la cadena actual |
-| Modelo comercial y entitlements | PR #11 | Documentación incluida |
-| Guías generales y especializadas | PR #12 | Documentación incluida; kits específicos siguen siendo borradores |
-| Duración exacta por días | PR #13 | Código y migración incluidos; DB CI debe confirmar el último arreglo |
-| Seguridad OWASP y rate limits | PR #8 | Pendiente de integración controlada |
+| Fundación y producto general | PR #1 | Base heredada; aún requiere validación comercial y E2E |
+| Identidad web y cloud | PR #2 | Base heredada; requiere pruebas integrales |
+| Bandeja de soporte | PR #3–#6; variante R4 integrada desde PR #8 | Código integrado; falta probar AAL2 y operación real |
+| Edición de importes | PR #7 | Incluida en la cadena |
+| Identidad visual | PR #9 | Incluida en la cadena |
+| Paleta configurable | PR #10 | Incluida en la cadena |
+| Modelo comercial y entitlements | PR #11 | Especificación incluida; implementación parcial |
+| Guías | PR #12 | Documentación incluida; kits específicos aún no publicados |
+| Duración exacta por días | PR #13 | Código/migración en repositorio; migración remota no aplicada |
+| Seguridad OWASP y rate limits | PR #8 | Fusionado a la rama de integración el 3-11-2026 |
 
-Los PR anteriores permanecen abiertos mientras se valida la consolidación. No se deben fusionar en masa ni cerrar como completados solo porque sus commits aparezcan como ancestros de esta rama.
+Los PR históricos no equivalen a funcionalidades terminadas. El estado de cada función se valida con pruebas, autorización, persistencia y uso real.
 
-## 3. Seguridad: dependencia que no se debe forzar
+## 3. Integración de seguridad
 
-PR #8 parte de `feat/admin-support-inbox-20261103-r4`, mientras que la cadena principal actual deriva de la rama de gastos y de las mejoras visuales. Al probar PR #8 contra esta rama de integración, GitHub informó que no era mergeable. El cambio de base se revirtió y PR #8 conserva su base original.
+PR #8 fue revisado y retargeteado a esta rama. El diff tenía 31 archivos y no compartía rutas modificadas con PR #14. GitHub confirmó `mergeable=true`; los workflows del head de seguridad reportaron CI #1174, Security #82, CodeQL #21 y Database tests #730 exitosos. Se marcó listo para revisión y se fusionó mediante GitHub el 3-11-2026.
 
-Por tanto:
-- No hacer merge, rebase, reset ni cherry-pick ciego de PR #8.
-- Mantener identificada la variante R4 de soporte como la base de esa línea de seguridad.
-- Resolver los conflictos en un checkout local limpio, inspeccionando primero cada diff y conservando ambos comportamientos cuando sean compatibles.
-- Integrar después la migración de rate limits `20261103030100` antes de la migración de duración `20261103050000`.
-- Ejecutar CI completo y pgTAP desde la rama consolidada antes de considerar la seguridad integrada.
+Commit de merge: `248d67fafe6225e2f1a26c5faa1336c5665febbe`.
 
-## 4. Flujo de cambios
+El merge incorpora rate limiting atómico, límites de cuerpo JSON, pruebas de seguridad y workflows. No implica despliegue remoto ni cierre de las puertas de lanzamiento. Pendientes:
+- Definir retención y limpieza periódica de `fixora_rate_limit_buckets`, con prueba de que los buckets activos nunca se eliminan.
+- Documentar el comportamiento de ráfaga del fixed-window y evaluar límites de gateway para endpoints expuestos.
+- Confirmar allowlist exacta del host de staging antes de habilitar ZAP.
+- Validar configuración efectiva de Auth/API, MFA AAL2 y roles con cuentas de prueba.
+- Revisar y resolver el bucket heredado `eyesite-media` mediante Storage API, tras confirmar su no utilización por Fixora.
+- Ejecutar CI, seguridad, CodeQL y Database tests sobre el HEAD combinado.
 
-1. Leer estado remoto de la rama antes de modificar.
-2. Trabajar únicamente sobre esta rama.
-3. Hacer cambios pequeños y coherentes por área; no reescribir módulos completos para incorporar una mejora localizada.
+## 4. Automatización de calidad en la rama central
+
+Se corrigieron los triggers `push` de:
+- `.github/workflows/ci.yml`
+- `.github/workflows/security.yml`
+- `.github/workflows/db-tests.yml`
+
+Los tres incluyen ahora `integration/**`, para que la rama central ejecute validación y escaneos al recibir commits directos. CI y Security conservan también sus triggers de pull request; Database tests ejecuta reconstrucción local, pgTAP, mutaciones RLS y pruebas de concurrencia.
+
+## 5. Flujo de cambios
+
+1. Leer el HEAD remoto y el estado de PRs antes de modificar.
+2. Trabajar únicamente en la rama central, sin reset destructivo, force-push ni reemplazo de archivos no inspeccionados.
+3. Hacer cambios pequeños y coherentes; conservar cambios concurrentes.
 4. Añadir pruebas de dominio, integración y seguridad con cada cambio.
-5. Ejecutar validación TypeScript, Vitest, build, Deno y reconstrucción local de Supabase.
-6. Revisar diff, migraciones, permisos, RLS, funciones SECURITY DEFINER y orden temporal.
-7. Registrar qué está en GitHub, qué pasó CI, qué está aplicado en Supabase y qué se probó realmente en navegador/dispositivo.
-8. No desplegar ni aplicar migraciones remotas por el hecho de que el archivo exista en GitHub.
+5. Ejecutar TypeScript, Vitest, build, Deno y reconstrucción local de Supabase.
+6. Revisar migraciones, permisos, RLS, funciones SECURITY DEFINER, secretos y orden temporal.
+7. Registrar por separado GitHub, CI, Supabase remoto, staging y dispositivos.
+8. No desplegar ni aplicar migraciones remotas solo porque el archivo exista en GitHub; requiere revisión del diff, plan y aprobación para el entorno concreto.
 
-## 5. Criterios para aceptar una integración
+## 6. Criterios de aceptación
 
 - No perder cambios de ninguna rama de trabajo activa.
 - No duplicar tablas, RPC, motores de cálculo ni centros de ayuda.
 - No introducir regresiones en cálculos, Auth, RLS, licencias o administración.
-- No aceptar una prueba que pase por debilitar una regla de seguridad.
-- Mantener el máximo confirmado de tres dispositivos activos por licencia.
-- No presentar borradores de kits como funciones ya implementadas.
+- No aceptar pruebas que pasen debilitando reglas de seguridad.
+- Mantener tres dispositivos activos como máximo por licencia; no convertirlo en cuota global por usuario.
+- No presentar borradores de kits como funciones implementadas.
 - Conservar los datos del comprador cuando vence una licencia.
-- Registrar cualquier decisión comercial pendiente antes de cambiar esquema o permisos.
+- Registrar decisiones comerciales pendientes antes de modificar esquema o permisos.
+- Una funcionalidad se declara terminada sólo tras pasar su matriz de pruebas y comprobar el flujo real.
 
-## 6. Estado de entorno
+## 7. Estado de entornos al 3-11-2026
 
-- Rama de integración: creada en GitHub.
-- CI de validación del commit anterior: correcto.
-- La última suite de base de datos falló por una expectativa incorrecta en el test: el usuario B tenía una licencia propia de 30 días y el test esperaba cero licencias. Se corrigió para comprobar que B puede ver su licencia y no la de A.
-- El commit de la corrección necesita una ejecución nueva de CI; no se declara pgTAP aprobado todavía.
-- No se aplicó la migración de duración a Supabase remoto ni se desplegaron Edge Functions.
-- La base de pruebas, staging y producción deben mantenerse como destinos distintos y verificables.
+- Rama central: `integration/fixora-mainline-20261103`.
+- CI #1269: SUCCESS en el commit anterior a la integración de seguridad.
+- Database tests #825: SUCCESS en el commit anterior a la integración de seguridad; completó stack local, reset, pgTAP, mutaciones negativas RLS y concurrencia.
+- PR #8: fusionado en la rama central; workflows de su head también pasaron antes del merge.
+- Triggers de CI, Security y Database tests ampliados para `integration/**`; se espera la validación del nuevo HEAD.
+- Supabase remoto `eyesite-security-test`: migración más reciente `20261102234809`; no se aplicaron las migraciones de rate limits ni duración por días y no se desplegaron funciones en esta sesión.
+- EYESITE oficial: fuera de alcance y sin modificaciones.
+- Staging y pruebas en navegador/dispositivo: no confirmados.
 
-## 7. Política de ramas
+La base local reconstruible, el proyecto remoto de pruebas y el staging deben permanecer como destinos distintos y verificables.
 
-A partir de este punto, la rama única de trabajo es `integration/fixora-mainline-20261103`. Si otra IA necesita continuar, debe trabajar sobre esta misma rama o entregar sus cambios como diff/PR para revisión; no crear una segunda línea de integración paralela. Los PR antiguos se consideran fuentes históricas hasta que se integren y validen explícitamente.
+## 8. Política para colaboración con otras IA
+
+Toda IA que continúe el trabajo debe usar esta rama como fuente única, leer el HEAD antes de escribir y entregar commits pequeños con pruebas. No crear otra rama de integración ni fusionar PR históricos sin revisar el diff y la relación con la rama central.
