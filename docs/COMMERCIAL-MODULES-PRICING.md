@@ -23,6 +23,7 @@ Precios propuestos para validar disposición de pago en México; no son precios 
 
 | SKU comercial propuesto | Incluye | Precio de prueba |
 |---|---|---:|
+| FIXORA-ESSENTIALS-30D-TRIAL | General durante 30 días desde la primera activación; una compra por titular | $249 |
 | FIXORA-ESSENTIALS-ANNUAL | General durante 12 meses | $699 |
 | FIXORA-BUNDLE-RESELL-ANNUAL | General + Comercio y reventa durante 12 meses | $999 |
 | FIXORA-BUNDLE-FOOD-ANNUAL | General + Alimentos y repostería durante 12 meses | $999 |
