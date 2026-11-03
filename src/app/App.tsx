@@ -205,6 +205,7 @@ export function App({
   const [history, setHistory] = useState<SavedCalculation[]>(historyLoadState.records);
   const [historyNeedsRecovery, setHistoryNeedsRecovery] = useState(historyLoadState.needsRecovery);
   const [savedMessage, setSavedMessage] = useState("");
+  const [savingCalculation, setSavingCalculation] = useState(false);
 
   useEffect(() => {
     const key = `fixora.theme.v1:${userEmail?.trim().toLowerCase() || "local"}`;
@@ -563,6 +564,7 @@ export function App({
   }
 
   async function saveCalculation() {
+    if (savingCalculation) return;
     if (draftHydratedScope !== calculatorDraftScope) {
       setSavedMessage("Espera a que Fixora termine de cargar los datos del negocio seleccionado.");
       return;
@@ -573,6 +575,7 @@ export function App({
     }
     if (!calculation.result) return;
     const saveScope = calculatorDraftScope;
+    setSavingCalculation(true);
     try {
       const snapshot = snapshotService.create({
         name: name.trim() || "Cálculo sin nombre",
@@ -605,6 +608,8 @@ export function App({
       if (currentDraftScope.current === saveScope) {
         setSavedMessage(error instanceof Error ? error.message : "No fue posible guardar el cálculo. Revisa la moneda y los datos del catálogo.");
       }
+    } finally {
+      if (currentDraftScope.current === saveScope) setSavingCalculation(false);
     }
   }
 
@@ -900,8 +905,8 @@ export function App({
                         </div>
                       </>
                     ) : null}
-                    <button className="primary-button" onClick={saveCalculation} disabled={!calculation.result || historyNeedsRecovery}>
-                      Guardar cálculo <span>↗</span>
+                    <button className="primary-button" onClick={saveCalculation} disabled={!calculation.result || (authMode !== "cloud" && historyNeedsRecovery) || savingCalculation || draftHydratedScope !== calculatorDraftScope}>
+                      {savingCalculation ? "Guardando…" : "Guardar cálculo"} <span>↗</span>
                     </button>
                     {savedMessage && <p className="save-message" role="status">{savedMessage}</p>}
                   </section>
