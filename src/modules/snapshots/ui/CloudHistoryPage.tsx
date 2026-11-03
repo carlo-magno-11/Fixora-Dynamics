@@ -35,6 +35,7 @@ export function CloudHistoryPage({ businessId, formatMoney, onOpenCalculation, o
 }) {
   const requestId = useRef(0);
   const [records, setRecords] = useState<SavedCalculation[]>([]);
+  const [loadedBusinessId, setLoadedBusinessId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [cursor, setCursor] = useState<SnapshotCursor | null>(null);
@@ -49,18 +50,24 @@ export function CloudHistoryPage({ businessId, formatMoney, onOpenCalculation, o
     setCursor(null);
     setHasMore(false);
     setRecords([]);
+    setLoadedBusinessId(null);
+    onRecordsLoaded([]);
     setInvalidCount(0);
     setErrorMessage("");
     try {
       const page = await service.firstPage(businessId, PAGE_SIZE);
       if (currentRequest !== requestId.current) return;
       setRecords(page.records);
+      setLoadedBusinessId(businessId);
       setCursor(page.cursor);
       setHasMore(page.hasMore);
       setInvalidCount(page.invalidCount);
       onRecordsLoaded(page.records);
     } catch (error) {
       if (currentRequest !== requestId.current) return;
+      setRecords([]);
+      setLoadedBusinessId(businessId);
+      onRecordsLoaded([]);
       setErrorMessage(error instanceof Error ? error.message : "No fue posible cargar el historial.");
     } finally {
       if (currentRequest === requestId.current) setLoading(false);
@@ -73,7 +80,7 @@ export function CloudHistoryPage({ businessId, formatMoney, onOpenCalculation, o
   }, [loadFirstPage]);
 
   const loadMore = useCallback(async () => {
-    if (!cursor || loadingMore || loading || !hasMore) return;
+    if (loadedBusinessId !== businessId || !cursor || loadingMore || loading || !hasMore) return;
     const currentRequest = requestId.current;
     setLoadingMore(true);
     setErrorMessage("");
@@ -92,7 +99,7 @@ export function CloudHistoryPage({ businessId, formatMoney, onOpenCalculation, o
     } finally {
       if (currentRequest === requestId.current) setLoadingMore(false);
     }
-  }, [businessId, cursor, hasMore, loading, loadingMore, onRecordsLoaded, records, service]);
+  }, [businessId, cursor, hasMore, loadedBusinessId, loading, loadingMore, onRecordsLoaded, records, service]);
 
   return (
     <div className="secondary-page">
@@ -102,7 +109,7 @@ export function CloudHistoryPage({ businessId, formatMoney, onOpenCalculation, o
       <div className="history-actions"><span>Historial del negocio seleccionado</span><button className="outline-button" type="button" disabled={loading || loadingMore} onClick={() => void loadFirstPage()}>{loading ? "Actualizando…" : "Actualizar historial"}</button></div>
       {errorMessage && <p className="error-state" role="alert">{errorMessage}</p>}
       {invalidCount > 0 && <div className="guide-callout" role="alert"><strong>Algunos registros no se pudieron interpretar.</strong><p>{invalidCount} registros no coinciden con el esquema de cálculo actual. No se modificaron ni eliminaron.</p></div>}
-      {loading ? <p className="local-storage-note">Cargando historial…</p> : records.length === 0 ? (
+      {loading || loadedBusinessId !== businessId ? <p className="local-storage-note">Cargando historial del negocio seleccionado…</p> : records.length === 0 ? (
         <div className="empty-state"><span>◷</span><h2>Aún no hay cálculos guardados</h2><p>Cuando guardes un análisis, aparecerá aquí para que puedas consultarlo desde este negocio.</p></div>
       ) : (
         <>
