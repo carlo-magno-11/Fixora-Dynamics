@@ -259,6 +259,7 @@ Calcula coste del lote puesto en almacén, coste de adquisición por unidad vend
 
 - El motor de precios admite una base de comisión explícita (`discounted_price` o `pre_discount`) sin cambiar el resultado anterior cuando el campo se omite. Los snapshots antiguos siguen siendo válidos y los nuevos rechazan valores de base no soportados.
 - El historial CSV exporta también la base de comisión, y la validación de cálculos guardados acepta el campo opcional solo con valores soportados; los registros antiguos sin ese campo conservan el comportamiento predeterminado.
+- La calculadora General ya expone la selección de base de comisión; el borrador local la conserva y rechaza valores desconocidos, y la exportación CSV deja constancia del criterio usado.
 - Se conectó el cálculo de precio sugerido del kit al motor común mediante `src/modules/retail/application/retail-pricing.ts`. El motor compartido ahora permite declarar si la comisión del canal se calcula sobre el precio con descuento o sobre el precio previo al descuento; el comportamiento anterior permanece como valor predeterminado.
 - El libro de movimientos es una proyección pura y ordenada por secuencia. No protege contra ventas concurrentes por sí solo: la futura escritura debe pasar por RPC transaccional, generar secuencia/idempotency key en servidor y bloquear el saldo del SKU antes de aceptar una salida.
 
