@@ -2,7 +2,7 @@
 
 Fecha: 3 de noviembre de 2026  
 Rama de referencia: `integration/fixora-mainline-20261103`  
-Estado: repositorios cloud y sincronización de borradores implementados en la rama central. En HEAD `1594a01`, TypeScript y Vitest pasan; build está en curso y Database tests debe validar la nueva migración de borradores. No equivale a una validación E2E en staging.
+Estado: rutas cloud para catálogo, gastos, snapshots/historial y borradores implementadas en la rama central. El commit `dcc8e63` tuvo CI, Security, CodeQL y Database tests exitosos; CI registró 199 pruebas Vitest y 14 pruebas Deno. Los cambios posteriores de aislamiento local por negocio y estados de fallo seguro están en validación nuevamente. No equivale a una validación E2E en staging.
 
 ## 1. Estado real observado
 
@@ -14,12 +14,13 @@ La aplicación ya tiene rutas cloud para los datos operativos principales. La au
 - `CloudExpensesPage` lee gastos/configuración y guarda el conjunto mediante `fixora_save_expenses`, que aplica control de versión optimista y una transacción.
 - `App.tsx` inserta los snapshots de cálculo en `fixora_calculation_snapshots` en modo cloud. `CloudHistoryPage` lee el historial del negocio y valida los registros antes de mostrarlos.
 - El historial cloud ya admite paginación por cursor de fecha + UUID, orden estable y lotes de 100. El cambio quedó en el commit `0ab526ed35a2378fb61d1af1bf6448ec5cc51b76`; sus controles CI/Security/Database/CodeQL deben considerarse pendientes hasta que GitHub confirme el resultado final de cada workflow.
-- Los borradores del calculador ahora tienen persistencia cloud privada por usuario + negocio en `fixora_calculator_drafts`, con RPC de control de versión y RLS de lectura propia. La UI conserva el almacenamiento local, pide elegir cuando detecta dos versiones, ofrece sincronización explícita del borrador local y permite conservar/restaurar una copia local previa. La migración está incluida en la rama; falta que pgTAP confirme sus políticas, permisos y concurrencia en el entorno local de CI.
+- Los borradores del calculador tienen persistencia cloud privada por usuario + negocio en `fixora_calculator_drafts`, con RPC de control de versión y RLS de lectura propia. La UI pide elegir cuando detecta versiones local/cloud, ofrece sincronización explícita del borrador local y permite conservar/restaurar una copia previa. pgTAP pasó en CI #979, incluida la migración y las pruebas de permisos, versión y aislamiento; falta conflicto real con dos dispositivos y E2E. El almacenamiento local de borradores también se separó por cuenta y negocio para evitar colisiones al cambiar de negocio.
 - Catálogo, gastos e historial ahora pasan por repositorios Supabase tipados y servicios de aplicación. Los componentes UI reciben contratos de aplicación; la composición de dependencias se concentra en `src/app/create-app-services.ts`. Las pruebas de arquitectura impiden que UI importe infraestructura directamente.
 - Los repositorios tienen pruebas unitarias de mapeo/validación y los servicios cloud tienen pruebas de delegación y reglas de dominio. El CI #1353 confirmó 195 pruebas Vitest, TypeScript y build web.
+- La UI oculta datos anteriores al cambiar de negocio, ignora respuestas asíncronas obsoletas y bloquea escrituras si no pudo cargar la colección actual. En catálogo, gastos e historial un error de lectura ya no se presenta como una colección vacía lista para editar.
 - No hay evidencia de E2E en staging con dos cuentas, dos negocios y dos dispositivos.
 
-**Conclusión:** catálogo, gastos y snapshots/historial ya tienen un camino cloud implementado en la UI y respaldado por tablas/RLS/RPC. No se debe anunciar sincronización integral entre dispositivos: el borrador sigue siendo local, la migración de datos no existe y faltan pruebas E2E operativas. No se debe hacer dual-write silencioso ni borrar los datos locales durante la transición.
+**Conclusión:** catálogo, gastos, snapshots/historial y borradores tienen caminos cloud implementados con repositorios/servicios tipados y respaldo de tablas/RLS/RPC. El borrador ya tiene persistencia cloud privada, pero aún falta validar conflictos reales entre dispositivos, migración/importación de datos históricos y E2E operativas. No se debe anunciar sincronización integral ni hacer dual-write silencioso o borrar datos locales durante la transición.
 
 ## 2. Arquitectura objetivo sin añadir infraestructura innecesaria
 
@@ -121,14 +122,17 @@ No forzar una conversión de todos los contratos locales a Promise si no aporta 
 
 ### G4 — borrador y transición local → cloud
 
-**Estado:** implementación en la rama; pgTAP y E2E pendientes.
+**Estado:** persistencia cloud y pgTAP aprobados en CI #979; validación E2E pendiente. Los últimos guards de UI/storage están en CI del HEAD posterior.
 
 - Tabla privada por negocio + usuario, con lectura propia, tamaño máximo y sin escritura directa desde el cliente.
 - RPC SECURITY INVOKER con helper SECURITY DEFINER de search_path vacío, grants mínimos y control optimista de versión.
+- pgTAP cubre creación, incremento de versión, rechazo de escritura obsoleta, payload inválido/grande, no miembro, lectura privada y miembro viewer.
 - La UI detecta borrador local/cloud, solicita elección explícita y no mezcla versiones.
-- La copia local se conserva; cuando se elige cloud, la copia previa se respalda por ámbito de usuario/negocio y puede restaurarse.
-- La aplicación reinicia e hidrata estado al cambiar cuenta/negocio y descarta respuestas asíncronas obsoletas para no mezclar datos.
-- Pendiente: pgTAP completo, conflicto real con dos dispositivos y pruebas de desconexión/reintento.
+- La copia local se conserva; al elegir cloud, la copia previa se respalda por cuenta/negocio y puede restaurarse.
+- El almacenamiento local de borradores usa un namespace por cuenta y negocio; hay prueba unitaria de aislamiento entre dos negocios.
+- La aplicación reinicia e hidrata estado al cambiar cuenta/negocio y descarta respuestas asíncronas obsoletas.
+- La UI de catálogo/gastos/historial bloquea escritura o presentación como vacía cuando la lectura cloud falla.
+- Pendiente: conflicto real con dos dispositivos, pruebas de desconexión/reintento, importación de borradores históricos con negocio no identificado y E2E.
 - Nunca mezclar datos de dos cuentas o negocios por compartir navegador.
 
 ### G5 — staging y salida
