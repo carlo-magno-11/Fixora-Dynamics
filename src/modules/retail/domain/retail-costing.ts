@@ -60,6 +60,10 @@ function money(value: Decimal): number {
   return finiteNumber(value.toDecimalPlaces(2, Decimal.ROUND_HALF_UP));
 }
 
+function unitCost(value: Decimal): number {
+  return finiteNumber(value.toDecimalPlaces(8, Decimal.ROUND_HALF_UP));
+}
+
 function rate(value: Decimal): number {
   return finiteNumber(value.toDecimalPlaces(6, Decimal.ROUND_HALF_UP));
 }
@@ -139,13 +143,13 @@ export function calculateRetailCosting(input: RetailCostingInput): RetailCosting
     purchasedUnits: input.purchasedUnits,
     saleableUnits: input.saleableUnits,
     landedLotCost: money(landedLotCost),
-    acquisitionCostPerSaleableUnit: money(acquisitionCostPerSaleableUnit),
+    acquisitionCostPerSaleableUnit: unitCost(acquisitionCostPerSaleableUnit),
     discountAmount: money(discountAmount),
     netSalesAfterDiscount: money(netSalesAfterDiscount),
     channelFeeBase: money(channelFeeBase),
     channelFee: money(channelFee),
     netRevenue: money(netRevenue),
-    variableCostBeforeFee: money(variableCostBeforeFee),
+    variableCostBeforeFee: unitCost(variableCostBeforeFee),
     contributionBeforeFixed: money(contributionBeforeFixed),
     fixedExpenseAllocationPerUnit: money(D(input.fixedExpenseAllocationPerUnit)),
     estimatedContributionAfterFixed: money(estimatedContributionAfterFixed),
