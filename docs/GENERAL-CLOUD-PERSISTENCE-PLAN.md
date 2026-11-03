@@ -2,120 +2,133 @@
 
 Fecha: 3 de noviembre de 2026  
 Rama de referencia: `integration/fixora-mainline-20261103`  
-Estado: auditoría estática de GitHub; no es evidencia de funcionamiento E2E.
+Estado: revisión estática del código y CI; no equivale a una validación E2E en staging.
 
-## 1. Hallazgo principal
+## 1. Estado real observado
 
-La aplicación permite iniciar sesión en modo cloud, pero el código inspeccionado todavía construye repositorios de navegador para los datos principales:
+La aplicación ya tiene rutas cloud para los datos operativos principales. La auditoría inicial se actualiza para distinguirlas del wiring local:
 
-- `src/app/create-app-services.ts` crea `browser-catalog-repository`, `browser-expenses-repository` y `browser-calculation-repository`.
-- `src/app/App.tsx` usa `window.localStorage` y guarda borradores localmente incluso cuando `authMode === "cloud"`; la interfaz aclara que ese borrador no está sincronizado.
-- La carga y guardado del historial local se omiten en modo cloud, pero no se observa en ese wiring un repositorio remoto sustituto.
-- La migración `20261031230837_fixora_operational_data.sql` ya crea tablas para catálogo, gastos, ajustes de gastos y snapshots, con RLS y pertenencia al negocio.
-- La migración `20261102230706_fixora_save_expenses_batch_rpc.sql` añade `fixora_save_expenses`, con control optimista de versión y escritura transaccional de gastos.
-- El dominio de catálogo/gastos y las interfaces de repositorio son síncronos hoy; una integración remota real requiere adaptar el contrato a operaciones asíncronas o diseñar un cache/outbox explícito.
+- `src/app/create-app-services.ts` construye repositorios de navegador para el modo local. No son, por sí solos, evidencia de que el modo cloud use almacenamiento local para catálogo y gastos.
+- En `src/app/App.tsx`, el modo cloud renderiza `CloudCatalogPage`, `CloudExpensesPage` y `CloudHistoryPage`.
+- `CloudCatalogPage` lee, crea, actualiza y archiva filas de `fixora_catalog_items` usando el cliente autenticado de Supabase y un `business_id` filtrado; las políticas RLS siguen siendo la autoridad de aislamiento.
+- `CloudExpensesPage` lee gastos/configuración y guarda el conjunto mediante `fixora_save_expenses`, que aplica control de versión optimista y una transacción.
+- `App.tsx` inserta los snapshots de cálculo en `fixora_calculation_snapshots` en modo cloud. `CloudHistoryPage` lee el historial del negocio y valida los registros antes de mostrarlos.
+- El historial cloud ya admite paginación por cursor de fecha + UUID, orden estable y lotes de 100. El cambio quedó en el commit `0ab526ed35a2378fb61d1af1bf6448ec5cc51b76`; sus controles CI/Security/Database/CodeQL deben considerarse pendientes hasta que GitHub confirme el resultado final de cada workflow.
+- Los borradores del calculador siguen guardándose en `localStorage` incluso en modo cloud. La UI informa que son locales y no están sincronizados. No existe aún un flujo de migración local → cloud.
+- Las páginas cloud consultan Supabase directamente desde componentes UI; falta extraer adaptadores/repositorios reutilizables y probarlos de forma aislada.
+- No hay evidencia de E2E en staging con dos cuentas, dos negocios y dos dispositivos.
 
-**Conclusión:** autenticación cloud y aislamiento de negocio existen como piezas, pero no se debe anunciar que catálogo, gastos, borradores e historial se sincronizan entre dispositivos hasta terminar los adaptadores remotos y sus pruebas. No se debe hacer dual-write silencioso local+cloud ni borrar los datos locales del comprador durante la transición.
+**Conclusión:** catálogo, gastos y snapshots/historial ya tienen un camino cloud implementado en la UI y respaldado por tablas/RLS/RPC. No se debe anunciar sincronización integral entre dispositivos: el borrador sigue siendo local, la migración de datos no existe y faltan pruebas E2E operativas. No se debe hacer dual-write silencioso ni borrar los datos locales durante la transición.
 
 ## 2. Arquitectura objetivo sin añadir infraestructura innecesaria
 
-Mantener monolito modular y Supabase como autoridad de datos. Reutilizar los puertos existentes y separar:
+Mantener el monolito modular y Supabase como autoridad cloud. Evolucionar la implementación existente sin reescribir los servicios locales:
 
 1. **Domain:** entidades, validaciones y fórmulas puras; sin Supabase ni navegador.
-2. **Application:** casos de uso asíncronos, validación de permisos esperados y control de conflictos.
-3. **Infrastructure/browser:** repositorios locales para modo local y migración/recuperación de datos.
-4. **Infrastructure/supabase:** repositorios remotos por módulo usando el cliente autenticado; nunca service_role en navegador.
-5. **UI:** estados loading/empty/error/conflict/offline explícitos y mensajes que distingan guardado local de guardado cloud.
+2. **Application:** casos de uso que expresen operaciones y conflictos del negocio.
+3. **Infrastructure/browser:** repositorios locales existentes y herramientas de exportación/recuperación.
+4. **Infrastructure/supabase:** extraer las consultas hoy embebidas en UI a repositorios por módulo, usando sólo el cliente autenticado; nunca `service_role` en navegador.
+5. **UI:** estados loading/empty/error/conflict explícitos y mensajes que distingan guardado local de guardado cloud.
 
-No añadir microservicios, Redis, Firebase, Google Cloud ni un segundo servidor de licencias. Para la primera versión cloud, priorizar funcionamiento online con operaciones asíncronas y errores claros; diseñar offline/outbox como fase separada, después de asegurar consistencia.
+No forzar una conversión de todos los contratos locales a Promise si no aporta valor. No añadir microservicios, Redis, Firebase, Google Cloud ni un segundo servidor de licencias. Para la primera versión cloud, priorizar funcionamiento online con errores claros; offline/outbox será una fase separada.
 
 ## 3. Contratos de persistencia por módulo
 
 ### Catálogo
 
-- Leer por `business_id`, ordenar de forma estable y depender de RLS para aislamiento.
-- Crear/actualizar mediante campos explícitos; no enviar objetos arbitrarios.
-- Mapear `id, name, kind, unit, sku, currency_code, reference_cost, is_active` a la entidad de dominio.
+- Leer por negocio, ordenar de forma estable y depender de RLS para aislamiento.
+- Crear/actualizar mediante campos explícitos; nunca enviar objetos arbitrarios.
 - No permitir cambiar `business_id` ni `created_by` desde el cliente.
-- Tratar SKU único por negocio como conflicto de dominio legible.
+- Traducir errores de SKU duplicado y permisos a mensajes de dominio comprensibles.
+- Mantener archivado lógico; no exponer borrado físico desde el cliente.
 
 ### Gastos
 
 - Cargar `fixora_expense_settings` y gastos activos del negocio.
-- Guardar la colección mediante `fixora_save_expenses`, enviando versión esperada para detectar edición concurrente.
-- Mostrar conflicto de versión y ofrecer recarga; no sobrescribir cambios recientes automáticamente.
-- La RPC ya valida propietario/rol, arrays, importes finitos, IDs y escritura transaccional. Añadir pruebas para dos clientes que guardan con la misma versión, IDs de otro negocio, cambio de tipo y límites de tamaño.
+- Guardar el conjunto mediante `fixora_save_expenses`, enviando la versión esperada.
+- Mostrar conflicto de versión y recargar sin sobrescribir cambios concurrentes.
+- Mantener la transacción indivisible: configuración, archivado de filas retiradas y altas/actualizaciones.
+- Las pruebas deben cubrir dos escritores con la misma versión, IDs de otro negocio/tipo, IDs repetidos, arrays grandes, valores no finitos y rollback completo.
 
 ### Snapshots e historial
 
-- Insertar snapshots inmutables en `fixora_calculation_snapshots` con moneda, versión de fórmula, entradas, resultados y snapshot del producto.
-- Leer por negocio y fecha, con paginación y límites.
+- Insertar snapshots inmutables con moneda, versión de fórmula, entradas, resultados y snapshot del producto.
+- Leer por negocio, con orden estable y paginación por cursor (no offset).
+- El CSV debe indicar con claridad si exporta todos los registros o sólo los cargados.
 - No actualizar resultados históricos al cambiar fórmulas o catálogo.
-- Validar en el servidor tamaño máximo del payload y estructura permitida; conservar versiones antiguas.
-- Definir política de exportación y borrado de datos conforme a términos, sin que la expiración de licencia borre el historial.
+- Validar en servidor el tamaño y tipo del payload; conservar las versiones históricas compatibles.
 
-### Borradores y preferencias
+### Borradores, preferencias y migración
 
-- Los borradores locales deben etiquetarse como locales y tener exportación/recuperación antes de cualquier migración.
-- Las preferencias no sensibles pueden permanecer locales; el perfil y la configuración de negocio autoritativa deben persistir en Supabase.
+- Los borradores del calculador deben seguir identificados como locales hasta que exista persistencia cloud probada.
+- Diseñar borrador cloud por negocio + usuario, con RLS que impida a otros integrantes leer borradores privados si ésa es la política elegida.
+- Las preferencias no sensibles pueden permanecer locales; perfil y configuración autoritativa del negocio deben persistir en Supabase.
 - No almacenar códigos de activación, tokens ni secretos en localStorage.
+- Importar datos locales sólo con preview, confirmación, idempotencia y copia recuperable; nunca mezclar automáticamente cuentas o negocios.
 
 ## 4. Seguridad y aislamiento
 
 - RLS es obligatorio, pero no reemplaza la autorización comercial del kit.
-- Probar usuario A y usuario B, ambos con negocios distintos; también miembro lector/editor/administrador.
+- Probar usuario A y usuario B con negocios distintos; además miembro lector/editor/administrador.
 - Probar llamadas directas a tablas y RPC, no sólo componentes React.
-- Las escrituras usan usuario autenticado y RPC invoker cuando corresponda; funciones SECURITY DEFINER deben estar aisladas y tener grants mínimos.
-- No aceptar `business_id`, `created_by`, `owner_id`, roles, precios ni entitlements confiados al navegador.
+- Las escrituras usan el usuario autenticado y RPC invoker cuando corresponda; funciones SECURITY DEFINER deben tener `search_path` vacío y grants mínimos.
+- No confiar en `business_id`, `created_by`, `owner_id`, roles, precios ni entitlements enviados por navegador.
 - Comprobar que cambiar UUID, query params, payload y estado local no permite leer ni modificar datos de otro negocio.
-- Las pruebas deben cubrir reintentos, idempotencia, doble envío y concurrencia.
+- Cubrir reintentos, idempotencia, doble envío, concurrencia y sesión revocada.
 
 ## 5. Plan de implementación incremental
 
-### G0 — contratos y pruebas
-- Convertir los puertos de catálogo, gastos e historial a operaciones Promise donde el caso de uso lo requiera.
-- Mantener adaptadores browser con la misma semántica.
-- Definir DTOs y mapeos explícitos entre filas Supabase y entidades.
-- Añadir pruebas unitarias de mapeo, validación y conflicto; conservar fixtures legacy.
+### G0 — extracción y contratos probables
+
+- Extraer los mapeos y consultas de las páginas cloud a repositorios Supabase tipados, sin alterar el comportamiento visible.
+- Mantener los adaptadores browser para modo local.
+- Añadir pruebas unitarias para mapeos, validación de snapshots, errores de conflicto y paginación.
+- Mantener los DTOs explícitos y limitar columnas seleccionadas.
 
 ### G1 — catálogo cloud
-- Implementar `supabase-catalog-repository`.
-- Cargar, crear y actualizar por negocio con RLS.
-- Añadir tests de integración para dos negocios y SKU duplicado.
-- Conectar UI a estados async y comprobar refresh/reintento.
+
+- Añadir repositorio Supabase y conectarlo a la UI existente.
+- Probar lectura/alta/edición/archivo, SKU duplicado, permisos de viewer y aislamiento de dos negocios.
+- Añadir manejo de errores recuperable y recarga explícita.
 
 ### G2 — gastos cloud
-- Implementar `supabase-expenses-repository` sobre `fixora_save_expenses`.
-- Recuperar versión actual y mapear fixed/variable.
-- Probar control optimista, IDs cruzados, rollback transaccional y dos escritores concurrentes.
+
+- Extraer repositorio sobre `fixora_save_expenses`.
+- Añadir pruebas de concurrencia, IDs cruzados, duplicados, límites, importes inválidos y rollback.
+- Confirmar que un error de red o conflicto nunca muestra un falso mensaje de guardado.
 
 ### G3 — snapshots/historial cloud
-- Implementar insert/select paginado y snapshots inmutables.
-- Probar que el historial de un negocio no se mezcla con otro y que fórmulas antiguas siguen reproduciéndose.
-- Añadir exportación CSV sólo después de probar el conjunto cloud.
 
-### G4 — transición local → cloud
+- Extraer repositorio de snapshots y mantener historial inmutable.
+- Probar cursor estable, registros con timestamps iguales, páginas vacías, invalidación de payloads y cambio de negocio durante carga.
+- Asegurar que el CSV comunica el alcance real de la exportación.
+
+### G4 — borrador y transición local → cloud
+
+- Definir persistencia de borradores cloud con política de privacidad por usuario/negocio.
 - Detectar registros locales legacy y ofrecer importación explícita al negocio seleccionado.
-- Mostrar conteo, preview, conflictos y confirmación antes de importar.
+- Mostrar conteo, preview, conflictos y confirmación.
 - Importar mediante operaciones idempotentes; conservar copia local hasta verificar el resultado remoto.
 - Nunca mezclar datos de dos cuentas o negocios por compartir navegador.
 
 ### G5 — staging y salida
-- Dos usuarios y dos negocios reales de prueba.
+
+- Dos usuarios y dos negocios reales de prueba; repetir con dos dispositivos.
 - Login, refresh, logout/login, cambio de dispositivo y sesión revocada.
 - Errores de red, reintentos, doble envío y conflictos.
-- E2E de catálogo, gastos, cálculo, snapshot, historial y exportación.
+- E2E de catálogo, gastos, cálculo, snapshot, historial, paginación y exportación.
 - Verificar backup/restauración y retención de datos al vencer licencia.
 
 ## 6. Puerta de aceptación
 
 General cloud sólo puede marcarse completo cuando:
-- los tres módulos (catálogo, gastos, snapshots/historial) usan repositorios Supabase en modo cloud;
+- catálogo, gastos y snapshots/historial usan repositorios Supabase tipados en modo cloud;
+- borradores y migración local-cloud tienen un comportamiento explícito, seguro y recuperable;
 - local y cloud no se mezclan ni se confunden en los mensajes;
 - RLS y RPC pasan pruebas positivas y negativas entre usuarios/negocios;
 - concurrencia y reintentos no duplican ni pisan datos;
-- la migración local-cloud es explícita, recuperable y probada;
 - E2E en staging funciona con dos cuentas y dos dispositivos;
+- exportación, recuperación, backup y retención están probados;
 - las guías reflejan exactamente el comportamiento entregado.
 
-Hasta entonces, la app puede ofrecer cálculo local y autenticación cloud, pero no debe prometer sincronización cloud integral.
+Hasta entonces, Fixora General tiene funciones cloud parciales reales, pero no debe anunciarse como sincronización cloud integral ni como listo para lanzamiento.
