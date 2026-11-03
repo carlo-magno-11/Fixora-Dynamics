@@ -50,10 +50,10 @@ En desarrollo, si no se especifica el modo, la aplicación usa local. En producc
 
 La rama de integración web/Auth es `feat/web-auth-cloud-20261102`, PR [#2](https://github.com/carlo-magno-11/Fixora-Dynamics/pull/2), actualmente en borrador. La fundación de producto/dominio se mantiene en `foundation/bootstrap-20261029`, PR #1, también en borrador.
 
-Validación más reciente registrada para PR #2, commit `b30d9272fe335a44203dccff2c30f8405216d4fb`:
+Validación más reciente registrada para PR #2, commit `52c36cb9c827da849ab03fcbba40379841b90354`:
 
-- CI #1094: SUCCESS (instalación congelada, TypeScript, Vitest, build, comprobaciones Deno y utilidades de Edge Functions).
-- Database tests #628: SUCCESS (reconstrucción desde migraciones, pgTAP, pruebas negativas RLS y límite concurrente de dispositivos).
+- CI #1114: SUCCESS (instalación congelada, TypeScript, Vitest, build, comprobaciones Deno y utilidades de Edge Functions).
+- Database tests #648: SUCCESS (reconstrucción desde migraciones, pgTAP, cuatro mutaciones RLS negativas y límite concurrente de dispositivos).
 - RPC de guardado de gastos: pgTAP remoto 14/14.
 - RPC de resumen administrativo: pgTAP remoto 7/7.
 - Security Advisor del proyecto de pruebas: sin hallazgos en la última revisión registrada.
