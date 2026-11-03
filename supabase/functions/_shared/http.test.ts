@@ -1,0 +1,48 @@
+import { readJsonObject } from "./http.ts";
+
+function assert(condition: boolean, message: string): void {
+  if (!condition) throw new Error(message);
+}
+
+Deno.test("readJsonObject accepts a valid JSON object within the size limit", async () => {
+  const request = new Request("https://fixora.test", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ ticketId: "test-123" }),
+  });
+  const value = await readJsonObject(request);
+  assert(value?.ticketId === "test-123", "expected parsed object");
+});
+
+Deno.test("readJsonObject rejects a declared body larger than the limit", async () => {
+  const request = new Request("https://fixora.test", {
+    method: "POST",
+    headers: { "content-type": "application/json", "content-length": "9000" },
+    body: "{}",
+  });
+  const value = await readJsonObject(request, 1024);
+  assert(value === null, "oversized declared body must be rejected");
+});
+
+Deno.test("readJsonObject rejects streamed bodies larger than the limit", async () => {
+  const request = new Request("https://fixora.test", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ payload: "x".repeat(2048) }),
+  });
+  const value = await readJsonObject(request, 1024);
+  assert(value === null, "oversized streamed body must be rejected");
+});
+
+Deno.test("readJsonObject rejects arrays and malformed JSON", async () => {
+  const arrayRequest = new Request("https://fixora.test", {
+    method: "POST",
+    body: "[]",
+  });
+  const malformedRequest = new Request("https://fixora.test", {
+    method: "POST",
+    body: "{",
+  });
+  assert(await readJsonObject(arrayRequest) === null, "arrays are not accepted as objects");
+  assert(await readJsonObject(malformedRequest) === null, "malformed JSON is rejected");
+});
