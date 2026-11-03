@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import { getSupabaseClient } from "../../../shared/infrastructure/supabase/client";
 
@@ -31,9 +31,12 @@ export function AdminSupportReplyPanel() {
   const [inboxLoading, setInboxLoading] = useState(true);
   const [inboxError, setInboxError] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const inboxRequestSequence = useRef(0);
 
   const loadInbox = useCallback(async () => {
+    const requestId = ++inboxRequestSequence.current;
     if (!supabase) {
+      setTickets([]);
       setInboxError("La conexión segura no está disponible.");
       setInboxLoading(false);
       return;
@@ -41,13 +44,23 @@ export function AdminSupportReplyPanel() {
     setInboxLoading(true);
     setInboxError("");
     const functionName = statusFilter === "all" ? "admin-support-inbox" : `admin-support-inbox?status=${statusFilter}`;
-    const { data, error: invokeError } = await supabase.functions.invoke(functionName, { method: "GET" });
-    if (invokeError || !data || !Array.isArray(data.tickets)) {
-      setInboxError("No fue posible cargar la bandeja. Comprueba tu permiso AAL2 y la conexión.");
-    } else {
-      setTickets(data.tickets as SupportTicket[]);
+    try {
+      const { data, error: invokeError } = await supabase.functions.invoke(functionName, { method: "GET" });
+      if (requestId !== inboxRequestSequence.current) return;
+      if (invokeError || !data || !Array.isArray(data.tickets)) {
+        setTickets([]);
+        setInboxError("No fue posible cargar la bandeja. Comprueba tu permiso AAL2 y la conexión.");
+      } else {
+        setTickets(data.tickets as SupportTicket[]);
+      }
+    } catch {
+      if (requestId === inboxRequestSequence.current) {
+        setTickets([]);
+        setInboxError("No fue posible cargar la bandeja. Comprueba tu permiso AAL2 y la conexión.");
+      }
+    } finally {
+      if (requestId === inboxRequestSequence.current) setInboxLoading(false);
     }
-    setInboxLoading(false);
   }, [statusFilter, supabase]);
 
   useEffect(() => { void loadInbox(); }, [loadInbox]);
@@ -56,12 +69,17 @@ export function AdminSupportReplyPanel() {
     event.preventDefault();
     if (!supabase || busy) return;
     setBusy(true); setError(""); setNotice("");
-    const { error: invokeError } = await supabase.functions.invoke("admin-support-reply", {
-      body: { ticketId: ticketId.trim(), body: body.trim() },
-    });
-    if (invokeError) setError("No se pudo enviar la respuesta. Comprueba el folio, tu permiso AAL2 y la configuración de auditoría.");
-    else { setBody(""); setNotice("Respuesta administrativa enviada."); await loadInbox(); }
-    setBusy(false);
+    try {
+      const { error: invokeError } = await supabase.functions.invoke("admin-support-reply", {
+        body: { ticketId: ticketId.trim(), body: body.trim() },
+      });
+      if (invokeError) setError("No se pudo enviar la respuesta. Comprueba el folio, tu permiso AAL2 y la configuración de auditoría.");
+      else { setBody(""); setNotice("Respuesta administrativa enviada."); await loadInbox(); }
+    } catch {
+      setError("No se pudo enviar la respuesta. Comprueba tu conexión y vuelve a intentarlo.");
+    } finally {
+      setBusy(false);
+    }
   }
 
   return <section className="admin-operation-panel">
