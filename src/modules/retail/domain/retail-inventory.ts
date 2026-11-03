@@ -15,6 +15,7 @@ export interface RetailStockMovement {
   occurredAt: string;
   kind: RetailStockMovementKind;
   quantity: number;
+  reason?: string;
 }
 
 export interface RetailInventoryBalance {
@@ -87,6 +88,13 @@ export function calculateRetailInventoryBalance(
     }
 
     assertPositiveSafeInteger(movement.quantity, "La cantidad del movimiento");
+
+    if (
+      ["write_off", "adjustment_in", "adjustment_out", "return_disposed"].includes(movement.kind)
+      && (typeof movement.reason !== "string" || !movement.reason.trim())
+    ) {
+      throw new RangeError("Este movimiento requiere un motivo para la auditoría.");
+    }
   }
 
   const ordered = [...movements].sort((a, b) => a.sequence - b.sequence);
