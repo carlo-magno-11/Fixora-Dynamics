@@ -143,7 +143,7 @@ export function App({
   const [mobileMoreOpen, setMobileMoreOpen] = useState(false);
   const [businessType, setBusinessType] = useState<BusinessType>(() => initialBusinessType ?? readBusinessType(storage));
   const [profileMessage, setProfileMessage] = useState("");
-  const [licenseAccess, setLicenseAccess] = useState<LicenseAccess | null>(null);
+  const [licenseAccess, setLicenseAccess] = useState<LicenseAccess[]>([]);
   const [licenseLoading, setLicenseLoading] = useState(false);
   const [licenseError, setLicenseError] = useState("");
   const [breakEvenInput, setBreakEvenInput] = useState<BreakEvenInput>(() => restoredDraft?.breakEvenInput ?? initialBreakEven);
@@ -227,7 +227,7 @@ export function App({
 
   useEffect(() => {
     if (authMode !== "cloud" || !supabase) {
-      setLicenseAccess(null);
+      setLicenseAccess([]);
       setLicenseLoading(false);
       setLicenseError("");
       return;
@@ -239,9 +239,9 @@ export function App({
       if (!active) return;
       if (error) {
         setLicenseError("No fue posible consultar el estado de la licencia. Inténtalo más tarde.");
-        setLicenseAccess(null);
+        setLicenseAccess([]);
       } else {
-        setLicenseAccess(data?.[0] ?? null);
+        setLicenseAccess(data ?? []);
       }
       setLicenseLoading(false);
     });
@@ -264,7 +264,7 @@ export function App({
     if (error) {
       setLicenseError("No fue posible actualizar el estado de la licencia.");
     } else {
-      setLicenseAccess(data?.[0] ?? null);
+      setLicenseAccess(data ?? []);
       setLicenseError("");
     }
     setLicenseLoading(false);
