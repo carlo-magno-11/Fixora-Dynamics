@@ -102,6 +102,12 @@ No integrar varios proveedores a la vez. Primero implementar una interfaz intern
 
 ## 3. Guías obligatorias del producto
 
+### Estado actual comprobado
+
+La aplicación ya tiene una guía General implementada en `src/app/BrandPages.tsx` mediante `GuidePage`, accesible desde Cuenta (“Abrir guía y ayuda”). Su contenido se obtiene de `src/i18n/messages.ts`, por lo que no conviene crear un segundo centro de ayuda paralelo. La guía actual incluye índice, secciones, pasos, ejemplos prácticos, limitaciones, FAQ y glosario.
+
+En el árbol de la rama revisada no aparece un módulo separado de guías por kit. Por tanto, el trabajo correcto es ampliar la guía General existente y añadir contenido específico por kit cuando el kit correspondiente esté implementado; no duplicar el centro de ayuda ni presentar como terminadas guías de módulos que aún no existen.
+
 La guía no es un documento opcional ni un único PDF genérico. Debe existir un **Centro de ayuda dentro de Fixora**, además de una versión descargable/PDF por producto. Cada kit pagado debe tener su propia guía y su propio contenido.
 
 ### Guía General — Fixora Essentials
