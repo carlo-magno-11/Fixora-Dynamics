@@ -90,3 +90,6 @@ jobs:
 
       - name: Test concurrent license device activation limit
         run: bash scripts/test-license-concurrency.sh "postgresql://postgres:postgres@127.0.0.1:54322/postgres"
+
+      - name: Test concurrent server rate limit
+        run: bash scripts/test-rate-limit-concurrency.sh "postgresql://postgres:postgres@127.0.0.1:54322/postgres"
