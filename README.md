@@ -1,71 +1,98 @@
 # Fixora Dynamics
 
-Aplicación web adaptable para que profesionales independientes y pequeños negocios calculen costes, definan precios, organicen gastos y comprendan su rentabilidad. Fixora Essentials es el núcleo general; los kits especializados se desarrollan como módulos del mismo producto.
+**Fixora Dynamics** es la marca paraguas. **Fixora Essentials** es el primer producto: una aplicación web para que profesionales independientes y pequeños negocios entiendan sus costes, definan precios y organicen su operación básica.
 
-## Experiencia inicial
+## Qué incluye la aplicación web
 
-- Fixora Essentials como acceso general y centro común para cualquier emprendimiento.
-- Selector de perfil de negocio: comercio/reventa, alimentos/repostería, servicios/belleza, productos digitales y taller/manufactura. El selector guarda la preferencia local; los módulos especializados siguen en planificación.
+- Calculadora general de costes y precios con motor matemático Decimal.js.
+- Mano de obra, materiales, merma, costes directos y fijos por unidad, comisiones, descuentos y margen objetivo.
+- Punto de equilibrio con unidades completas y margen de contribución.
+- Control de gastos fijos y variables, periodo de registro y asignación analítica.
+- Catálogo de productos y servicios con SKU opcional, moneda, coste de referencia, edición y archivo.
+- Historial de cálculos versionados, recuperación de snapshots y exportación CSV.
+- Guía práctica, perfiles de actividad, información de marca y cuenta.
+- Registro/inicio de sesión, confirmación de correo, recuperación de contraseña y MFA TOTP.
+- Negocios separados por usuario mediante RLS; catálogo, gastos e historial cloud.
+- Centro de soporte para tickets y mensajes.
+- Licencia anual y activación preparadas para el modelo comercial; máximo tres dispositivos activos.
+- Consola administrativa con autorización AAL2 en servidor y operaciones de compra, licencias, dispositivos, invitaciones y soporte.
 
-- Calculadora de costes, mano de obra, merma, gastos fijos por unidad, comisión, descuento y margen.
-- Precio sugerido, ganancia estimada, margen efectivo, recargo y desglose de costes.
-- Selector de moneda MXN/USD.
-- Registro de gastos fijos del periodo y costes variables por unidad, con asignación analítica sin doble conteo.
-- Catálogo local compartido de productos y servicios con unidades explícitas, SKU opcional y coste de referencia.
-- Historial local y guía práctica ampliada con ejemplos, preguntas frecuentes y glosario.
-- Catálogo con alta, edición, archivo/reactivación y moneda propia por elemento.
-- Página de presentación de Fixora Dynamics y área Mi cuenta (estructura visual; autenticación aún pendiente).
-- Borradores internos de términos y privacidad claramente marcados como no vigentes.
-- El perfil, gastos, catálogo e historial actuales se conservan solo en el almacenamiento local del navegador. No representan todavía una cuenta, sincronización cloud ni licencia activa.
+La interfaz móvil utiliza una navegación inferior compacta con un menú de secciones adicionales. En escritorio conserva la navegación lateral.
 
-## Estado de lanzamiento
+## Arquitectura y tecnología
 
-Fixora sigue en desarrollo y no está lista para venderse ni para almacenar datos de clientes. El esquema de base de datos ya está aplicado en el proyecto Supabase de pruebas `eyesite-security-test` (`dclaebknyalimmtgppeg`), con identidad, operación, licencias, dispositivos, administración, auditoría y soporte; no es producción. La app todavía conserva persistencia local y no tiene Auth cloud ni Edge Functions conectadas. CI ya reconstruye el esquema desde cero; faltan AAL2 real, endpoints desplegados de compra/activación/admin, Storage privado, backup/restore, staging y pruebas E2E. El proyecto oficial EYESITE `xhvpvpvtkdgnnxdwdrkn` no se ha tocado.
+- React 19, TypeScript estricto y Vite.
+- Motor financiero independiente de React y Supabase; Decimal.js es la fuente única de cálculo.
+- Supabase Auth, PostgreSQL, RLS, RPC y Edge Functions.
+- Monolito modular por dominios; no microservicios en el MVP.
+- Persistencia local en modo de desarrollo y persistencia cloud por negocio cuando Auth está configurado.
+- Español de México primero; inglés después.
+- Web primero; arquitectura preparada para reutilizar lógica en Expo más adelante.
 
-## Principios técnicos
+## Entorno Supabase
 
-- React + TypeScript estricto + Vite.
-- Motor matemático único con Decimal.js, desacoplado de UI y Supabase.
-- Supabase Auth/PostgreSQL/RLS como plataforma de datos.
-- Esquema modificado exclusivamente mediante migraciones SQL versionadas en `supabase/migrations`. No SQL directo ni edición manual de tablas.
-- Aislamiento multiusuario por negocio y membresías.
-- Licencia anual desde primera activación; máximo tres dispositivos simultáneos.
-- Etsy como canal inicial de venta.
-- No crear recursos Supabase Cloud adicionales sin autorización.
+Destino de pruebas reservado para Fixora: **`eyesite-security-test`**, ref **`dclaebknyalimmtgppeg`**.
+
+El proyecto oficial EYESITE **`xhvpvpvtkdgnnxdwdrkn`** es independiente y no debe modificarse desde este proyecto.
+
+Configura el entorno a partir de `.env.example`. En modo cloud se necesita:
+
+- `VITE_FIXORA_AUTH_MODE=cloud`
+- `VITE_SUPABASE_URL`
+- `VITE_SUPABASE_PUBLISHABLE_KEY`
+
+Se admite `VITE_SUPABASE_ANON_KEY` como fallback temporal. Nunca incluyas `service_role`, secret keys ni credenciales de administración en variables `VITE_*`, el navegador o el repositorio.
+
+En desarrollo, si no se especifica el modo, la aplicación usa local. En producción, el modo predeterminado es cloud y falla de forma segura si falta la configuración.
+
+## Estado real de entrega — 2 de noviembre de 2026
+
+La rama de integración web/Auth es `feat/web-auth-cloud-20261102`, PR [#2](https://github.com/carlo-magno-11/Fixora-Dynamics/pull/2), actualmente en borrador. La fundación de producto/dominio se mantiene en `foundation/bootstrap-20261029`, PR #1, también en borrador.
+
+Validación más reciente registrada para PR #2, commit `b30d9272fe335a44203dccff2c30f8405216d4fb`:
+
+- CI #1094: SUCCESS (instalación congelada, TypeScript, Vitest, build, comprobaciones Deno y utilidades de Edge Functions).
+- Database tests #628: SUCCESS (reconstrucción desde migraciones, pgTAP, pruebas negativas RLS y límite concurrente de dispositivos).
+- RPC de guardado de gastos: pgTAP remoto 14/14.
+- RPC de resumen administrativo: pgTAP remoto 7/7.
+- Security Advisor del proyecto de pruebas: sin hallazgos en la última revisión registrada.
+- Las ocho Edge Functions administrativas/de activación enumeradas en `docs/WEB-AUTH-SETUP.md` están desplegadas en el proyecto de pruebas con JWT obligatorio.
+
+**Esto no significa que Fixora esté lista para venderse o desplegarse públicamente.** Siguen pendientes configuración de Auth/SMTP/redirects, secretos HMAC, primer propietario administrativo verificado, E2E con identidad real, importación de datos locales, pruebas de accesibilidad y dispositivos, DAST/SCA, backups/restauración y staging HTTPS. Algunas funciones administrativas fallan de forma segura hasta configurar sus secretos.
+
+## Decisiones de producto que deben conservarse
+
+- Primer lanzamiento limitado a Fixora Essentials general.
+- Kits de ropa y repostería quedan para fases posteriores.
+- Licencia anual desde la primera activación; máximo tres dispositivos activos.
+- Etsy como canal inicial; revisión manual de compra hasta que una integración oficial esté aprobada y probada.
+- El vencimiento no borra la cuenta ni el historial.
+- No prometer rendimientos ni sustituir asesoría contable, fiscal o legal.
+- No crear un ERP, contabilidad fiscal, nómina, sincronización bancaria ni microservicios en el MVP.
 
 ## Desarrollo
 
-Requisitos: Node.js 24 y pnpm 9.15.9. Ejecutar `pnpm install`, `pnpm dev`, `pnpm test` y `pnpm typecheck`. Copiar `.env.example` a `.env.local`. Nunca exponer claves secret/service-role.
+Requisitos: Node.js 24 y pnpm 9.15.9.
 
-## Documentación
+```bash
+pnpm install
+pnpm dev
+pnpm typecheck
+pnpm test
+pnpm build
+```
 
-- `docs/ARCHITECTURE.md`: arquitectura y límites entre capas.
-- `docs/ADMIN-CONSOLE-ARCHITECTURE.md`: roles, permisos, operaciones y auditoría del panel administrativo.
-- `docs/DESIGN-SYSTEM.md`: identidad visual y paleta prémium.
+## Documentación principal
+
+- `docs/MASTER-IMPLEMENTATION-PLAN.md`: alcance, arquitectura y puertas de salida.
+- `docs/ARCHITECTURE.md`: límites entre módulos y capas.
+- `docs/DESIGN-SYSTEM.md`: identidad visual, paleta y accesibilidad.
+- `docs/WEB-AUTH-SETUP.md`: Auth, negocios, persistencia y configuración cloud.
+- `docs/ADMIN-CONSOLE-ARCHITECTURE.md`: roles, permisos y operaciones administrativas.
 - `docs/CALCULATIONS.md`: fórmulas y convenciones.
-- `docs/DATABASE.md`, `docs/DATA-MODEL.md` y `docs/DATABASE-BOOTSTRAP-PLAN.md`: datos, grants, RLS, modelo objetivo y migraciones.
+- `docs/DATABASE.md`, `docs/DATA-MODEL.md` y `docs/DATABASE-LOCAL-SETUP.md`: datos y migraciones.
 - `docs/SECURITY.md` y `docs/LICENSES.md`: seguridad y licenciamiento.
-- `docs/ROADMAP.md`: estado y puertas de lanzamiento.
-- `docs/MASTER-IMPLEMENTATION-PLAN.md` y `docs/PROGRESS-LOG.md`: plan maestro y registro por commit.
-- `docs/EXECUTION-AUDIT-AND-PLAN-20261031.md`: auditoría de estado, hallazgos, pruebas de aceptación y secuencia de ejecución.
-- `docs/I18N.md`: convenciones para centralizar textos y agregar idiomas.
-- `docs/legal/`: borradores legales sujetos a revisión.
-- `docs/DATABASE-LOCAL-SETUP.md`: preparación segura de Supabase local y flujo de migraciones.\n- `docs/FIXORA-FOUNDATION-SPEC.md`: arquitectura de la primera base propia de Fixora.\n- `docs/FIXORA-FOUNDATION-MIGRATION-SQL.md`: registro histórico de revisión de la migración fundacional.
-- `docs/OPEN-SOURCE-RESEARCH.md`: repositorios evaluados, estrellas, licencias y decisiones de adopción.
-- `docs/DECISIONS/ADR-003-essentials-and-business-kits.md`: decisión de producto modular.
+- `docs/ROADMAP.md` y `docs/PROGRESS-LOG.md`: estado y secuencia de entrega.
+- `docs/WEB-UX-IMPROVEMENT-PLAN.md`: hallazgos de experiencia web y mejoras priorizadas.
 
-
-## Estado de base de datos — 31 de octubre de 2026
-
-- Proyecto de pruebas: `eyesite-security-test`, ref `dclaebknyalimmtgppeg`, PostgreSQL 17.11.
-- Proyecto oficial EYESITE `xhvpvpvtkdgnnxdwdrkn`: no modificado.
-- 9 tablas públicas Fixora y 14 privadas; RLS en todas, FORCE RLS en privadas.
-- Security Advisor: 0 hallazgos; Performance Advisor: 0 claves foráneas sin índice. Quedan avisos informativos por índices no usados en una base sin tráfico y asignación fija de conexiones Auth.
-- Los datos de prueba se revirtieron: 0 usuarios Auth y 0 filas de negocio/licencias/soporte; solo quedan el SKU anual y 18 permisos de rol.
-- El bucket heredado `eyesite-media` sigue público y vacío; falta borrarlo mediante Storage API/Dashboard. `fixora_private` requiere confirmar en Dashboard que no está expuesto por PostgREST.
-- El estado detallado y las pruebas pendientes están en `docs/DATA-MODEL.md`, `docs/SECURITY-VERIFICATION-MATRIX.md` y `docs/EXECUTION-AUDIT-AND-PLAN-20261031.md`.
-
-
-## Validación de base de datos
-
-El commit `117b62c68adf932448eea52ec811854249b7ce91` pasó CI #970 y Database tests #504. `supabase db reset` aplicó desde cero las 18 migraciones Fixora; siete suites pgTAP pasaron con 195 aserciones. Cuatro mutation tests independientes detectaron políticas SELECT permisivas en negocios, catálogo, tickets y mensajes. La prueba concurrente rechazó la cuarta activación y mantuvo el máximo de tres dispositivos. TypeScript, Vitest, build, `deno check` y utilidades Deno pasaron.
+Las páginas legales actuales son borradores y requieren revisión profesional antes de publicarse.
