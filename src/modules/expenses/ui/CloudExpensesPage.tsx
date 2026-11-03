@@ -20,6 +20,8 @@ export function CloudExpensesPage({ businessId, currency, formatMoney, service }
   formatMoney: (value: number, currency: CurrencyCode) => string;
 }) {
   const requestId = useRef(0);
+  const previousBusinessId = useRef(businessId);
+  const [loadedBusinessId, setLoadedBusinessId] = useState<string | null>(null);
   const [fixed, setFixed] = useState<FixedExpense[]>([]);
   const [variable, setVariable] = useState<VariableExpense[]>([]);
   const [expectedUnits, setExpectedUnits] = useState(100);
@@ -32,6 +34,14 @@ export function CloudExpensesPage({ businessId, currency, formatMoney, service }
 
   const loadData = useCallback(async () => {
     const currentRequest = ++requestId.current;
+    if (previousBusinessId.current !== businessId) {
+      previousBusinessId.current = businessId;
+      setFixed([]);
+      setVariable([]);
+      setExpectedUnits(1);
+      setVersion(0);
+    }
+    setLoadedBusinessId(null);
     setLoading(true);
     setErrorMessage("");
     try {
@@ -42,9 +52,15 @@ export function CloudExpensesPage({ businessId, currency, formatMoney, service }
       setExpectedUnits(state.expectedUnits);
       setPeriod(state.period);
       setVersion(state.version);
+      setLoadedBusinessId(businessId);
       return true;
     } catch (error) {
       if (currentRequest !== requestId.current) return false;
+      setFixed([]);
+      setVariable([]);
+      setExpectedUnits(1);
+      setVersion(0);
+      setLoadedBusinessId(businessId);
       setErrorMessage(error instanceof Error ? error.message : "No fue posible cargar los gastos.");
       return false;
     } finally {
@@ -98,7 +114,7 @@ export function CloudExpensesPage({ businessId, currency, formatMoney, service }
   }
 
   async function saveExpenses() {
-    if (!summary.result) return;
+    if (loadedBusinessId !== businessId || loading || !summary.result) return;
     setSaving(true);
     setMessage("");
     setErrorMessage("");
@@ -122,6 +138,18 @@ export function CloudExpensesPage({ businessId, currency, formatMoney, service }
     } finally {
       setSaving(false);
     }
+  }
+
+  if (loading || loadedBusinessId !== businessId) {
+    return (
+      <div className="secondary-page expenses-page">
+        <p className="eyebrow">FIXORA ESSENTIALS <span> / </span> 05 · NUBE</p>
+        <h1>Gastos del negocio.</h1>
+        <p className="page-lead">Cargando la información del negocio seleccionado para evitar mezclar datos entre negocios.</p>
+        {errorMessage && <p className="error-state" role="alert">{errorMessage}</p>}
+        <p className="local-storage-note">Consultando gastos y configuración…</p>
+      </div>
+    );
   }
 
   return (
