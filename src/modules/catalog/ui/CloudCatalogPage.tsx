@@ -13,9 +13,11 @@ export function CloudCatalogPage({ businessId, currency, formatMoney, onUseInCal
   const requestId = useRef(0);
   const activeBusinessId = useRef(businessId);
   activeBusinessId.current = businessId;
+  const previousBusinessId = useRef(businessId);
   const saveRequestId = useRef(0);
   const [items, setItems] = useState<CatalogItem[]>([]);
   const [loadedBusinessId, setLoadedBusinessId] = useState<string | null>(null);
+  const [loadFailed, setLoadFailed] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [name, setName] = useState("");
@@ -32,6 +34,12 @@ export function CloudCatalogPage({ businessId, currency, formatMoney, onUseInCal
     const currentRequest = ++requestId.current;
     saveRequestId.current += 1;
     setSaving(false);
+    if (previousBusinessId.current !== businessId) {
+      previousBusinessId.current = businessId;
+      resetForm();
+      setMessage("");
+    }
+    setLoadFailed(false);
     setLoading(true);
     setLoadedBusinessId(null);
     setItems([]);
@@ -41,10 +49,12 @@ export function CloudCatalogPage({ businessId, currency, formatMoney, onUseInCal
       if (currentRequest !== requestId.current) return;
       setItems(records);
       setLoadedBusinessId(businessId);
+      setLoadFailed(false);
     } catch (error) {
       if (currentRequest !== requestId.current) return;
       setItems([]);
       setLoadedBusinessId(businessId);
+      setLoadFailed(true);
       setErrorMessage(error instanceof Error ? error.message : "No fue posible cargar el catálogo.");
     } finally {
       if (currentRequest === requestId.current) setLoading(false);
@@ -80,7 +90,7 @@ export function CloudCatalogPage({ businessId, currency, formatMoney, onUseInCal
 
   async function saveItem(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (loadedBusinessId !== businessId || loading) return;
+    if (loadedBusinessId !== businessId || loading || loadFailed) return;
     const currentSaveRequest = ++saveRequestId.current;
     const saveBusinessId = businessId;
     setSaving(true);
@@ -110,7 +120,7 @@ export function CloudCatalogPage({ businessId, currency, formatMoney, onUseInCal
   }
 
   async function archiveItem(item: CatalogItem) {
-    if (loadedBusinessId !== businessId || loading) return;
+    if (loadedBusinessId !== businessId || loading || loadFailed) return;
     const currentSaveRequest = ++saveRequestId.current;
     const saveBusinessId = businessId;
     setSaving(true);
@@ -145,14 +155,14 @@ export function CloudCatalogPage({ businessId, currency, formatMoney, onUseInCal
           <label className="field"><span>SKU / código (opcional)</span><input value={sku} maxLength={40} placeholder="Código interno" onChange={(event) => setSku(event.target.value)} /></label>
           <label className="field"><span>Moneda</span><select value={draftCurrency} onChange={(event) => setDraftCurrency(event.target.value as CatalogCurrency)}><option value="MXN">MXN</option><option value="USD">USD</option></select></label>
           <label className="field"><span>Coste de referencia ({draftCurrency})</span><input type="number" min="0" step="0.01" value={referenceCost} onChange={(event) => setReferenceCost(Math.max(0, Number(event.target.value) || 0))} /></label>
-          <div className="catalog-form-actions"><button className="primary-button compact" type="submit" disabled={saving || loading || loadedBusinessId !== businessId}>{saving ? "Guardando…" : editingId ? "Guardar cambios" : "Añadir al catálogo"} <span>↗</span></button>{editingId && <button className="outline-button" type="button" onClick={resetForm}>Cancelar</button>}</div>
+          <div className="catalog-form-actions"><button className="primary-button compact" type="submit" disabled={saving || loading || loadFailed || loadedBusinessId !== businessId}>{saving ? "Guardando…" : editingId ? "Guardar cambios" : "Añadir al catálogo"} <span>↗</span></button>{editingId && <button className="outline-button" type="button" onClick={resetForm}>Cancelar</button>}</div>
         </form>
         {message && <p className="save-message" role="status">{message}</p>}
         {errorMessage && <p className="error-state" role="alert">{errorMessage}</p>}
       </section>
       <section className="catalog-list-section">
         <div className="section-heading"><div className="section-number">02</div><div><h2>Elementos registrados</h2><p>{loadedBusinessId === businessId ? items.length : 0} elementos activos en este negocio.</p></div><button className="outline-button" type="button" disabled={loading || saving} onClick={() => void loadItems()}>{loading ? "Actualizando…" : "Actualizar lista"}</button></div>
-        {loading || loadedBusinessId !== businessId ? <p className="local-storage-note">Cargando catálogo del negocio seleccionado…</p> : items.length === 0 ? (
+        {loading || loadedBusinessId !== businessId ? <p className="local-storage-note">Cargando catálogo del negocio seleccionado…</p> : loadFailed ? <div className="empty-state"><h2>No pudimos cargar el catálogo</h2><p>Por seguridad, no puedes editarlo hasta confirmar los elementos actuales.</p><button className="outline-button" type="button" onClick={() => void loadItems()}>Volver a intentar</button></div> : items.length === 0 ? (
           <div className="empty-state"><span>◇</span><h2>Tu catálogo está listo para comenzar</h2><p>Añade productos o servicios para reutilizar sus referencias al calcular precios.</p></div>
         ) : (
           <div className="catalog-list">
