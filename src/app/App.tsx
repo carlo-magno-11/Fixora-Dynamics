@@ -378,7 +378,7 @@ export function App({
           <span className="brand-word">FIXORA <b>DYNAMICS</b></span>
         </a>
         <div className="topbar-right">
-          <span className="status-dot" />
+          <span className={authMode === "cloud" ? "status-dot is-connected" : "status-dot is-local"} aria-hidden="true" />
           <span className="topbar-caption">{authMode === "cloud" ? (businessName ?? "NEGOCIO CONECTADO") : "MODO LOCAL · SIN CUENTA"}</span>
           {onSwitchBusiness && <button className="topbar-action" onClick={onSwitchBusiness}>Cambiar negocio</button>}
           {onSignOut && <button className="topbar-action" onClick={onSignOut}>Salir</button>}
@@ -410,40 +410,40 @@ export function App({
       <div className="app-layout">
         <aside className="sidebar" aria-label="Navegación principal">
           <p className="nav-label">TU ESPACIO</p>
-          <button className={view === "essentials" ? "nav-item active" : "nav-item"} onClick={() => setView("essentials")}>
+          <button className={view === "essentials" ? "nav-item active" : "nav-item"} aria-current={view === "essentials" ? "page" : undefined} onClick={() => setView("essentials")}>
             <span className="nav-icon">✳</span> Fixora Essentials
           </button>
-          <button className={view === "calculator" ? "nav-item active" : "nav-item"} onClick={() => setView("calculator")}>
+          <button className={view === "calculator" ? "nav-item active" : "nav-item"} aria-current={view === "calculator" ? "page" : undefined} onClick={() => setView("calculator")}>
             <span className="nav-icon">⌗</span> Calculadora
           </button>
-          <button className={view === "breakEven" ? "nav-item active" : "nav-item"} onClick={() => setView("breakEven")}>
+          <button className={view === "breakEven" ? "nav-item active" : "nav-item"} aria-current={view === "breakEven" ? "page" : undefined} onClick={() => setView("breakEven")}>
             <span className="nav-icon">◒</span> Punto de equilibrio
           </button>
-          <button className={view === "expenses" ? "nav-item active" : "nav-item"} onClick={() => setView("expenses")}>
+          <button className={view === "expenses" ? "nav-item active" : "nav-item"} aria-current={view === "expenses" ? "page" : undefined} onClick={() => setView("expenses")}>
             <span className="nav-icon">＋</span> Control de gastos
           </button>
-          <button className={view === "catalog" ? "nav-item active" : "nav-item"} onClick={() => setView("catalog")}>
+          <button className={view === "catalog" ? "nav-item active" : "nav-item"} aria-current={view === "catalog" ? "page" : undefined} onClick={() => setView("catalog")}>
             <span className="nav-icon">◇</span> Catálogo
           </button>
-          <button className={view === "kits" ? "nav-item active" : "nav-item"} onClick={() => setView("kits")}>
+          <button className={view === "kits" ? "nav-item active" : "nav-item"} aria-current={view === "kits" ? "page" : undefined} onClick={() => setView("kits")}>
             <span className="nav-icon">◇</span> Kits por negocio
           </button>
           <p className="nav-label nav-label-spaced">MIS REGISTROS</p>
-          <button className={view === "history" ? "nav-item active" : "nav-item"} onClick={() => setView("history")}>
+          <button className={view === "history" ? "nav-item active" : "nav-item"} aria-current={view === "history" ? "page" : undefined} onClick={() => setView("history")}>
             <span className="nav-icon">◷</span> Mis cálculos
             <span className="nav-count">{history.length}</span>
           </button>
           <p className="nav-label nav-label-spaced">TU CUENTA</p>
-          <button className={view === "account" ? "nav-item active" : "nav-item"} onClick={() => setView("account")}><span className="nav-icon">◉</span> Mi cuenta</button>
-          {authMode === "cloud" && <button className={view === "support" ? "nav-item active" : "nav-item"} onClick={() => setView("support")}><span className="nav-icon">?</span> Soporte</button>}
-          {authMode === "cloud" && <button className={view === "admin" ? "nav-item active" : "nav-item"} onClick={() => setView("admin")}><span className="nav-icon">⌘</span> Administración</button>}
-          <button className={view === "about" ? "nav-item active" : "nav-item"} onClick={() => setView("about")}><span className="nav-icon">✳</span> Nuestra familia</button>
+          <button className={view === "account" ? "nav-item active" : "nav-item"} aria-current={view === "account" ? "page" : undefined} onClick={() => setView("account")}><span className="nav-icon">◉</span> Mi cuenta</button>
+          {authMode === "cloud" && <button className={view === "support" ? "nav-item active" : "nav-item"} aria-current={view === "support" ? "page" : undefined} onClick={() => setView("support")}><span className="nav-icon">?</span> Soporte</button>}
+          {authMode === "cloud" && <button className={view === "admin" ? "nav-item active" : "nav-item"} aria-current={view === "admin" ? "page" : undefined} onClick={() => setView("admin")}><span className="nav-icon">⌘</span> Administración</button>}
+          <button className={view === "about" ? "nav-item active" : "nav-item"} aria-current={view === "about" ? "page" : undefined} onClick={() => setView("about")}><span className="nav-icon">✳</span> Nuestra familia</button>
           <p className="nav-label nav-label-spaced">RECURSOS</p>
-          <button className={view === "guide" ? "nav-item active" : "nav-item"} onClick={() => setView("guide")}>
+          <button className={view === "guide" ? "nav-item active" : "nav-item"} aria-current={view === "guide" ? "page" : undefined} onClick={() => setView("guide")}>
             <span className="nav-icon">⌘</span> Guía de uso
           </button>
-          <button className={view === "terms" ? "nav-item active" : "nav-item"} onClick={() => setView("terms")}><span className="nav-icon">§</span> Términos</button>
-          <button className={view === "privacy" ? "nav-item active" : "nav-item"} onClick={() => setView("privacy")}><span className="nav-icon">⌑</span> Privacidad</button>
+          <button className={view === "terms" ? "nav-item active" : "nav-item"} aria-current={view === "terms" ? "page" : undefined} onClick={() => setView("terms")}><span className="nav-icon">§</span> Términos</button>
+          <button className={view === "privacy" ? "nav-item active" : "nav-item"} aria-current={view === "privacy" ? "page" : undefined} onClick={() => setView("privacy")}><span className="nav-icon">⌑</span> Privacidad</button>
           <div className="sidebar-note">
             <span className="sidebar-note-mark">✳</span>
             <strong>Decisiones con claridad.</strong>
