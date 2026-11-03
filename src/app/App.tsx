@@ -162,6 +162,10 @@ export function App({
   const [name, setName] = useState(() => restoredDraft?.name ?? "Mi primer producto");
   const [selectedCatalogItem, setSelectedCatalogItem] = useState<CatalogItemSnapshot | undefined>(() => restoredDraft?.selectedCatalogItem);
   const [draftStatus, setDraftStatus] = useState(() => restoredDraft ? "Se recuperó el borrador de esta cuenta y negocio." : "");
+  const [draftHydratedScope, setDraftHydratedScope] = useState(calculatorDraftScope);
+  const previousDraftScope = useRef(calculatorDraftScope);
+  const currentDraftScope = useRef(calculatorDraftScope);
+  currentDraftScope.current = calculatorDraftScope;
   const [cloudDraftCandidate, setCloudDraftCandidate] = useState<CalculatorDraft | null>(null);
   const [cloudDraftNeedsChoice, setCloudDraftNeedsChoice] = useState(false);
   const [cloudDraftReady, setCloudDraftReady] = useState(authMode !== "cloud");
@@ -184,7 +188,7 @@ export function App({
   const [cloudDraftNeedsReload, setCloudDraftNeedsReload] = useState(false);
   const [cloudDraftReloadToken, setCloudDraftReloadToken] = useState(0);
   const lastCloudDraftFingerprint = useRef("");
-  const cloudDraftSaveInFlight = useRef(false);
+  const cloudDraftSaveInFlight = useRef<string | null>(null);
   const [historyLoadState] = useState(() => historyRepository.loadState());
   const [history, setHistory] = useState<SavedCalculation[]>(historyLoadState.records);
   const [historyNeedsRecovery, setHistoryNeedsRecovery] = useState(historyLoadState.needsRecovery);
@@ -238,6 +242,38 @@ export function App({
   }, [input]);
 
   useEffect(() => {
+    if (previousDraftScope.current === calculatorDraftScope) return;
+    previousDraftScope.current = calculatorDraftScope;
+    setDraftHydratedScope("");
+    const draft = readCalculatorDraft(storage);
+    setInput(draft?.input ?? initial);
+    setCurrency(draft?.currency ?? initialCurrency ?? "MXN");
+    setBreakEvenInput(draft?.breakEvenInput ?? initialBreakEven);
+    setName(draft?.name ?? "Mi primer producto");
+    setSelectedCatalogItem(draft?.selectedCatalogItem);
+    setBusinessType(initialBusinessType ?? readBusinessType(storage));
+    setProfileMessage("");
+    if (authMode === "cloud") {
+      setHistory([]);
+      setHistoryNeedsRecovery(false);
+    } else {
+      const nextHistory = historyRepository.loadState();
+      setHistory(nextHistory.records);
+      setHistoryNeedsRecovery(nextHistory.needsRecovery);
+    }
+    setCloudDraftReady(authMode !== "cloud");
+    setCloudDraftVersion(0);
+    setCloudDraftCandidate(null);
+    setCloudDraftNeedsChoice(false);
+    setCloudDraftNeedsReload(false);
+    setCloudDraftSaving(false);
+    lastCloudDraftFingerprint.current = "";
+    setDraftStatus(draft ? "Se recuperó el borrador local de este usuario y negocio." : "");
+    setDraftHydratedScope(calculatorDraftScope);
+  }, [authMode, calculatorDraftScope, historyRepository, initialBusinessType, initialCurrency, storage]);
+
+  useEffect(() => {
+    if (draftHydratedScope !== calculatorDraftScope) return;
     const saved = saveCalculatorDraft(storage, {
       name,
       currency,
@@ -250,7 +286,7 @@ export function App({
         ? "Borrador local guardado en este dispositivo; todavía no está sincronizado con la nube."
         : "Borrador guardado en este navegador."
       : "No se pudo guardar el borrador local. Evita cerrar esta pestaña hasta guardar tu cálculo.");
-  }, [authMode, breakEvenInput, currency, input, name, selectedCatalogItem, storage]);
+  }, [authMode, breakEvenInput, calculatorDraftScope, currency, draftHydratedScope, input, name, selectedCatalogItem, storage]);
 
   function applyCalculatorDraft(draft: CalculatorDraft) {
     setName(draft.name);
@@ -261,7 +297,7 @@ export function App({
   }
 
   useEffect(() => {
-    if (authMode !== "cloud" || !businessId) {
+    if (authMode !== "cloud" || !businessId || draftHydratedScope !== calculatorDraftScope) {
       setCloudDraftReady(false);
       setCloudDraftNeedsChoice(false);
       setCloudDraftCandidate(null);
@@ -309,7 +345,7 @@ export function App({
         : "No se pudo comprobar el borrador cloud. La copia local se conserva.");
     });
     return () => { active = false; };
-  }, [authMode, businessId, cloudCalculatorDraftService, cloudDraftReloadToken, storage]);
+  }, [authMode, businessId, calculatorDraftScope, cloudCalculatorDraftService, cloudDraftReloadToken, draftHydratedScope, storage]);
 
   async function chooseCloudDraft() {
     if (!cloudDraftCandidate) return;
@@ -374,40 +410,44 @@ export function App({
   }
 
   useEffect(() => {
-    if (authMode !== "cloud" || !businessId || !cloudDraftReady || cloudDraftNeedsChoice) return;
+    if (authMode !== "cloud" || !businessId || draftHydratedScope !== calculatorDraftScope || !cloudDraftReady || cloudDraftNeedsChoice) return;
     const timeout = window.setTimeout(() => {
-      if (cloudDraftSaveInFlight.current) return;
+      if (cloudDraftSaveInFlight.current === calculatorDraftScope) return;
+      const saveScope = calculatorDraftScope;
       const draft = readCalculatorDraft(storage);
       if (!draft) return;
       const fingerprint = calculatorDraftFingerprint(draft);
       if (fingerprint === lastCloudDraftFingerprint.current) return;
-      cloudDraftSaveInFlight.current = true;
+      cloudDraftSaveInFlight.current = saveScope;
       setCloudDraftSaving(true);
       void cloudCalculatorDraftService.save(businessId, draft, cloudDraftVersion).then((nextVersion) => {
+        if (currentDraftScope.current !== saveScope) return;
         setCloudDraftVersion(nextVersion);
         lastCloudDraftFingerprint.current = fingerprint;
         setDraftStatus("Borrador sincronizado con la nube para este usuario y negocio.");
       }).catch((error: unknown) => {
+        if (currentDraftScope.current !== saveScope) return;
         setDraftStatus(error instanceof Error ? error.message : "No fue posible sincronizar el borrador. La copia local se conserva.");
         if (error instanceof Error && error.message.includes("otro dispositivo")) {
           setCloudDraftReady(false);
           setCloudDraftNeedsReload(true);
         }
       }).finally(() => {
-        cloudDraftSaveInFlight.current = false;
-        setCloudDraftSaving(false);
+        if (cloudDraftSaveInFlight.current === saveScope) cloudDraftSaveInFlight.current = null;
+        if (currentDraftScope.current === saveScope) setCloudDraftSaving(false);
       });
     }, 1000);
     return () => window.clearTimeout(timeout);
-  }, [authMode, businessId, cloudDraftReady, cloudDraftNeedsChoice, cloudDraftVersion, cloudCalculatorDraftService, breakEvenInput, currency, input, name, selectedCatalogItem, storage]);
+  }, [authMode, businessId, calculatorDraftScope, cloudDraftReady, cloudDraftNeedsChoice, cloudDraftVersion, cloudCalculatorDraftService, breakEvenInput, currency, draftHydratedScope, input, name, selectedCatalogItem, storage]);
 
   useEffect(() => {
+    if (draftHydratedScope !== calculatorDraftScope) return;
     try {
       storage.setItem(BUSINESS_TYPE_KEY, businessType);
     } catch {
       setProfileMessage("No fue posible guardar el perfil en este navegador.");
     }
-  }, [businessType, storage]);
+  }, [businessType, calculatorDraftScope, draftHydratedScope, storage]);
 
   useEffect(() => {
     if (authMode !== "cloud" || !supabase) {
@@ -433,13 +473,13 @@ export function App({
   }, [authMode, supabase]);
 
   useEffect(() => {
-    if (authMode === "cloud" || historyNeedsRecovery) return;
+    if (draftHydratedScope !== calculatorDraftScope || authMode === "cloud" || historyNeedsRecovery) return;
     try {
       historyRepository.save(history);
     } catch {
       setSavedMessage("No fue posible guardar en este navegador.");
     }
-  }, [authMode, history, historyNeedsRecovery, historyRepository]);
+  }, [authMode, calculatorDraftScope, draftHydratedScope, history, historyNeedsRecovery, historyRepository]);
 
   async function refreshLicenseAccess() {
     if (authMode !== "cloud" || !supabase) return;
