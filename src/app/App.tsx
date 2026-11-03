@@ -326,7 +326,7 @@ export function App({
         pricingInput: input,
         catalogItem: selectedCatalogItem,
       });
-      let record: SavedCalculation = {
+      const record: SavedCalculation = {
         id: snapshot.id,
         name: snapshot.name,
         createdAt: snapshot.createdAt,
@@ -341,10 +341,6 @@ export function App({
         if (!businessId) throw new Error("No hay un negocio cloud seleccionado.");
         const cloudRecord = await cloudHistoryService.saveSnapshot(businessId, snapshot);
         setHistory((current) => [cloudRecord, ...current].slice(0, 100));
-        setSavedMessage("Cálculo guardado en Supabase para este negocio.");
-        return;
-      }
-      setHistory((current) => [record, ...current].slice(0, 100));
         setSavedMessage("Cálculo guardado en Supabase para este negocio.");
         return;
       }
