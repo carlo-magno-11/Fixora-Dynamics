@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { getMessages, type SupportedLocale } from "../i18n/messages";
 import { MfaSettings } from "../modules/auth/ui/MfaSettings";
 import { LicenseActivationPanel } from "../modules/licensing/ui/LicenseActivationPanel";
@@ -8,6 +9,119 @@ import { FixoraMark } from "../shared/ui/FixoraMark";
 type LicenseAccess = Database["public"]["Functions"]["fixora_get_license_access"]["Returns"][number];
 
 type PageProps = { locale?: SupportedLocale };
+
+
+type FixoraTheme = {
+  burgundy: string;
+  charcoal: string;
+  gold: string;
+  cocoa: string;
+  forest: string;
+};
+
+const DEFAULT_FIXORA_THEME: FixoraTheme = {
+  burgundy: "#6E0D25",
+  charcoal: "#0F0F0F",
+  gold: "#DCAB6B",
+  cocoa: "#774E24",
+  forest: "#16302B",
+};
+
+const THEME_FIELDS: { key: keyof FixoraTheme; label: string; description: string }[] = [
+  { key: "burgundy", label: "Borgoña", description: "Color principal y elementos destacados" },
+  { key: "charcoal", label: "Carbón", description: "Texto principal y contraste" },
+  { key: "gold", label: "Oro cálido", description: "Acentos, botones y detalles" },
+  { key: "cocoa", label: "Cacao", description: "Color secundario y textos de apoyo" },
+  { key: "forest", label: "Verde profundo", description: "Navegación y superficies oscuras" },
+];
+
+function readFixoraTheme(storageKey: string): FixoraTheme {
+  try {
+    const stored = window.localStorage.getItem(storageKey);
+    if (!stored) return DEFAULT_FIXORA_THEME;
+    const parsed = JSON.parse(stored) as Partial<FixoraTheme>;
+    return Object.fromEntries(THEME_FIELDS.map(({ key }) => {
+      const value = parsed[key];
+      return [key, typeof value === "string" && /^#[0-9a-fA-F]{6}$/.test(value) ? value : DEFAULT_FIXORA_THEME[key]];
+    })) as FixoraTheme;
+  } catch {
+    return DEFAULT_FIXORA_THEME;
+  }
+}
+
+function applyFixoraTheme(theme: FixoraTheme) {
+  const root = document.documentElement;
+  const variables: Record<string, string> = {
+    "--fixora-deep": theme.burgundy,
+    "--fixora-forest": theme.forest,
+    "--fixora-jade": theme.forest,
+    "--fixora-copper": theme.gold,
+    "--ink": theme.charcoal,
+    "--ink-soft": theme.cocoa,
+    "--petrol": theme.forest,
+    "--gold": theme.gold,
+    "--red": theme.burgundy,
+  };
+  Object.entries(variables).forEach(([name, value]) => root.style.setProperty(name, value));
+}
+
+function ThemeSettings({ userEmail }: { userEmail?: string }) {
+  const storageKey = `fixora.theme.v1:${userEmail?.trim().toLowerCase() || "local"}`;
+  const [theme, setTheme] = useState<FixoraTheme>(() => readFixoraTheme(storageKey));
+  const [saveState, setSaveState] = useState("Los cambios se guardan en este dispositivo.");
+
+  useEffect(() => {
+    applyFixoraTheme(theme);
+    try {
+      window.localStorage.setItem(storageKey, JSON.stringify(theme));
+      setSaveState("Tema guardado en este dispositivo.");
+    } catch {
+      setSaveState("No se pudo guardar el tema; los cambios solo estarán activos mientras esta página permanezca abierta.");
+    }
+  }, [storageKey, theme]);
+
+  function updateColor(key: keyof FixoraTheme, value: string) {
+    if (!/^#[0-9a-fA-F]{6}$/.test(value)) return;
+    setTheme((current) => ({ ...current, [key]: value.toUpperCase() }));
+  }
+
+  function resetTheme() {
+    setTheme(DEFAULT_FIXORA_THEME);
+  }
+
+  return (
+    <section className="theme-settings" aria-labelledby="theme-settings-title">
+      <div className="theme-settings-heading">
+        <div>
+          <span className="eyebrow">APARIENCIA DE FIXORA</span>
+          <h2 id="theme-settings-title">Personaliza tus colores</h2>
+          <p>Adapta la interfaz a tu gusto. Esto no modifica tus cálculos, documentos ni la identidad de marca en otros materiales.</p>
+        </div>
+        <button className="outline-button" type="button" onClick={resetTheme}>Restablecer colores</button>
+      </div>
+      <div className="theme-palette-preview" aria-label="Vista previa de la paleta actual">
+        {THEME_FIELDS.map(({ key, label }) => (
+          <div className="theme-swatch" key={key}>
+            <span style={{ backgroundColor: theme[key] }} />
+            <small>{label}</small>
+            <code>{theme[key]}</code>
+          </div>
+        ))}
+      </div>
+      <div className="theme-color-grid">
+        {THEME_FIELDS.map(({ key, label, description }) => (
+          <label className="theme-color-field" key={key}>
+            <span className="theme-color-input" style={{ borderColor: theme[key] }}>
+              <input type="color" value={theme[key]} aria-label={`Color ${label}`} onChange={(event) => updateColor(key, event.target.value)} />
+            </span>
+            <span><strong>{label}</strong><small>{description}</small><code>{theme[key]}</code></span>
+          </label>
+        ))}
+      </div>
+      <p className="theme-save-state" role="status" aria-live="polite">{saveState}</p>
+    </section>
+  );
+}
 
 export function AboutPage({ locale }: PageProps) {
   const copy = getMessages(locale).brand;
@@ -69,6 +183,7 @@ export function AccountPage({ locale, onOpenGuide, authMode = "local", userEmail
       <p className="eyebrow">TU ESPACIO PERSONAL <span> / </span> CUENTA</p>
       <h1>{copy.title}</h1>
       <p className="page-lead">{copy.lead}</p>
+      <ThemeSettings userEmail={userEmail} />
       <section className="account-security-banner">
         <span className="account-security-icon">⌑</span>
         <div><strong>{authMode === "cloud" ? "Cuenta y negocio conectados" : copy.authTitle}</strong><p>{authMode === "cloud" ? `Sesión activa para ${userEmail || "tu cuenta"} en ${businessName || "tu negocio"}.` : copy.authBody}</p></div>
