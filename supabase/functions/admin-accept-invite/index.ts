@@ -3,12 +3,15 @@ import { userAuthConfig } from "../_shared/auth.ts";
 import { getAal2Actor } from "../_shared/admin.ts";
 import { isHex, sha256Hex, toBytea } from "../_shared/crypto.ts";
 import { jsonResponse, readJsonObject, rpcErrorResponse } from "../_shared/http.ts";
+import { enforceRateLimit } from "../_shared/rate-limit.ts";
 
 export default {
   fetch: withSupabase(userAuthConfig, async (request, ctx) => {
     if (request.method !== "POST") return jsonResponse({ error: "Method not allowed." }, 405);
     const actorId = getAal2Actor(ctx.jwtClaims);
     if (!actorId) return jsonResponse({ error: "Complete MFA verification before accepting an administrator invitation." }, 403);
+    const rateLimit = await enforceRateLimit(ctx.supabaseAdmin, actorId, "admin.invite.accept", 5, 3600);
+    if (rateLimit) return rateLimit;
     const body = await readJsonObject(request);
     const inviteToken = body?.inviteToken;
     if (!isHex(inviteToken, 64)) return jsonResponse({ error: "A valid invitation token is required." }, 400);

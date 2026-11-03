@@ -5,3 +5,10 @@ Cliente solo URL y clave publishable; nunca service_role/secret keys. RLS en tod
 ## Historial local del prototipo
 
 La primera versión de interfaz guarda snapshots de cálculos en `localStorage` del navegador. Es una comodidad temporal, no almacenamiento seguro: no está cifrado por la aplicación, puede ser leído por quien tenga acceso al perfil del navegador y puede borrarse al limpiar los datos del sitio. No guardar contraseñas, códigos de licencia, tokens ni información personal sensible allí. La persistencia multiusuario se migrará a Supabase con Auth, RLS y permisos mínimos antes del lanzamiento.
+
+
+## Línea base y controles automatizados — 3 de noviembre de 2026
+
+La matriz de 15 clases de ataque, controles, pruebas de aceptación, inventario de herramientas open source y hallazgos reales del proyecto de pruebas está en [SECURITY-BASELINE-2026.md](./SECURITY-BASELINE-2026.md). Incluye el bucket heredado público y vacío, el pendiente de rate limiting de negocio, la comprobación del esquema PostgREST y las pruebas de AAL2 real que todavía faltan.
+
+La CI de seguridad añade Gitleaks, OSV-Scanner, Trivy y zizmor. ZAP baseline solo se ejecutará cuando exista la variable `FIXORA_STAGING_URL` apuntando a staging HTTPS. Ningún escaneo DAST debe apuntar a producción ni a sistemas de terceros sin autorización.

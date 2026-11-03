@@ -11,7 +11,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: fixora-db-tests-${{ github.ref }}
+  group: fixora-db-tests-${{ github.head_ref || github.ref_name }}
   cancel-in-progress: true
 
 jobs:
@@ -20,10 +20,12 @@ jobs:
     timeout-minutes: 30
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Set up Supabase CLI
-        uses: supabase/setup-cli@v3
+        uses: supabase/setup-cli@689adcfb80d947100a1eab127289b97d1fb07b13 # v3
         with:
           version: 2.122.0
 
@@ -87,3 +89,6 @@ jobs:
 
       - name: Test concurrent license device activation limit
         run: bash scripts/test-license-concurrency.sh "postgresql://postgres:postgres@127.0.0.1:54322/postgres"
+
+      - name: Test concurrent server rate limit
+        run: bash scripts/test-rate-limit-concurrency.sh "postgresql://postgres:postgres@127.0.0.1:54322/postgres"

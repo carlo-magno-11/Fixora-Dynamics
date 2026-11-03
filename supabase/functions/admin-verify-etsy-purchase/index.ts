@@ -3,6 +3,7 @@ import { userAuthConfig } from "../_shared/auth.ts";
 import { getAal2Actor, hasAdminPermission, requestAuditHashes } from "../_shared/admin.ts";
 import { isUuid } from "../_shared/crypto.ts";
 import { jsonResponse, readJsonObject, rpcErrorResponse } from "../_shared/http.ts";
+import { enforceRateLimit } from "../_shared/rate-limit.ts";
 
 export default {
   fetch: withSupabase(userAuthConfig, async (request, ctx) => {
@@ -10,6 +11,8 @@ export default {
 
     const actorId = getAal2Actor(ctx.jwtClaims);
     if (!actorId) return jsonResponse({ error: "AAL2 administrator authentication is required." }, 403);
+    const rateLimit = await enforceRateLimit(ctx.supabaseAdmin, actorId, "admin.purchase.verify", 5, 3600);
+    if (rateLimit) return rateLimit;
 
     const body = await readJsonObject(request);
     if (!body) return jsonResponse({ error: "A JSON request body is required." }, 400);

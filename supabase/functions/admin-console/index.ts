@@ -2,6 +2,7 @@ import { withSupabase } from "npm:@supabase/server@1.9.2";
 import { userAuthConfig } from "../_shared/auth.ts";
 import { getAuthenticatedUserId, hasAdminPermission } from "../_shared/admin.ts";
 import { jsonResponse } from "../_shared/http.ts";
+import { enforceRateLimit } from "../_shared/rate-limit.ts";
 
 const permissionKeys = [
   "dashboard.read", "users.read", "users.read_limited", "users.suspend",
@@ -18,6 +19,8 @@ export default {
     }
     const actorId = getAuthenticatedUserId(ctx.jwtClaims);
     if (!actorId) return jsonResponse({ error: "Authentication is required." }, 401);
+    const rateLimit = await enforceRateLimit(ctx.supabaseAdmin, actorId, "admin.console", 30, 60);
+    if (rateLimit) return rateLimit;
     if (ctx.jwtClaims?.aal !== "aal2") {
       return jsonResponse({
         access: { allowed: false, reason: "mfa_required", permissions: [] },

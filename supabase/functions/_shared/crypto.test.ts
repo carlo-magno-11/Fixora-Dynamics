@@ -16,7 +16,7 @@ Deno.test("SHA-256 matches the standard abc test vector", async () => {
 });
 
 Deno.test("HMAC-SHA-256 is stable and message-specific", async () => {
-  const secret = "0123456789abcdef0123456789abcdef";
+  const secret = "x".repeat(32);
   const first = await hmacSha256Hex(secret, "user:installation");
   const second = await hmacSha256Hex(secret, "user:installation");
   const different = await hmacSha256Hex(secret, "user:other-installation");
