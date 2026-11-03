@@ -256,7 +256,18 @@ No permitir que la IA:
 
 La decisión recomendada hoy es **no hacer que Fixora dependa de IA**. Primero completar guías y ayuda contextual. Después probar un asistente limitado y opcional con presupuesto máximo explícito.
 
-## 5. Pendientes antes de lanzar
+## 5. Bloqueos técnicos comprobados antes de implementar el pase y los cobros
+
+La revisión de la migración `20261031231529_fixora_licenses_purchases_devices.sql` y de `src/modules/licensing/domain/license-policy.ts` detectó dos límites actuales que impiden implementar la propuesta solo insertando un SKU:
+
+1. `fixora_products.term_months` es obligatorio y solo admite 1–60 meses; la política TypeScript calcula vencimiento como un año calendario fijo (`LICENSE_TERM_YEARS = 1`). No existe hoy una duración de 30 días configurable por producto.
+2. El CHECK de `fixora_purchase_orders.provider` solo admite `etsy`, `gumroad`, `hotmart` y `manual`. Mercado Pago, Stripe, PayPal y SPEI no pueden registrarse con el esquema actual.
+
+Antes de vender el pase de 30 días, diseñar una migración revisada que permita duración explícita por producto (por ejemplo, exactamente uno entre `term_months` y `term_days`), actualice las funciones de activación/vencimiento y cambie la política TypeScript para calcular por duración del producto. Preservar el comportamiento anual actual y agregar pruebas de límites: fin de mes, año bisiesto, UTC, exactamente 30 días, expiración al instante correcto y activación repetida. **No** representar 30 días como un mes calendario ni cambiar el contrato anual por accidente.
+
+Antes de activar pagos propios, ampliar de forma controlada el CHECK de proveedor, agregar verificación de webhooks firmados/idempotentes y revisar la relación entre orden, SKU, importe, moneda y proveedor. Mantener Etsy manual hasta que exista una integración autorizada y evidencia de compra confiable. No modificar estas migraciones ni desplegar hasta revisar PR #8 y resolver los límites de dispositivos/alcance de licencia.
+
+## 6. Pendientes antes de lanzar
 
 - Confirmar legalmente el producto digital/licencia y el método de entrega permitidos en Etsy.
 - Revisar política de privacidad, términos, reembolsos, IVA y facturación.
