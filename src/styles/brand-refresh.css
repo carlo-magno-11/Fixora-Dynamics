@@ -6,7 +6,7 @@
   --ink-soft: #344D4D;
   --petrol: #1D6259;
   --petrol-light: #E3ECE6;
-  --gold: #B97856;
+  --gold: #92583F;
   --gold-light: #F1E1D6;
   --paper: #FCFBF7;
   --canvas: #F1F0E9;
@@ -57,7 +57,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   line-height: 1;
 }
 .brand-word b {
-  color: var(--fixora-copper);
+  color: #92583F;
   font-size: 8px;
   font-weight: 700;
   letter-spacing: .29em;
@@ -172,7 +172,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 }
 .page-heading { margin-bottom: 25px; }
 .eyebrow {
-  color: #A36A4E;
+  color: #92583F;
   font-size: 9px;
   font-weight: 750;
   letter-spacing: .17em;
@@ -307,7 +307,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   color: var(--fixora-jade);
   font-size: 18px;
 }
-.essential-tile:nth-child(3n + 2) .tile-symbol { border-color: #EAD9CF; background: #F7ECE5; color: #A9684A; }
+.essential-tile:nth-child(3n + 2) .tile-symbol { border-color: #EAD9CF; background: #F7ECE5; color: #92583F; }
 .essential-tile h3 { color: var(--fixora-deep); font-size: 13px; font-weight: 700; letter-spacing: -.02em; }
 .essential-tile p { color: #718078; font-size: 10px; line-height: 1.7; }
 .essential-tile button { color: var(--fixora-jade); font-size: 10px; font-weight: 750; }
