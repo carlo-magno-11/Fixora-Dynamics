@@ -11,6 +11,12 @@ export default {
     const userId = getAuthenticatedUserId(ctx.jwtClaims);
     if (!userId) return jsonResponse({ error: "A valid authenticated user is required." }, 401);
 
+    const { data: authUserResult, error: authUserError } =
+      await ctx.supabaseAdmin.auth.admin.getUserById(userId);
+    if (authUserError || !authUserResult.user?.email_confirmed_at || authUserResult.user.is_anonymous) {
+      return jsonResponse({ error: "Email verification is required before activating a license." }, 403);
+    }
+
     const deviceSecret = Deno.env.get("FIXORA_DEVICE_HMAC_SECRET");
     if (!deviceSecret || new TextEncoder().encode(deviceSecret).byteLength < 32) {
       return jsonResponse({ error: "License activation is not configured." }, 503);
