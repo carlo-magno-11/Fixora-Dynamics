@@ -1,24 +1,9 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import { createCatalogItem, updateCatalogItem } from "../domain/catalog";
 import type { CatalogCurrency, CatalogDraft, CatalogItem, CatalogItemKind } from "../domain/catalog";
-import type { Database } from "../../../shared/infrastructure/supabase/database.types";
+import { createSupabaseCatalogRepository } from "../infrastructure/supabase-catalog-repository";
 import { getSupabaseClient } from "../../../shared/infrastructure/supabase/client";
-
-type CatalogRow = Database["public"]["Tables"]["fixora_catalog_items"]["Row"];
-
-function mapCatalogRow(row: CatalogRow): CatalogItem {
-  return {
-    id: row.id,
-    name: row.name,
-    kind: row.kind as CatalogItemKind,
-    unit: row.unit,
-    sku: row.sku,
-    currency: row.currency_code as CatalogCurrency,
-    referenceCost: Number(row.reference_cost),
-    active: row.is_active,
-  };
-}
 
 export function CloudCatalogPage({ businessId, currency, formatMoney, onUseInCalculator }: {
   businessId: string;
@@ -26,7 +11,8 @@ export function CloudCatalogPage({ businessId, currency, formatMoney, onUseInCal
   formatMoney: (value: number, currency: CatalogCurrency) => string;
   onUseInCalculator: (item: CatalogItem) => void;
 }) {
-  const supabase = useMemo(() => getSupabaseClient(), []);
+  const repository = useMemo(() => createSupabaseCatalogRepository(getSupabaseClient()), []);
+  const requestId = useRef(0);
   const [items, setItems] = useState<CatalogItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -41,30 +27,24 @@ export function CloudCatalogPage({ businessId, currency, formatMoney, onUseInCal
   const [errorMessage, setErrorMessage] = useState("");
 
   const loadItems = useCallback(async () => {
-    if (!supabase) {
-      setErrorMessage("No se pudo inicializar la conexión con Supabase.");
-      setLoading(false);
-      return;
-    }
+    const currentRequest = ++requestId.current;
     setLoading(true);
-    const { data, error } = await supabase
-      .from("fixora_catalog_items")
-      .select("id, business_id, name, kind, unit, sku, currency_code, reference_cost, is_active, created_by, created_at, updated_at")
-      .eq("business_id", businessId)
-      .eq("is_active", true)
-      .order("created_at", { ascending: false })
-      .limit(500);
-    setLoading(false);
-    if (error) {
-      setErrorMessage(error.message);
-      return;
-    }
     setErrorMessage("");
-    setItems((data ?? []).map(mapCatalogRow));
-  }, [businessId, supabase]);
+    try {
+      const records = await repository.listActive(businessId);
+      if (currentRequest !== requestId.current) return;
+      setItems(records);
+    } catch (error) {
+      if (currentRequest !== requestId.current) return;
+      setErrorMessage(error instanceof Error ? error.message : "No fue posible cargar el catálogo.");
+    } finally {
+      if (currentRequest === requestId.current) setLoading(false);
+    }
+  }, [businessId, repository]);
 
   useEffect(() => {
     void loadItems();
+    return () => { requestId.current += 1; };
   }, [loadItems]);
 
   function resetForm() {
@@ -86,11 +66,11 @@ export function CloudCatalogPage({ businessId, currency, formatMoney, onUseInCal
     setReferenceCost(item.referenceCost);
     setDraftCurrency(item.currency);
     setMessage("Editando elemento. Guarda los cambios o cancela para salir.");
+    setErrorMessage("");
   }
 
   async function saveItem(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!supabase) return;
     setSaving(true);
     setMessage("");
     setErrorMessage("");
@@ -98,40 +78,13 @@ export function CloudCatalogPage({ businessId, currency, formatMoney, onUseInCal
     try {
       if (editingId) {
         const validated = updateCatalogItem(editingId, draft, items);
-        const { data, error } = await supabase
-          .from("fixora_catalog_items")
-          .update({
-            name: validated.name,
-            kind: validated.kind,
-            unit: validated.unit,
-            sku: validated.sku,
-            currency_code: validated.currency,
-            reference_cost: validated.referenceCost,
-          })
-          .eq("business_id", businessId)
-          .eq("id", editingId)
-          .select("id, business_id, name, kind, unit, sku, currency_code, reference_cost, is_active, created_by, created_at, updated_at")
-          .single();
-        if (error) throw error;
-        setItems((current) => current.map((item) => item.id === editingId ? mapCatalogRow(data) : item));
+        const updated = await repository.update(businessId, editingId, validated);
+        setItems((current) => current.map((item) => item.id === editingId ? updated : item));
         setMessage("Cambios guardados en el catálogo cloud.");
       } else {
         const validated = createCatalogItem(draft, items, crypto.randomUUID());
-        const { data, error } = await supabase
-          .from("fixora_catalog_items")
-          .insert({
-            business_id: businessId,
-            name: validated.name,
-            kind: validated.kind,
-            unit: validated.unit,
-            sku: validated.sku,
-            currency_code: validated.currency,
-            reference_cost: validated.referenceCost,
-          })
-          .select("id, business_id, name, kind, unit, sku, currency_code, reference_cost, is_active, created_by, created_at, updated_at")
-          .single();
-        if (error) throw error;
-        setItems((current) => [mapCatalogRow(data), ...current]);
+        const created = await repository.create(businessId, validated);
+        setItems((current) => [created, ...current]);
         setMessage("Elemento añadido al catálogo cloud.");
       }
       resetForm();
@@ -143,23 +96,19 @@ export function CloudCatalogPage({ businessId, currency, formatMoney, onUseInCal
   }
 
   async function archiveItem(item: CatalogItem) {
-    if (!supabase) return;
     setSaving(true);
     setMessage("");
     setErrorMessage("");
-    const { error } = await supabase
-      .from("fixora_catalog_items")
-      .update({ is_active: false })
-      .eq("business_id", businessId)
-      .eq("id", item.id);
-    setSaving(false);
-    if (error) {
-      setErrorMessage(error.message);
-      return;
+    try {
+      await repository.archive(businessId, item.id);
+      setItems((current) => current.filter((entry) => entry.id !== item.id));
+      setMessage("Elemento archivado. No se eliminó del historial del negocio.");
+      if (editingId === item.id) resetForm();
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "No fue posible archivar el elemento.");
+    } finally {
+      setSaving(false);
     }
-    setItems((current) => current.filter((entry) => entry.id !== item.id));
-    setMessage("Elemento archivado. No se eliminó del historial del negocio.");
-    if (editingId === item.id) resetForm();
   }
 
   return (
@@ -182,7 +131,7 @@ export function CloudCatalogPage({ businessId, currency, formatMoney, onUseInCal
         {errorMessage && <p className="error-state" role="alert">{errorMessage}</p>}
       </section>
       <section className="catalog-list-section">
-        <div className="section-heading"><div className="section-number">02</div><div><h2>Elementos registrados</h2><p>{items.length} elementos activos en este negocio.</p></div></div>
+        <div className="section-heading"><div className="section-number">02</div><div><h2>Elementos registrados</h2><p>{items.length} elementos activos en este negocio.</p></div><button className="outline-button" type="button" disabled={loading || saving} onClick={() => void loadItems()}>{loading ? "Actualizando…" : "Actualizar lista"}</button></div>
         {loading ? <p className="local-storage-note">Cargando catálogo…</p> : items.length === 0 ? (
           <div className="empty-state"><span>◇</span><h2>Tu catálogo está listo para comenzar</h2><p>Añade productos o servicios para reutilizar sus referencias al calcular precios.</p></div>
         ) : (
@@ -192,7 +141,7 @@ export function CloudCatalogPage({ businessId, currency, formatMoney, onUseInCal
                 <div className="catalog-row-symbol">{item.kind === "product" ? "◇" : "◉"}</div>
                 <div className="catalog-row-main"><strong>{item.name}</strong><span>{item.kind === "product" ? "Producto" : "Servicio"} · {item.unit}{item.sku ? ` · SKU ${item.sku}` : ""}</span></div>
                 <div className="catalog-row-cost"><span>COSTE DE REFERENCIA</span><strong>{formatMoney(item.referenceCost, item.currency)}</strong></div>
-                <div className="catalog-row-actions"><button className="outline-button" onClick={() => onUseInCalculator(item)}>Usar</button><button className="outline-button" onClick={() => startEditing(item)}>Editar</button><button className="text-button" disabled={saving} onClick={() => void archiveItem(item)}>Archivar</button></div>
+                <div className="catalog-row-actions"><button className="outline-button" disabled={saving} onClick={() => onUseInCalculator(item)}>Usar</button><button className="outline-button" disabled={saving} onClick={() => startEditing(item)}>Editar</button><button className="text-button" disabled={saving} onClick={() => void archiveItem(item)}>Archivar</button></div>
               </article>
             ))}
           </div>
