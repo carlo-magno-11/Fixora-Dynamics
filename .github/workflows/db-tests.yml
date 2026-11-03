@@ -11,7 +11,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: fixora-db-tests-${{ github.ref }}
+  group: fixora-db-tests-${{ github.head_ref || github.ref_name }}
   cancel-in-progress: true
 
 jobs:
