@@ -369,9 +369,11 @@ export function App({
 
   async function restoreLocalBackup() {
     if (!businessId || !localBackupDraft || localBackupDraftScope !== calculatorDraftScope) return;
+    const saveScope = calculatorDraftScope;
     setCloudDraftSaving(true);
     try {
       const nextVersion = await cloudCalculatorDraftService.save(businessId, localBackupDraft, cloudDraftVersion);
+      if (currentDraftScope.current !== saveScope) return;
       applyCalculatorDraft(localBackupDraft);
       setCloudDraftVersion(nextVersion);
       lastCloudDraftFingerprint.current = calculatorDraftFingerprint(localBackupDraft);
@@ -379,10 +381,11 @@ export function App({
       setCloudDraftNeedsReload(false);
       setDraftStatus("La copia local anterior se restauró y sincronizó con la nube. El respaldo original se conserva.");
     } catch (error) {
+      if (currentDraftScope.current !== saveScope) return;
       setCloudDraftNeedsReload(true);
       setDraftStatus(error instanceof Error ? error.message : "No fue posible restaurar la copia local anterior.");
     } finally {
-      setCloudDraftSaving(false);
+      if (currentDraftScope.current === saveScope) setCloudDraftSaving(false);
     }
   }
 
@@ -393,19 +396,22 @@ export function App({
       setDraftStatus("No encontramos un borrador local válido para sincronizar.");
       return;
     }
+    const saveScope = calculatorDraftScope;
     setCloudDraftSaving(true);
     try {
       const nextVersion = await cloudCalculatorDraftService.save(businessId, local, cloudDraftVersion);
+      if (currentDraftScope.current !== saveScope) return;
       setCloudDraftVersion(nextVersion);
       lastCloudDraftFingerprint.current = calculatorDraftFingerprint(local);
       setCloudDraftNeedsChoice(false);
       setCloudDraftReady(true);
       setDraftStatus("El borrador local elegido se sincronizó con la nube. La copia del dispositivo se conserva.");
     } catch (error) {
+      if (currentDraftScope.current !== saveScope) return;
       setCloudDraftNeedsReload(true);
       setDraftStatus(error instanceof Error ? error.message : "No fue posible sincronizar el borrador local.");
     } finally {
-      setCloudDraftSaving(false);
+      if (currentDraftScope.current === saveScope) setCloudDraftSaving(false);
     }
   }
 
