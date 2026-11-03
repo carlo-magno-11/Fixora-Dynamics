@@ -68,6 +68,7 @@ export function AuthGate({ children }: AuthGateProps) {
   const [errorMessage, setErrorMessage] = useState("");
   const [mfaCode, setMfaCode] = useState("");
   const [mfaBusy, setMfaBusy] = useState(false);
+  const [mfaRetry, setMfaRetry] = useState(0);
   const [mfaState, setMfaState] = useState<{ status: "checking" | "none" } | { status: "challenge"; factorId: string; challengeId: string } | { status: "error"; message: string }>({ status: "checking" });
 
   const loadBusinesses = useCallback(async (userId: string) => {
@@ -168,7 +169,7 @@ export function AuthGate({ children }: AuthGateProps) {
       setMfaState({ status: "challenge", factorId: verifiedFactor.id, challengeId: challenge.id });
     })();
     return () => { active = false; };
-  }, [session?.access_token, session?.user.id, supabase]);
+  }, [session?.access_token, session?.user.id, supabase, mfaRetry]);
 
   async function verifyMfaChallenge(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -358,7 +359,7 @@ export function AuthGate({ children }: AuthGateProps) {
       <p className="auth-eyebrow">FIXORA DYNAMICS · SEGURIDAD</p>
       <h1>No pudimos verificar tu sesión.</h1>
       <p className="auth-error" role="alert">{mfaState.message}</p>
-      <button className="outline-button" onClick={() => setMfaState({ status: "checking" })}>Volver a comprobar</button>
+      <button className="outline-button" onClick={() => setMfaRetry((current) => current + 1)}>Volver a comprobar</button>
       <button className="text-button" onClick={() => void signOut()}>Cerrar sesión</button>
     </AuthShell>;
   }
