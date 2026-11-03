@@ -55,17 +55,18 @@ export function readCalculatorDraft(storage: KeyValueStorage): CalculatorDraft |
     if (!isRecord(value) || value.version !== 1
       || typeof value.savedAt !== "string" || !Number.isFinite(Date.parse(value.savedAt))
       || typeof value.name !== "string"
-      || (value.currency !== "MXN" && value.currency !== "USD")
-      || !hasFiniteFields(value.input, pricingFields)
-      || !hasFiniteFields(value.breakEvenInput, breakEvenFields)) return null;
+      || (value.currency !== "MXN" && value.currency !== "USD")) return null;
+    const input = value.input;
+    const breakEvenInput = value.breakEvenInput;
+    if (!hasFiniteFields(input, pricingFields) || !hasFiniteFields(breakEvenInput, breakEvenFields)) return null;
     if (value.selectedCatalogItem !== undefined && !isCatalogSnapshot(value.selectedCatalogItem)) return null;
     return {
       version: 1,
       savedAt: value.savedAt,
       name: value.name.slice(0, 80),
       currency: value.currency,
-      input: Object.fromEntries(pricingFields.map((field) => [field, value.input[field]])) as PricingInput,
-      breakEvenInput: Object.fromEntries(breakEvenFields.map((field) => [field, value.breakEvenInput[field]])) as BreakEvenInput,
+      input: Object.fromEntries(pricingFields.map((field) => [field, input[field]])) as PricingInput,
+      breakEvenInput: Object.fromEntries(breakEvenFields.map((field) => [field, breakEvenInput[field]])) as BreakEvenInput,
       ...(value.selectedCatalogItem ? { selectedCatalogItem: value.selectedCatalogItem } : {}),
     };
   } catch {
