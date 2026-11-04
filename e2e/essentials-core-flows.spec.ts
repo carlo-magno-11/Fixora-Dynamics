@@ -200,15 +200,19 @@ test("cloud expenses persist fixed and variable costs with their period settings
 
   await page.getByRole("button", { name: "Control de gastos", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Controla tus gastos." })).toBeVisible();
-  const visibleExpenseEntries = await page.locator(".expense-entry").allTextContents();
+  const reloadedFixedEntry = page.locator(".expense-entry").filter({ has: page.getByPlaceholder("Ej. renta del local") });
+  const reloadedVariableEntry = page.locator(".expense-entry").filter({ has: page.getByPlaceholder("Ej. empaque por unidad") });
   console.log("Post-reload expense diagnostics", JSON.stringify({
     businessId: reloadedScope.selectedBusinessId,
-    visibleExpenseEntries,
+    fixedInputValues: await reloadedFixedEntry.locator("input").evaluateAll((inputs) => inputs.map((input) => (input as HTMLInputElement).value)),
+    variableInputValues: await reloadedVariableEntry.locator("input").evaluateAll((inputs) => inputs.map((input) => (input as HTMLInputElement).value)),
     expenseResponses: postReloadExpenseDiagnostics,
     pageErrors: postReloadPageErrors,
   }));
-  await expect(page.locator(".expense-entry").filter({ hasText: "Renta E2E" })).toBeVisible();
-  await expect(page.locator(".expense-entry").filter({ hasText: "Empaque E2E" })).toBeVisible();
+  await expect(reloadedFixedEntry.locator("input").first()).toHaveValue("Renta E2E");
+  await expect(reloadedFixedEntry.locator("input").nth(1)).toHaveValue("5000");
+  await expect(reloadedVariableEntry.locator("input").first()).toHaveValue("Empaque E2E");
+  await expect(reloadedVariableEntry.locator("input").nth(1)).toHaveValue("12.5");
 
   await context.close();
 });
