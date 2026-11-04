@@ -242,3 +242,12 @@ La concurrencia probada usa Supabase local efímero. No implica que se haya ejec
 - [ ] Database tests #1383, Browser E2E #90 y CodeQL #489 pendientes al cierre de esta actualización.
 - [ ] Integrar el dominio en el flujo de UI; todavía no guarda pedidos ni se conecta al ledger de inventario.
 - [ ] Diseñar repositorio transaccional/RPC y migración versionada después de cerrar ADR-004; añadir pruebas de RLS, idempotencia y concurrencia.
+
+
+## 8. Comercio y reventa — reposición sugerida (4-nov-2026)
+- [x] Dominio determinista para posición de inventario, punto de reposición, objetivo, MOQ y múltiplo de compra.
+- [x] Validación de cantidades enteras seguras y demanda diaria promedio explícita.
+- [ ] Confirmar CI/typecheck y suite Vitest del nuevo dominio.
+- [ ] Conectar demanda a ventas históricas verificadas y tratar periodos sin stock antes de presentar un promedio automático.
+- [ ] Integrar UI y persistencia transaccional; actualmente no crea órdenes ni mueve inventario.
+- [ ] Añadir E2E, RLS, auditoría e idempotencia antes de habilitar para clientes.
