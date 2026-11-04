@@ -16,6 +16,7 @@ export interface LocalImportRawBundle {
   catalog: string | null;
   expenses: string | null;
   history: string | null;
+  storageError?: boolean;
 }
 
 export interface LocalImportIssue {
@@ -84,6 +85,10 @@ function hasDuplicateIds(items: readonly { id: string }[]): boolean {
 export function parseLocalImportBundle(raw: LocalImportRawBundle): LocalImportBundle {
   const issues: LocalImportIssue[] = [];
   const foundLocalData = raw.catalog !== null || raw.expenses !== null || raw.history !== null;
+  if (raw.storageError) {
+    issues.push({ category: "storage", code: "storage_unavailable", message: "El navegador no permitió leer los datos locales. No se asumirá que están vacíos." });
+    return { catalog: [], expenses: null, history: [], issues, foundLocalData, canImport: false };
+  }
   const payloadBytes = [raw.catalog, raw.expenses, raw.history]
     .filter((value): value is string => value !== null)
     .reduce((total, value) => total + new TextEncoder().encode(value).byteLength, 0);
