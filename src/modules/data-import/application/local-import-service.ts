@@ -7,9 +7,11 @@ import {
   type LocalImportRawBundle,
 } from "../domain/local-import";
 
+export type LocalImportBackupScope = "scoped" | "legacy";
+
 export interface LocalImportSourcePort {
   read(): LocalImportRawBundle;
-  createBackup(): string;
+  createBackup(scope?: LocalImportBackupScope): string;
 }
 
 export interface LocalImportCloudState {
@@ -163,7 +165,7 @@ export function createLocalImportService(
     readSource: () => source.read(),
     importBundle,
     importData,
-    createBackup: () => source.createBackup(),
+    createBackup: (scope?: LocalImportBackupScope) => source.createBackup(scope),
   };
 }
 

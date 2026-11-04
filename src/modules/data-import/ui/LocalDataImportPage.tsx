@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { ChangeEvent } from "react";
-import type { LocalImportService, LocalImportResult, LocalImportPreview } from "../application/local-import-service";
+import type { LocalImportBackupScope, LocalImportService, LocalImportResult, LocalImportPreview } from "../application/local-import-service";
 import type { LocalImportSelection } from "../application/local-import-service";
 import { parseLocalImportBackup, type LocalImportRawBundle } from "../domain/local-import";
 import { createLocalImportFingerprint, createLocalImportKey } from "../application/local-import-idempotency";
@@ -109,19 +109,24 @@ export function LocalDataImportPage({
     }
   }
 
-  function downloadBackup() {
+  function downloadBackup(scope?: LocalImportBackupScope) {
     try {
-      const backup = service.createBackup();
+      const backup = service.createBackup(scope);
       const blob = new Blob([backup], { type: "application/json;charset=utf-8" });
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = `fixora-respaldo-local-${new Date().toISOString().slice(0, 10)}.json`;
+      const scopeName = scope === "scoped" ? "cuenta-negocio" : scope === "legacy" ? "anterior-navegador" : "local";
+      link.download = `fixora-respaldo-${scopeName}-${new Date().toISOString().slice(0, 10)}.json`;
       document.body.appendChild(link);
       link.click();
       link.remove();
       window.setTimeout(() => URL.revokeObjectURL(url), 1000);
-      setBackupMessage("Copia JSON descargada. Guárdala en un lugar privado y seguro.");
+      setBackupMessage(scope === "scoped"
+        ? "Copia de esta cuenta y negocio descargada. El almacenamiento original no se modifica."
+        : scope === "legacy"
+          ? "Copia del almacenamiento anterior descargada por separado. No se mezcló con los datos actuales."
+          : "Copia JSON descargada. Guárdala en un lugar privado y seguro.");
       setError("");
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "No fue posible crear una copia local.");
@@ -171,6 +176,7 @@ export function LocalDataImportPage({
   const catalogBlocked = !preview || hasIssue(preview, "catalog") || preview.catalogConflicts.length > 0 || preview.catalog.length === 0;
   const expensesBlocked = !preview || hasIssue(preview, "expenses") || preview.expensesConflict || preview.currencyIssues.length > 0 || preview.expenses === null;
   const historyBlocked = !preview || hasIssue(preview, "history") || preview.history.length === 0;
+  const storageConflict = Boolean(preview?.issues.some((issue) => issue.code === "storage_conflict"));
   const backupUnavailable = Boolean(preview?.issues.some((issue) =>
     issue.code === "storage_unavailable" || issue.code === "storage_conflict",
   ));
@@ -207,6 +213,13 @@ export function LocalDataImportPage({
           <span>{backupBundle ? "Elegir otro respaldo" : "Seleccionar respaldo JSON"}</span>
           <input type="file" accept=".json,application/json" disabled={loading || saving || attempted} onChange={(event) => void loadBackupFile(event)} />
         </label>
+        {storageConflict && (
+          <div className="local-import-separate-backups" role="group" aria-label="Respaldos separados">
+            <p>Detectamos dos conjuntos independientes. Descarga cada uno por separado; no los mezclaremos ni eliminaremos los originales. Después podrás elegir un archivo para revisarlo e importarlo al negocio conectado.</p>
+            <button className="outline-button" type="button" disabled={loading || saving || attempted} onClick={() => downloadBackup("scoped")}>Respaldar datos de esta cuenta</button>
+            <button className="outline-button" type="button" disabled={loading || saving || attempted} onClick={() => downloadBackup("legacy")}>Respaldar datos anteriores del navegador</button>
+          </div>
+        )}
       </div>
       {backupMessage && <p className="save-message" role="status">{backupMessage}</p>}
 
