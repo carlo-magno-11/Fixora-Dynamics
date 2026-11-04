@@ -51,7 +51,8 @@ export function createSupabaseLocalImportRepository(
 
       return {
         existingSkus: (catalogResult.data ?? []).map((item) => item.sku).filter(Boolean),
-        expensesConfigured: settingsResult.data !== null
+        expensesConfigured: !settingsResult.data
+          || settingsResult.data.version !== 1
           || (expensesResult.data?.length ?? 0) > 0,
       };
     },
