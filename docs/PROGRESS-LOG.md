@@ -748,3 +748,14 @@ Durante la revisión final detecté que el camino idempotente de un código ya r
 - La nueva prueba se ejecutó solo contra Supabase local descartable del workflow; no utilizó secretos ni datos del proyecto remoto.
 - Pendientes siguientes: MFA/AAL2 TOTP en E2E, pruebas de endpoints admin con AAL1/AAL2 y roles distintos, dos dispositivos/revocación, staging HTTPS, revisión visual/accesibilidad y pruebas físicas.
 - Proyecto remoto Fixora `dclaebknyalimmtgppeg`: última migración observada `20261103235603`; la migración local→cloud `20261104010000` continúa sin aplicar. No se ejecutó SQL de escritura ni despliegues remotos; EYESITE oficial no se tocó.
+
+## Corrección del parser HTTP y prueba directa de autorización — 2026-11-04
+
+**HEAD de código:** `71567243a5436ede36cb7c96ad5ee5b156c1bde7`.
+
+- [x] Se corrigió la validación de `Content-Length` en `readJsonObject`: ahora acepta cadenas numéricas válidas y conserva el rechazo de valores no numéricos, tamaños excesivos y cuerpos JSON inválidos.
+- [x] Se añadió una prueba Deno que entrega un cuerpo JSON con `Content-Length` numérico y comprueba que el objeto se interpreta correctamente.
+- [ ] Validar en CI la prueba unitaria y repetir Browser E2E del endpoint `admin-create-invite`. En el HEAD anterior, la prueba AAL2 sin rol recibió HTTP 400 por validación del cuerpo antes de llegar a la autorización; por tanto, esa ejecución no demostró todavía el rechazo 403 por falta de permiso.
+- [ ] Confirmar que, tras la corrección, el endpoint responde 403 para AAL1 y para AAL2 sin permiso `admins.manage`.
+- [ ] Revisar el orden de controles de `admin-create-invite`: la autenticación AAL2 y la autorización deben preceder cualquier operación con efectos; el rate limit debe mantenerse sin permitir bypass.
+- No se aplicaron migraciones ni se desplegaron funciones en Supabase remoto. El cambio está versionado en GitHub; validación CI pendiente.
