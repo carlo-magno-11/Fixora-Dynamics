@@ -22,7 +22,7 @@ create table fixora_private.fixora_import_source_records (
   source_hash bytea not null check (pg_catalog.octet_length(source_hash) = 32),
   cloud_record_id uuid not null,
   created_at timestamptz not null default pg_catalog.clock_timestamp(),
-  constraint fixora_import_source_records_unique_source unique (user_id, business_id, source_type, source_id)
+  constraint fixora_import_source_records_unique_source unique (business_id, source_type, source_id)
 );
 
 alter table fixora_private.fixora_import_batches enable row level security;
@@ -243,8 +243,7 @@ begin
 
     select source_hash into v_existing_source_hash
     from fixora_private.fixora_import_source_records
-    where user_id = v_user_id
-      and business_id = p_business_id
+    where business_id = p_business_id
       and source_type = 'catalog'
       and source_id = v_source_id;
 
@@ -559,8 +558,7 @@ begin
 
     select source_hash into v_existing_source_hash
     from fixora_private.fixora_import_source_records
-    where user_id = v_user_id
-      and business_id = p_business_id
+    where business_id = p_business_id
       and source_type = 'snapshot'
       and source_id = v_source_id;
 
