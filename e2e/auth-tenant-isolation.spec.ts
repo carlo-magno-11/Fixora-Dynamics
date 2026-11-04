@@ -287,3 +287,95 @@ test("exports scoped and legacy backups separately and restores only the selecte
   expect(storageAfterRestore).toEqual({ scoped: scopedCatalog, legacy: legacyExpenses });
   await context.close();
 });
+
+
+test("concurrent import submissions never duplicate a source record", async ({ browser }) => {
+  test.setTimeout(60_000);
+  const suffix = crypto.randomUUID();
+  const user = await createTestUser(`e2e-import-race-${suffix}@fixora.test`, "E2E Import Race");
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  const businessId = await signInAndCreateBusiness(page, user, `Negocio import race ${suffix}`);
+
+  const accessToken = await page.evaluate(() => {
+    const key = Object.keys(window.localStorage).find((candidate) => candidate.endsWith("-auth-token"));
+    const raw = key ? window.localStorage.getItem(key) : null;
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { access_token?: unknown };
+    return typeof parsed.access_token === "string" ? parsed.access_token : null;
+  });
+  expect(accessToken).toBeTruthy();
+
+  const sourceId = `race-source-${suffix}`;
+  const firstCatalog = [{
+    id: sourceId,
+    name: `Importación concurrente ${suffix.slice(0, 8)}`,
+    kind: "product",
+    unit: "pieza",
+    sku: "",
+    currency: "MXN",
+    referenceCost: 12.5,
+    active: true,
+  }];
+  const rpcUrl = `${supabaseUrl}/rest/v1/rpc/fixora_import_local_bundle`;
+  const headers = {
+    apikey: anonKey,
+    Authorization: `Bearer ${accessToken}`,
+    "Content-Type": "application/json",
+  };
+
+  const sameKey = crypto.randomUUID();
+  const sameKeyPayload = {
+    p_business_id: businessId,
+    p_import_key: sameKey,
+    p_catalog: firstCatalog,
+    p_expenses: null,
+    p_history: [],
+  };
+  const sameKeyResponses = await Promise.all([
+    fetch(rpcUrl, { method: "POST", headers, body: JSON.stringify(sameKeyPayload) }),
+    fetch(rpcUrl, { method: "POST", headers, body: JSON.stringify(sameKeyPayload) }),
+  ]);
+  expect(sameKeyResponses.every((response) => response.ok)).toBe(true);
+  const sameKeyResults = await Promise.all(sameKeyResponses.map((response) => response.json() as Promise<{ importId: string }>));
+  expect(sameKeyResults[0].importId).toBe(sameKeyResults[1].importId);
+
+  const secondSourceId = `race-source-different-key-${suffix}`;
+  const secondCatalog = [{ ...firstCatalog[0], id: secondSourceId, name: `Dos claves ${suffix.slice(0, 8)}` }];
+  const differentKeyResponses = await Promise.all([
+    fetch(rpcUrl, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        p_business_id: businessId,
+        p_import_key: crypto.randomUUID(),
+        p_catalog: secondCatalog,
+        p_expenses: null,
+        p_history: [],
+      }),
+    }),
+    fetch(rpcUrl, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        p_business_id: businessId,
+        p_import_key: crypto.randomUUID(),
+        p_catalog: secondCatalog,
+        p_expenses: null,
+        p_history: [],
+      }),
+    }),
+  ]);
+  expect(differentKeyResponses.every((response) => response.ok || response.status === 409)).toBe(true);
+
+  const catalogResponse = await fetch(
+    `${supabaseUrl}/rest/v1/fixora_catalog_items?select=id,name&business_id=eq.${businessId}&name=in.(${encodeURIComponent(firstCatalog[0].name)},${encodeURIComponent(secondCatalog[0].name)})`,
+    { headers: { apikey: anonKey, Authorization: `Bearer ${accessToken}` } },
+  );
+  expect(catalogResponse.ok).toBe(true);
+  const rows = await catalogResponse.json() as { id: string; name: string }[];
+  expect(rows).toHaveLength(2);
+  expect(rows.filter((row) => row.name === firstCatalog[0].name)).toHaveLength(1);
+  expect(rows.filter((row) => row.name === secondCatalog[0].name)).toHaveLength(1);
+  await context.close();
+});
