@@ -5,7 +5,9 @@ import {
   type LocalImportBundle,
   type LocalImportIssue,
 } from "../domain/local-import";
-import type { LocalImportSourcePort } from "../infrastructure/browser-local-import-source";
+export interface LocalImportSourcePort {
+  read(): import("../domain/local-import").LocalImportRawBundle;
+}
 
 export interface LocalImportCloudState {
   existingSkus: string[];
