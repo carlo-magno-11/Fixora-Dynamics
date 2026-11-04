@@ -765,3 +765,62 @@ tr { border-color: var(--line); }
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/* Safe local-to-cloud migration */
+.local-import-page { max-width: 1040px; }
+.local-import-safety, .local-import-preview, .local-import-success { margin: 22px 0; }
+.local-import-safety ul {
+  display: grid;
+  gap: 9px;
+  margin: 0;
+  padding-left: 20px;
+  color: var(--ink-soft);
+  font-size: 13px;
+  line-height: 1.65;
+}
+.local-import-options { display: grid; gap: 10px; margin-top: 18px; }
+.local-import-option {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 76px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface, #fff);
+  cursor: pointer;
+}
+.local-import-option:has(input:checked) {
+  border-color: var(--fixora-forest);
+  background: color-mix(in srgb, var(--fixora-forest) 6%, var(--surface, #fff));
+}
+.local-import-option.is-blocked { cursor: not-allowed; opacity: .68; }
+.local-import-option input { width: 19px; height: 19px; flex: 0 0 19px; accent-color: var(--fixora-forest); }
+.local-import-option-copy { display: grid; min-width: 0; flex: 1; gap: 4px; }
+.local-import-option-copy strong { color: var(--fixora-deep); font-size: 13px; }
+.local-import-option-copy small { color: var(--muted); font-size: 11px; line-height: 1.5; }
+.local-import-option-status { color: var(--fixora-forest); font-size: 10px; font-weight: 700; text-align: right; }
+.local-import-option.is-blocked .local-import-option-status { color: var(--muted); }
+.local-import-warning {
+  margin: 8px 0;
+  padding: 10px 12px;
+  border-left: 3px solid var(--fixora-copper);
+  border-radius: 0 8px 8px 0;
+  background: color-mix(in srgb, var(--fixora-copper) 9%, var(--surface, #fff));
+  color: var(--ink-soft);
+  font-size: 11px;
+  line-height: 1.6;
+}
+.local-import-success {
+  border-color: color-mix(in srgb, var(--fixora-forest) 35%, var(--line));
+  background: color-mix(in srgb, var(--fixora-forest) 5%, var(--surface, #fff));
+}
+.local-import-success h2 { margin: 8px 0; color: var(--fixora-deep); }
+.local-import-success p { color: var(--ink-soft); font-size: 12px; line-height: 1.7; }
+.local-import-actions { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin: 20px 0 32px; }
+@media (max-width: 620px) {
+  .local-import-option { align-items: flex-start; gap: 10px; padding: 12px; }
+  .local-import-option-status { max-width: 86px; font-size: 9px; }
+  .local-import-actions { display: grid; grid-template-columns: 1fr; }
+  .local-import-actions button { width: 100%; }
+}
