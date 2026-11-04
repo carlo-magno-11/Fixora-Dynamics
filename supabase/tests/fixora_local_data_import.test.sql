@@ -9,6 +9,7 @@ SELECT ok((SELECT relrowsecurity AND relforcerowsecurity FROM pg_class WHERE oid
 SELECT ok(NOT has_table_privilege('authenticated','fixora_private.fixora_import_batches','SELECT') AND NOT has_table_privilege('authenticated','fixora_private.fixora_import_source_records','SELECT'),'Authenticated cannot read private import tables');
 SELECT ok(has_function_privilege('authenticated','public.fixora_import_local_bundle(uuid,uuid,jsonb,jsonb,jsonb)','EXECUTE'),'Authenticated can invoke import RPC');
 SELECT ok(NOT has_function_privilege('anon','public.fixora_import_local_bundle(uuid,uuid,jsonb,jsonb,jsonb)','EXECUTE'),'Anon cannot invoke import RPC');
+SELECT ok(NOT has_function_privilege('service_role','public.fixora_import_local_bundle(uuid,uuid,jsonb,jsonb,jsonb)','EXECUTE'),'Service role does not need the user import RPC');
 SELECT ok(NOT has_function_privilege('authenticated','fixora_private.import_local_bundle(uuid,uuid,jsonb,jsonb,jsonb)','EXECUTE'),'Authenticated cannot invoke private helper');
 SELECT ok((SELECT prosecdef AND proconfig @> ARRAY['search_path=""'] FROM pg_proc WHERE oid='public.fixora_import_local_bundle(uuid,uuid,jsonb,jsonb,jsonb)'::regprocedure),'Public wrapper is SECURITY DEFINER with empty search_path');
 SELECT ok((SELECT prosecdef AND proconfig @> ARRAY['search_path=""'] FROM pg_proc WHERE oid='fixora_private.import_local_bundle(uuid,uuid,jsonb,jsonb,jsonb)'::regprocedure),'Private helper is SECURITY DEFINER with empty search_path');
