@@ -37,6 +37,9 @@ describe("architecture boundaries", () => {
 
       const sourceModule = segments[2];
       const sourceLayer = segments[3];
+      const executableSource = source
+        .replace(/\/\*[\s\S]*?\*\//g, "")
+        .replace(/^\s*\/\/.*$/gm, "");
       if (!["domain", "application", "infrastructure", "ui"].includes(sourceLayer)) continue;
 
       const specifiers = new Set<string>();
