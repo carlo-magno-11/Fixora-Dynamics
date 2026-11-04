@@ -141,12 +141,6 @@ test("cloud expenses persist fixed and variable costs with their period settings
   await page.getByRole("button", { name: "Guardar cambios" }).click();
   await expect(page.getByText("Gastos y asignación guardados en Supabase. Los cambios se aplicaron como una sola operación.")).toBeVisible();
 
-  await page.reload();
-  await page.getByRole("button", { name: "Control de gastos", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "Controla tus gastos." })).toBeVisible();
-  await expect(page.locator(".expense-entry").filter({ hasText: "Renta E2E" })).toBeVisible();
-  await expect(page.locator(".expense-entry").filter({ hasText: "Empaque E2E" })).toBeVisible();
-
   const token = await page.evaluate(() => {
     const key = Object.keys(localStorage).find((candidate) => candidate.endsWith("-auth-token"));
     const raw = key ? localStorage.getItem(key) : null;
@@ -164,5 +158,12 @@ test("cloud expenses persist fixed and variable costs with their period settings
     { name: "Renta E2E", expense_type: "fixed", amount: 5000 },
     { name: "Empaque E2E", expense_type: "variable", amount: 12.5 },
   ]);
+
+  await page.reload();
+  await page.getByRole("button", { name: "Control de gastos", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Controla tus gastos." })).toBeVisible();
+  await expect(page.locator(".expense-entry").filter({ hasText: "Renta E2E" })).toBeVisible();
+  await expect(page.locator(".expense-entry").filter({ hasText: "Empaque E2E" })).toBeVisible();
+
   await context.close();
 });
