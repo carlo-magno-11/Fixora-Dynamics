@@ -261,8 +261,9 @@ test("switching businesses isolates the catalog view and cloud records", async (
       p_timezone: "America/Merida",
     }),
   });
-  expect(createSecondBusiness.ok, await createSecondBusiness.text()).toBeTruthy();
-  const secondBusinessId = await createSecondBusiness.json() as string;
+  const secondBusinessResponseBody = await createSecondBusiness.text();
+  expect(createSecondBusiness.ok, secondBusinessResponseBody).toBeTruthy();
+  const secondBusinessId = JSON.parse(secondBusinessResponseBody) as string;
   expect(secondBusinessId).toMatch(/^[0-9a-f-]{36}$/i);
 
   const firstBusinessRows = await fetch(
