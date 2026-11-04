@@ -49,6 +49,7 @@ export interface RetailOrderProfitResult {
   fixedCostAllocation: number;
   estimatedContributionAfterFixed: number;
   contributionMargin: number | null;
+  estimatedOperatingMargin: number | null;
 }
 
 const D = (value: number) => new Decimal(value);
@@ -165,6 +166,9 @@ export function calculateRetailOrderProfit(
     .minus(orderFees);
   const estimatedContributionAfterFixed = contributionBeforeFixed.minus(input.fixedCostAllocation);
   const contributionMargin = netRevenue.greaterThan(0)
+    ? contributionBeforeFixed.div(netRevenue).toDecimalPlaces(6, Decimal.ROUND_HALF_UP).toNumber()
+    : null;
+  const estimatedOperatingMargin = netRevenue.greaterThan(0)
     ? estimatedContributionAfterFixed.div(netRevenue).toDecimalPlaces(6, Decimal.ROUND_HALF_UP).toNumber()
     : null;
 
@@ -190,5 +194,6 @@ export function calculateRetailOrderProfit(
     fixedCostAllocation: money(D(input.fixedCostAllocation)),
     estimatedContributionAfterFixed: money(estimatedContributionAfterFixed),
     contributionMargin,
+    estimatedOperatingMargin,
   };
 }
