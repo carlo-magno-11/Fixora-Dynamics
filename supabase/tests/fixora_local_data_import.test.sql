@@ -1,7 +1,7 @@
 \set ON_ERROR_STOP on
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
-SELECT plan(31);
+SELECT plan(33);
 SELECT has_table('fixora_private','fixora_import_batches','Import ledger exists');
 SELECT has_table('fixora_private','fixora_import_source_records','Source map exists');
 SELECT ok((SELECT relrowsecurity AND relforcerowsecurity FROM pg_class WHERE oid='fixora_private.fixora_import_batches'::regclass),'Import ledger forces RLS');
@@ -159,6 +159,41 @@ SELECT throws_ok(
   'A non-member cannot import into another users business'
 );
 
+RESET ROLE;
+INSERT INTO public.fixora_business_memberships (business_id, user_id, role, status)
+SELECT id, 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbb42', 'editor', 'active'
+FROM public.fixora_businesses
+WHERE name = 'Local Import A';
+
+SET LOCAL ROLE authenticated;
+SET LOCAL request.jwt.claim.sub='bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbb42';
+
+SELECT is(
+  (public.fixora_import_local_bundle(
+    current_setting('app.fixora_test_business_id')::uuid,
+    'eeeeeeee-eeee-4eee-8eee-eeeeeeeeee43',
+    current_setting('app.fixora_import_catalog')::jsonb,
+    null,
+    '[]'::jsonb
+  )->>'catalogSkipped')::integer,
+  1,
+  'A second authorized editor cannot duplicate catalog data imported by another editor'
+);
+
+SELECT is(
+  (public.fixora_import_local_bundle(
+    current_setting('app.fixora_test_business_id')::uuid,
+    'eeeeeeee-eeee-4eee-8eee-eeeeeeeeee44',
+    '[]'::jsonb,
+    null,
+    current_setting('app.fixora_import_history')::jsonb
+  )->>'historySkipped')::integer,
+  1,
+  'A second authorized editor cannot duplicate history imported by another editor'
+);
+
+RESET ROLE;
+SET LOCAL ROLE authenticated;
 SET LOCAL request.jwt.claim.sub='cccccccc-cccc-4ccc-8ccc-cccccccccc43';
 
 SELECT throws_ok(
@@ -177,8 +212,8 @@ SELECT throws_ok(
 RESET ROLE;
 SELECT is(
   (SELECT count(*) FROM fixora_private.fixora_import_batches WHERE business_id=current_setting('app.fixora_test_business_id')::uuid AND status='completed'),
-  3::bigint,
-  'Only the three successful, idempotent import batches are completed'
+  5::bigint,
+  'Only the five successful, idempotent import batches are completed'
 );
 
 SELECT * FROM finish();
