@@ -3,7 +3,7 @@ BEGIN;
 
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 
-SELECT plan(14);
+SELECT plan(21);
 
 SELECT ok(
   to_regprocedure('public.fixora_save_expenses(uuid,numeric,text,bigint,jsonb,jsonb)') IS NOT NULL,
@@ -23,6 +23,47 @@ SELECT ok(
 SELECT ok(
   NOT (SELECT prosecdef FROM pg_catalog.pg_proc WHERE oid = 'public.fixora_save_expenses(uuid,numeric,text,bigint,jsonb,jsonb)'::regprocedure),
   'Expense save RPC is SECURITY INVOKER'
+);
+
+SELECT ok(
+  EXISTS (
+    SELECT 1 FROM pg_catalog.pg_constraint
+    WHERE conrelid = 'public.fixora_expense_settings'::regclass
+      AND conname = 'fixora_expense_settings_expected_units_safe_integer_check'
+      AND convalidated
+  ),
+  'Expected unit settings have a validated safe-integer constraint'
+);
+
+SELECT ok(
+  EXISTS (
+    SELECT 1 FROM pg_catalog.pg_trigger
+    WHERE tgrelid = 'public.fixora_expense_settings'::regclass
+      AND tgname = 'fixora_expense_settings_validate_units'
+      AND NOT tgisinternal
+  ),
+  'Expected unit settings are validated on direct writes'
+);
+
+SELECT is(
+  (
+    SELECT pg_catalog.format_type(atttypid, atttypmod)
+    FROM pg_catalog.pg_attribute
+    WHERE attrelid = 'public.fixora_expense_settings'::regclass
+      AND attname = 'expected_units'
+      AND NOT attisdropped
+  ),
+  'numeric',
+  'Expected units preserve exact numeric input before validation'
+);
+
+SELECT ok(
+  (
+    SELECT NOT prosecdef AND proconfig @> ARRAY['search_path=""']
+    FROM pg_catalog.pg_proc
+    WHERE oid = 'fixora_private.validate_expense_settings()'::regprocedure
+  ),
+  'The validation trigger is invoker-safe with an empty search_path'
 );
 
 INSERT INTO auth.users (id, email, raw_user_meta_data)
@@ -103,13 +144,44 @@ SELECT throws_ok(
 );
 
 SELECT throws_ok(
-  $$SELECT public.fixora_save_expenses(
+  $sql$SELECT public.fixora_save_expenses(
     current_setting('app.fixora_test_business_id')::uuid,
     300, 'quarter', 3, '[{"name":"Invalid","amount":-1}]'::jsonb, '[]'::jsonb
-  )$$,
+  )$sql$,
   '22023',
   NULL,
   'Negative amounts are rejected before writes'
+);
+
+SELECT throws_ok(
+  $sql$SELECT public.fixora_save_expenses(
+    current_setting('app.fixora_test_business_id')::uuid,
+    300.5, 'quarter', 3, '[]'::jsonb, '[]'::jsonb
+  )$sql$,
+  '22023',
+  NULL,
+  'Fractional expected unit counts are rejected'
+);
+
+SELECT throws_ok(
+  $sql$UPDATE public.fixora_expense_settings
+    SET expected_units = 1.5, version = version + 1
+    WHERE business_id = current_setting('app.fixora_test_business_id')::uuid$sql$,
+  '22023',
+  NULL,
+  'Direct table updates cannot bypass integer expected unit validation'
+);
+
+SELECT throws_ok(
+  $sql$SELECT public.fixora_save_expenses(
+    current_setting('app.fixora_test_business_id')::uuid,
+    300, 'quarter', 3,
+    (SELECT pg_catalog.jsonb_agg(pg_catalog.jsonb_build_object('name', 'Line ' || g, 'amount', 1)) FROM generate_series(1, 101) AS g),
+    '[]'::jsonb
+  )$sql$,
+  '22023',
+  NULL,
+  'Expense RPC rejects more than one hundred lines per type'
 );
 
 RESET ROLE;

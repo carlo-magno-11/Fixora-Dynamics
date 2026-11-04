@@ -3,6 +3,7 @@ import { userAuthConfig } from "../_shared/auth.ts";
 import { getAuthenticatedUserId } from "../_shared/admin.ts";
 import { hmacSha256Hex, isHex, isUuid, sha256Hex, toBytea } from "../_shared/crypto.ts";
 import { jsonResponse, readJsonObject, rpcErrorResponse } from "../_shared/http.ts";
+import { enforceRateLimit } from "../_shared/rate-limit.ts";
 
 export default {
   fetch: withSupabase(userAuthConfig, async (request, ctx) => {
@@ -10,6 +11,8 @@ export default {
 
     const userId = getAuthenticatedUserId(ctx.jwtClaims);
     if (!userId) return jsonResponse({ error: "A valid authenticated user is required." }, 401);
+    const rateLimit = await enforceRateLimit(ctx.supabaseAdmin, userId, "license.activate", 10, 3600);
+    if (rateLimit) return rateLimit;
 
     const { data: authUserResult, error: authUserError } =
       await ctx.supabaseAdmin.auth.admin.getUserById(userId);

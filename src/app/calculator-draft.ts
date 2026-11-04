@@ -1,91 +1,34 @@
-import type { BreakEvenInput } from "../modules/break-even/domain/break-even";
-import type { CatalogItemSnapshot } from "../modules/snapshots/domain/calculation-snapshot";
-import type { PricingInput } from "../modules/pricing/domain/pricing";
-import type { KeyValueStorage } from "../shared/infrastructure/key-value-storage";
+import type { CalculatorDraft } from "../modules/drafts/domain/calculator-draft";
+import { parseCalculatorDraftValue } from "../modules/drafts/domain/calculator-draft";
+import { createNamespacedKeyValueStorage, type KeyValueStorage } from "../shared/infrastructure/key-value-storage";
+
+export { parseCalculatorDraftValue };
+export type { CalculatorDraft };
 
 export const CALCULATOR_DRAFT_KEY = "fixora.calculator-draft.v1";
 
-export interface CalculatorDraft {
-  version: 1;
-  savedAt: string;
-  name: string;
-  currency: "MXN" | "USD";
-  input: PricingInput;
-  breakEvenInput: BreakEvenInput;
-  selectedCatalogItem?: CatalogItemSnapshot;
-}
-
-const pricingFields: (keyof PricingInput)[] = [
-  "materials", "laborMinutes", "hourlyRate", "directExpenses", "wasteRate",
-  "fixedExpensesPerUnit", "variableFeeRate", "targetMarginRate", "discountRate",
-];
-const breakEvenFields: (keyof BreakEvenInput)[] = ["fixedCosts", "sellingPrice", "variableCostPerUnit"];
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-function hasFiniteFields<T extends string>(
-  value: unknown,
-  fields: readonly T[],
-): value is Record<T, number> {
-  return isRecord(value) && fields.every((field) =>
-    typeof value[field] === "number" && Number.isFinite(value[field]),
-  );
-}
-
-function isCatalogSnapshot(value: unknown): value is CatalogItemSnapshot {
-  if (!isRecord(value)) return false;
-  return typeof value.id === "string"
-    && typeof value.name === "string"
-    && (value.kind === "product" || value.kind === "service")
-    && typeof value.unit === "string"
-    && typeof value.sku === "string"
-    && (value.currency === "MXN" || value.currency === "USD")
-    && typeof value.referenceCost === "number"
-    && Number.isFinite(value.referenceCost)
-    && value.referenceCost >= 0;
+export function createCalculatorDraftStorage(storage: KeyValueStorage, businessId: string | null | undefined): KeyValueStorage {
+  return businessId
+    ? createNamespacedKeyValueStorage(storage, `business:${businessId}`)
+    : storage;
 }
 
 export function readCalculatorDraft(storage: KeyValueStorage): CalculatorDraft | null {
   try {
     const raw = storage.getItem(CALCULATOR_DRAFT_KEY);
-    if (!raw) return null;
-    const value: unknown = JSON.parse(raw);
-    if (!isRecord(value) || value.version !== 1
-      || typeof value.savedAt !== "string" || !Number.isFinite(Date.parse(value.savedAt))
-      || typeof value.name !== "string"
-      || (value.currency !== "MXN" && value.currency !== "USD")) return null;
-    const input = value.input;
-    const breakEvenInput = value.breakEvenInput;
-    if (!hasFiniteFields(input, pricingFields) || !hasFiniteFields(breakEvenInput, breakEvenFields)) return null;
-    if (value.selectedCatalogItem !== undefined && !isCatalogSnapshot(value.selectedCatalogItem)) return null;
-    return {
-      version: 1,
-      savedAt: value.savedAt,
-      name: value.name.slice(0, 80),
-      currency: value.currency,
-      input: {
-        materials: input.materials,
-        laborMinutes: input.laborMinutes,
-        hourlyRate: input.hourlyRate,
-        directExpenses: input.directExpenses,
-        wasteRate: input.wasteRate,
-        fixedExpensesPerUnit: input.fixedExpensesPerUnit,
-        variableFeeRate: input.variableFeeRate,
-        targetMarginRate: input.targetMarginRate,
-        discountRate: input.discountRate,
-      },
-      breakEvenInput: {
-        fixedCosts: breakEvenInput.fixedCosts,
-        sellingPrice: breakEvenInput.sellingPrice,
-        variableCostPerUnit: breakEvenInput.variableCostPerUnit,
-      },
-      ...(value.selectedCatalogItem ? { selectedCatalogItem: value.selectedCatalogItem } : {}),
-    };
+    return raw ? parseCalculatorDraftValue(JSON.parse(raw) as unknown) : null;
   } catch {
     return null;
   }
+}
+
+export function readCalculatorDraftWithLegacyFallback(
+  businessStorage: KeyValueStorage,
+  legacyStorage: KeyValueStorage,
+  allowLegacyFallback: boolean,
+): CalculatorDraft | null {
+  return readCalculatorDraft(businessStorage)
+    ?? (allowLegacyFallback ? readCalculatorDraft(legacyStorage) : null);
 }
 
 export function saveCalculatorDraft(

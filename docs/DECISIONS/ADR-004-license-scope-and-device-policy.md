@@ -34,11 +34,13 @@ Estado: propuesta para decisión de producto; no implementada. Fecha: 2026-11-03
 
 ## Recomendación para el primer lanzamiento
 
-No habilitar colaboración comercial todavía. Mantener licencia por usuario comprador y acceso individual; no propagar derechos a business_memberships. Para evitar que las compras adicionales multipliquen dispositivos, definir un máximo de tres instalaciones activas globales por usuario entre todas sus licencias, contando instalaciones distintas con hash HMAC.
+No habilitar colaboración comercial todavía. Mantener licencia por usuario comprador y acceso individual; no propagar derechos a business_memberships. La regla aprobada para Fixora es **un máximo de tres dispositivos activos por licencia**. Cada licencia de General, kit o bundle aplica su propio límite; no se debe convertir silenciosamente en una cuota global por usuario.
 
-El límite por licencia debe aplicarse dentro de la transacción que bloquea la fila de licencia, con índice único para evitar dispositivos duplicados y pruebas concurrentes que demuestren que nunca se superan tres dispositivos activos en una licencia. No confiar en conteos hechos solo por TypeScript.
+Esta decisión tiene una consecuencia comercial que debe mostrarse con transparencia: si una persona compra General y varios complementos que se emiten como licencias separadas, cada licencia tendrá su propio máximo de tres dispositivos. Si más adelante se desea un límite compartido entre todas las compras, deberá aprobarse una nueva decisión de producto y diseñarse una migración transaccional específica antes de cambiar el comportamiento.
 
-Si la investigación comercial confirma que un negocio necesita compartir Fixora con colaboradores, diseñar ADR nuevo para licencias por negocio antes de vender ese plan. No cambiar el modelo a mitad de una licencia activa.
+El límite por licencia se aplica en servidor, dentro de la transacción que bloquea la fila de licencia, con índice único para evitar dispositivos duplicados y pruebas concurrentes que demuestren que nunca se superan tres dispositivos activos en esa licencia. No confiar en conteos hechos solo por TypeScript.
+
+Si la investigación comercial confirma que un negocio necesita compartir Fixora con colaboradores, diseñar un ADR nuevo para licencias por negocio antes de vender ese plan. No cambiar el modelo a mitad de una licencia activa.
 
 ## Regla de entitlements
 

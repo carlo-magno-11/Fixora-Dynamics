@@ -4,6 +4,12 @@ import { getSupabaseClient } from "../../../shared/infrastructure/supabase/clien
 
 type TotpFactor = { id: string; friendly_name?: string | null; status: "verified" | "unverified" };
 
+function readSafeErrorCode(error: unknown): string | null {
+  if (typeof error !== "object" || error === null || !("code" in error)) return null;
+  const code = (error as { code?: unknown }).code;
+  return typeof code === "string" && /^[a-z0-9_-]{1,64}$/i.test(code) ? code : null;
+}
+
 export function MfaSettings() {
   const supabase = useMemo(() => getSupabaseClient(), []);
   const [factors, setFactors] = useState<TotpFactor[]>([]);
@@ -12,70 +18,137 @@ export function MfaSettings() {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [errorCode, setErrorCode] = useState<string | null>(null);
   const [notice, setNotice] = useState("");
 
   const loadFactors = useCallback(async () => {
-    if (!supabase) { setError("La autenticación no está disponible."); setLoading(false); return; }
-    const { data, error: requestError } = await supabase.auth.mfa.listFactors();
-    if (requestError) setError("No fue posible consultar los factores de seguridad.");
-    else setFactors(data.totp.map((factor) => ({ id: factor.id, friendly_name: factor.friendly_name, status: factor.status })));
-    setLoading(false);
+    if (!supabase) {
+      setError("La autenticación no está disponible.");
+      setErrorCode("client_unavailable");
+      setLoading(false);
+      return;
+    }
+    try {
+      const { data, error: requestError } = await supabase.auth.mfa.listFactors();
+      if (requestError) {
+        setError("No fue posible consultar los factores de seguridad.");
+        setErrorCode(readSafeErrorCode(requestError));
+      } else {
+        setFactors(data.totp.map((factor) => ({ id: factor.id, friendly_name: factor.friendly_name, status: factor.status })));
+      }
+    } catch (requestError) {
+      setError("No fue posible consultar los factores de seguridad. Comprueba tu conexión e inténtalo de nuevo.");
+      setErrorCode(readSafeErrorCode(requestError) ?? "network_error");
+    } finally {
+      setLoading(false);
+    }
   }, [supabase]);
 
   useEffect(() => { void loadFactors(); }, [loadFactors]);
 
   async function startEnrollment() {
     if (!supabase || busy) return;
-    setBusy(true); setError(""); setNotice("");
-    const { data, error: enrollError } = await supabase.auth.mfa.enroll({ factorType: "totp", friendlyName: "Fixora Authenticator" });
-    if (enrollError) {
-      setError("No fue posible iniciar la configuración. Comprueba que MFA TOTP esté habilitado en Supabase Auth.");
-      setBusy(false); return;
+    setBusy(true);
+    setError("");
+    setErrorCode(null);
+    setNotice("");
+    try {
+      const { data, error: enrollError } = await supabase.auth.mfa.enroll({
+        factorType: "totp",
+        friendlyName: "Fixora Authenticator",
+      });
+      if (enrollError) {
+        setError("No fue posible iniciar la configuración. Comprueba que MFA TOTP esté habilitado en Supabase Auth.");
+        setErrorCode(readSafeErrorCode(enrollError));
+        return;
+      }
+
+      const { data: challenge, error: challengeError } = await supabase.auth.mfa.challenge({ factorId: data.id });
+      if (challengeError) {
+        const { error: cleanupError } = await supabase.auth.mfa.unenroll({ factorId: data.id });
+        setError("El factor se creó, pero no se pudo iniciar su verificación. Vuelve a intentarlo.");
+        setErrorCode(readSafeErrorCode(challengeError));
+        if (cleanupError) setNotice("La configuración pendiente no pudo retirarse automáticamente. Usa Cancelar configuración antes de volver a intentarlo.");
+        await loadFactors();
+        return;
+      }
+
+      if (!data.totp.secret || !data.totp.qr_code) {
+        await supabase.auth.mfa.unenroll({ factorId: data.id });
+        setError("Supabase Auth no devolvió los datos necesarios para configurar el autenticador. Vuelve a intentarlo.");
+        setErrorCode("totp_enrollment_response_incomplete");
+        await loadFactors();
+        return;
+      }
+
+      setPending({ id: data.id, qrCode: data.totp.qr_code, secret: data.totp.secret, challengeId: challenge.id });
+      setNotice("Escanea el código QR con tu aplicación autenticadora y confirma el código de seis dígitos.");
+    } catch (enrollError) {
+      setError("No fue posible completar la configuración del autenticador. Comprueba tu conexión e inténtalo de nuevo.");
+      setErrorCode(readSafeErrorCode(enrollError) ?? "network_error");
+    } finally {
+      setBusy(false);
     }
-    const { data: challenge, error: challengeError } = await supabase.auth.mfa.challenge({ factorId: data.id });
-    if (challengeError) {
-      setError("El factor se creó, pero no se pudo iniciar su verificación. Recarga esta sección para continuar.");
-      await loadFactors();
-      setBusy(false); return;
-    }
-    setPending({ id: data.id, qrCode: data.totp.qr_code, secret: data.totp.secret, challengeId: challenge.id });
-    setNotice("Escanea el código QR con tu aplicación autenticadora y confirma el código de seis dígitos.");
-    setBusy(false);
   }
 
   async function verifyEnrollment(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!supabase || !pending || busy) return;
-    setBusy(true); setError(""); setNotice("");
-    const { error: verifyError } = await supabase.auth.mfa.verify({
-      factorId: pending.id, challengeId: pending.challengeId, code: code.trim(),
-    });
-    if (verifyError) setError("El código no pudo verificarse. Comprueba la hora del dispositivo y vuelve a intentarlo.");
-    else {
-      setPending(null); setCode("");
-      setNotice("Autenticación multifactor activada correctamente para esta cuenta.");
-      await supabase.auth.refreshSession();
-      await loadFactors();
+    setBusy(true);
+    setError("");
+    setErrorCode(null);
+    setNotice("");
+    try {
+      const { error: verifyError } = await supabase.auth.mfa.verify({
+        factorId: pending.id,
+        challengeId: pending.challengeId,
+        code: code.trim(),
+      });
+      if (verifyError) {
+        setError("El código no pudo verificarse. Comprueba la hora del dispositivo y vuelve a intentarlo.");
+        setErrorCode(readSafeErrorCode(verifyError));
+      } else {
+        setPending(null);
+        setCode("");
+        setNotice("Autenticación multifactor activada correctamente para esta cuenta.");
+        await supabase.auth.refreshSession();
+        await loadFactors();
+      }
+    } catch (verifyError) {
+      setError("No fue posible completar la verificación. Comprueba tu conexión e inténtalo de nuevo.");
+      setErrorCode(readSafeErrorCode(verifyError) ?? "network_error");
+    } finally {
+      setBusy(false);
     }
-    setBusy(false);
   }
 
   async function removeFactor(factorId: string) {
     if (!supabase || busy) return;
     if (!window.confirm("¿Deseas retirar este factor de autenticación de tu cuenta?")) return;
-    setBusy(true); setError(""); setNotice("");
-    const { error: removeError } = await supabase.auth.mfa.unenroll({ factorId });
-    if (removeError) setError("No fue posible retirar el autenticador. Es posible que necesites verificar MFA primero.");
-    else {
-      if (pending?.id === factorId) {
-        setPending(null);
-        setCode("");
+    setBusy(true);
+    setError("");
+    setErrorCode(null);
+    setNotice("");
+    try {
+      const { error: removeError } = await supabase.auth.mfa.unenroll({ factorId });
+      if (removeError) {
+        setError("No fue posible retirar el autenticador. Es posible que necesites verificar MFA primero.");
+        setErrorCode(readSafeErrorCode(removeError));
+      } else {
+        if (pending?.id === factorId) {
+          setPending(null);
+          setCode("");
+        }
+        setNotice("Autenticador retirado.");
+        await supabase.auth.refreshSession();
+        await loadFactors();
       }
-      setNotice("Autenticador retirado.");
-      await supabase.auth.refreshSession();
-      await loadFactors();
+    } catch (removeError) {
+      setError("No fue posible retirar el autenticador. Comprueba tu conexión e inténtalo de nuevo.");
+      setErrorCode(readSafeErrorCode(removeError) ?? "network_error");
+    } finally {
+      setBusy(false);
     }
-    setBusy(false);
   }
 
   return <section className="guide-callout account-mfa-panel">
@@ -96,7 +169,7 @@ export function MfaSettings() {
         <button className="outline-button" type="button" disabled={busy} onClick={() => void removeFactor(pending.id)}>Cancelar configuración</button>
       </form>
     </div>}
-    {error && <p className="auth-error" role="alert">{error}</p>}
+    {error && <p className="auth-error" role="alert" data-testid="mfa-error" data-error-code={errorCode ?? undefined}>{error}{errorCode ? ` Código: ${errorCode}.` : ""}</p>}
     {notice && <p className="auth-success" role="status">{notice}</p>}
   </section>;
 }

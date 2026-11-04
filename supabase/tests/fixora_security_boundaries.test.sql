@@ -3,7 +3,7 @@ BEGIN;
 
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 
-SELECT plan(12);
+SELECT plan(13);
 
 SELECT ok(NOT EXISTS (
   SELECT 1
@@ -48,7 +48,14 @@ SELECT ok((
   FROM pg_proc p
   JOIN pg_namespace n ON n.oid = p.pronamespace
   WHERE n.nspname = 'public' AND p.prokind = 'f'
-), 'All public RPCs are SECURITY INVOKER with an empty search_path');
+    AND p.proname <> 'fixora_import_local_bundle'
+), 'All public RPCs except the audited local-import entrypoint are SECURITY INVOKER with an empty search_path');
+
+SELECT ok((
+  SELECT prosecdef AND proconfig @> ARRAY['search_path=""']
+  FROM pg_proc
+  WHERE oid = 'public.fixora_import_local_bundle(uuid,uuid,jsonb,jsonb,jsonb)'::regprocedure
+), 'The local-import SECURITY DEFINER entrypoint is explicitly audited and has an empty search_path');
 
 SELECT ok((
   SELECT count(*) > 0 AND bool_and(c.relrowsecurity)

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { calculatePrice } from "../modules/pricing/domain/pricing";
 import { FixoraMark } from "../shared/ui/FixoraMark";
 import { FixoraIcon } from "../shared/ui/FixoraIcon";
@@ -7,24 +7,26 @@ import { CloudExpensesPage } from "../modules/expenses/ui/CloudExpensesPage";
 import { CatalogPage } from "../modules/catalog/ui/CatalogPage";
 import { CloudCatalogPage } from "../modules/catalog/ui/CloudCatalogPage";
 import { CloudHistoryPage } from "../modules/snapshots/ui/CloudHistoryPage";
+import { LocalDataImportPage } from "../modules/data-import/ui/LocalDataImportPage";
 import { SupportPage } from "../modules/support/ui/SupportPage";
 import { AdminConsoleContainer } from "../modules/admin/ui/AdminConsoleContainer";
 import type { CatalogItem } from "../modules/catalog/domain/catalog";
 import type { CatalogItemSnapshot } from "../modules/snapshots/domain/calculation-snapshot";
 import { calculateBreakEven } from "../modules/break-even/domain/break-even";
 import type { BreakEvenInput } from "../modules/break-even/domain/break-even";
-import type { PricingInput } from "../modules/pricing/domain/pricing";
+import type { PricingFeeBasis, PricingInput } from "../modules/pricing/domain/pricing";
 import { AboutPage, AccountPage, GuidePage } from "./BrandPages";
 import { LegalPage } from "./LegalPages";
 import { createAppServices } from "./create-app-services";
-import { readCalculatorDraft, saveCalculatorDraft } from "./calculator-draft";
+import { createCalculatorDraftStorage, parseCalculatorDraftValue, readCalculatorDraft, readCalculatorDraftWithLegacyFallback, saveCalculatorDraft } from "./calculator-draft";
+import type { CalculatorDraft } from "../modules/drafts/domain/calculator-draft";
 import { calculationsToCsv } from "../modules/snapshots/domain/calculation-export";
 import type { SavedCalculation } from "../modules/snapshots/domain/saved-calculation";
 import { createNamespacedKeyValueStorage, type KeyValueStorage } from "../shared/infrastructure/key-value-storage";
 import { getSupabaseClient } from "../shared/infrastructure/supabase/client";
-import type { Database, Json } from "../shared/infrastructure/supabase/database.types";
+import type { Database } from "../shared/infrastructure/supabase/database.types";
 
-type View = "essentials" | "calculator" | "breakEven" | "expenses" | "catalog" | "kits" | "history" | "guide" | "account" | "support" | "admin" | "about" | "terms" | "privacy";
+type View = "essentials" | "calculator" | "breakEven" | "expenses" | "catalog" | "kits" | "history" | "import" | "guide" | "account" | "support" | "admin" | "about" | "terms" | "privacy";
 const mobilePrimaryViews: View[] = ["essentials", "calculator", "expenses", "history"];
 type BusinessType = "general" | "retail" | "food" | "services_beauty" | "digital_products" | "workshop";
 type CurrencyCode = "MXN" | "USD";
@@ -46,6 +48,16 @@ function readBusinessType(storage: KeyValueStorage): BusinessType {
   }
 }
 const initialBreakEven: BreakEvenInput = { fixedCosts: 12000, sellingPrice: 250, variableCostPerUnit: 100 };
+
+function calculatorDraftFingerprint(draft: CalculatorDraft): string {
+  return JSON.stringify({
+    name: draft.name,
+    currency: draft.currency,
+    input: draft.input,
+    breakEvenInput: draft.breakEvenInput,
+    selectedCatalogItem: draft.selectedCatalogItem ?? null,
+  });
+}
 
 const initial: PricingInput = {
   materials: 85,
@@ -101,6 +113,13 @@ interface AppProps {
   authMode?: "cloud" | "local";
   userEmail?: string;
   businessName?: string;
+  businessTimezone?: string;
+  businessCurrency?: CurrencyCode;
+  profileDisplayName?: string;
+  profileLoading?: boolean;
+  profileError?: string;
+  onProfileUpdate?: (input: { displayName: string }) => Promise<void>;
+  onBusinessDetailsUpdate?: (input: { name: string; timezone: string }) => Promise<void>;
   initialBusinessType?: BusinessType;
   initialCurrency?: CurrencyCode;
   onSignOut?: () => void;
@@ -114,6 +133,13 @@ export function App({
   authMode = "local",
   userEmail,
   businessName,
+  businessTimezone,
+  businessCurrency,
+  profileDisplayName,
+  profileLoading,
+  profileError,
+  onProfileUpdate,
+  onBusinessDetailsUpdate,
   initialBusinessType,
   initialCurrency,
   onSignOut,
@@ -127,33 +153,80 @@ export function App({
       : window.localStorage,
     [storageScope],
   );
+  const calculatorDraftScope = `${storageScope ?? "default"}:${businessId ?? "none"}`;
+  const canRecoverLegacyBusinessDraft = Boolean(businessId && storageScope?.endsWith(`:${businessId}`));
+  const calculatorDraftStorage = useMemo(
+    () => createCalculatorDraftStorage(storage, businessId),
+    [businessId, storage],
+  );
   const appServices = useMemo(
     () => createAppServices({
       storage,
+      legacyStorage: window.localStorage,
       generateId: () => crypto.randomUUID(),
       now: () => new Date().toISOString(),
     }),
     [storage],
   );
-  const { historyRepository, snapshotService, catalogService, expensesService } = appServices;
-  const [restoredDraft] = useState(() => readCalculatorDraft(storage));
+  const { historyRepository, snapshotService, catalogService, expensesService, cloudCatalogService, cloudExpensesService, cloudHistoryService, cloudCalculatorDraftService, localImportService } = appServices;
+  const [restoredDraft] = useState(() => readCalculatorDraftWithLegacyFallback(
+    calculatorDraftStorage,
+    storage,
+    canRecoverLegacyBusinessDraft,
+  ));
   const [input, setInput] = useState<PricingInput>(() => restoredDraft?.input ?? initial);
   const [currency, setCurrency] = useState<CurrencyCode>(() => restoredDraft?.currency ?? initialCurrency ?? "MXN");
   const [view, setView] = useState<View>("essentials");
   const [mobileMoreOpen, setMobileMoreOpen] = useState(false);
   const [businessType, setBusinessType] = useState<BusinessType>(() => initialBusinessType ?? readBusinessType(storage));
   const [profileMessage, setProfileMessage] = useState("");
-  const [licenseAccess, setLicenseAccess] = useState<LicenseAccess | null>(null);
+  const [licenseAccess, setLicenseAccess] = useState<LicenseAccess[]>([]);
   const [licenseLoading, setLicenseLoading] = useState(false);
   const [licenseError, setLicenseError] = useState("");
   const [breakEvenInput, setBreakEvenInput] = useState<BreakEvenInput>(() => restoredDraft?.breakEvenInput ?? initialBreakEven);
   const [name, setName] = useState(() => restoredDraft?.name ?? "Mi primer producto");
   const [selectedCatalogItem, setSelectedCatalogItem] = useState<CatalogItemSnapshot | undefined>(() => restoredDraft?.selectedCatalogItem);
   const [draftStatus, setDraftStatus] = useState(() => restoredDraft ? "Se recuperó el borrador de esta cuenta y negocio." : "");
+  const [draftHydratedScope, setDraftHydratedScope] = useState(calculatorDraftScope);
+  const previousDraftScope = useRef(calculatorDraftScope);
+  const currentDraftScope = useRef(calculatorDraftScope);
+  currentDraftScope.current = calculatorDraftScope;
+  const [cloudDraftCandidate, setCloudDraftCandidate] = useState<CalculatorDraft | null>(null);
+  const [cloudDraftCandidateScope, setCloudDraftCandidateScope] = useState(calculatorDraftScope);
+  const [cloudDraftChoiceScope, setCloudDraftChoiceScope] = useState(calculatorDraftScope);
+  const [cloudDraftNeedsChoice, setCloudDraftNeedsChoice] = useState(false);
+  const [cloudDraftReady, setCloudDraftReady] = useState(authMode !== "cloud");
+  const [cloudDraftVersion, setCloudDraftVersion] = useState(0);
+  const [cloudDraftSaving, setCloudDraftSaving] = useState(false);
+  const [localBackupDraft, setLocalBackupDraft] = useState<CalculatorDraft | null>(null);
+  const [localBackupDraftScope, setLocalBackupDraftScope] = useState(calculatorDraftScope);
+
+  useEffect(() => {
+    setLocalBackupDraft(null);
+    setLocalBackupDraftScope(calculatorDraftScope);
+    if (!businessId) return;
+    try {
+      const backupKey = `fixora.calculator-draft.local-backup.v1:${businessId}`;
+      const raw = calculatorDraftStorage.getItem(backupKey)
+        ?? storage.getItem(backupKey);
+      const parsed = raw ? parseCalculatorDraftValue(JSON.parse(raw) as unknown) : null;
+      setLocalBackupDraft(parsed);
+      if (raw && !calculatorDraftStorage.getItem(backupKey)) {
+        calculatorDraftStorage.setItem(backupKey, raw);
+      }
+    } catch {
+      setLocalBackupDraft(null);
+    }
+  }, [businessId, calculatorDraftScope, calculatorDraftStorage, storage]);
+  const [cloudDraftNeedsReload, setCloudDraftNeedsReload] = useState(false);
+  const [cloudDraftReloadToken, setCloudDraftReloadToken] = useState(0);
+  const lastCloudDraftFingerprint = useRef("");
+  const cloudDraftSaveInFlight = useRef<string | null>(null);
   const [historyLoadState] = useState(() => historyRepository.loadState());
   const [history, setHistory] = useState<SavedCalculation[]>(historyLoadState.records);
   const [historyNeedsRecovery, setHistoryNeedsRecovery] = useState(historyLoadState.needsRecovery);
   const [savedMessage, setSavedMessage] = useState("");
+  const [savingCalculation, setSavingCalculation] = useState(false);
 
   useEffect(() => {
     const key = `fixora.theme.v1:${userEmail?.trim().toLowerCase() || "local"}`;
@@ -203,7 +276,45 @@ export function App({
   }, [input]);
 
   useEffect(() => {
-    const saved = saveCalculatorDraft(storage, {
+    if (previousDraftScope.current === calculatorDraftScope) return;
+    previousDraftScope.current = calculatorDraftScope;
+    setDraftHydratedScope("");
+    const draft = readCalculatorDraftWithLegacyFallback(
+      calculatorDraftStorage,
+      storage,
+      canRecoverLegacyBusinessDraft,
+    );
+    setInput(draft?.input ?? initial);
+    setCurrency(draft?.currency ?? initialCurrency ?? "MXN");
+    setBreakEvenInput(draft?.breakEvenInput ?? initialBreakEven);
+    setName(draft?.name ?? "Mi primer producto");
+    setSelectedCatalogItem(draft?.selectedCatalogItem);
+    setBusinessType(initialBusinessType ?? readBusinessType(storage));
+    setProfileMessage("");
+    if (authMode === "cloud") {
+      setHistory([]);
+      setHistoryNeedsRecovery(false);
+    } else {
+      const nextHistory = historyRepository.loadState();
+      setHistory(nextHistory.records);
+      setHistoryNeedsRecovery(nextHistory.needsRecovery);
+    }
+    setCloudDraftReady(authMode !== "cloud");
+    setCloudDraftVersion(0);
+    setCloudDraftCandidate(null);
+    setCloudDraftCandidateScope(calculatorDraftScope);
+    setCloudDraftChoiceScope(calculatorDraftScope);
+    setCloudDraftNeedsChoice(false);
+    setCloudDraftNeedsReload(false);
+    setCloudDraftSaving(false);
+    lastCloudDraftFingerprint.current = "";
+    setDraftStatus(draft ? "Se recuperó el borrador local de este usuario y negocio." : "");
+    setDraftHydratedScope(calculatorDraftScope);
+  }, [authMode, businessId, calculatorDraftScope, calculatorDraftStorage, canRecoverLegacyBusinessDraft, historyRepository, initialBusinessType, initialCurrency, storage]);
+
+  useEffect(() => {
+    if (draftHydratedScope !== calculatorDraftScope) return;
+    const saved = saveCalculatorDraft(calculatorDraftStorage, {
       name,
       currency,
       input,
@@ -215,19 +326,183 @@ export function App({
         ? "Borrador local guardado en este dispositivo; todavía no está sincronizado con la nube."
         : "Borrador guardado en este navegador."
       : "No se pudo guardar el borrador local. Evita cerrar esta pestaña hasta guardar tu cálculo.");
-  }, [authMode, breakEvenInput, currency, input, name, selectedCatalogItem, storage]);
+  }, [authMode, breakEvenInput, calculatorDraftScope, calculatorDraftStorage, currency, draftHydratedScope, input, name, selectedCatalogItem]);
+
+  function applyCalculatorDraft(draft: CalculatorDraft) {
+    setName(draft.name);
+    setCurrency(draft.currency);
+    setInput(draft.input);
+    setBreakEvenInput(draft.breakEvenInput);
+    setSelectedCatalogItem(draft.selectedCatalogItem);
+  }
 
   useEffect(() => {
+    if (authMode !== "cloud" || !businessId || draftHydratedScope !== calculatorDraftScope) {
+      setCloudDraftReady(false);
+      setCloudDraftNeedsChoice(false);
+      setCloudDraftCandidate(null);
+      return;
+    }
+    let active = true;
+    setCloudDraftReady(false);
+    setCloudDraftNeedsChoice(false);
+    setCloudDraftCandidate(null);
+    setCloudDraftCandidateScope(calculatorDraftScope);
+    setCloudDraftChoiceScope(calculatorDraftScope);
+    setCloudDraftNeedsReload(false);
+    void cloudCalculatorDraftService.load(businessId).then((remote) => {
+      if (!active) return;
+      setCloudDraftVersion(remote.version);
+      if (remote.invalid) {
+        setDraftStatus("El borrador cloud no pasó la validación. Se conservó la copia local y no se sobrescribió ningún dato.");
+        return;
+      }
+      const local = readCalculatorDraft(calculatorDraftStorage);
+      if (remote.draft && local) {
+        setCloudDraftCandidate(remote.draft);
+        setCloudDraftCandidateScope(calculatorDraftScope);
+        setCloudDraftChoiceScope(calculatorDraftScope);
+        setCloudDraftNeedsChoice(true);
+        setDraftStatus("Hay una copia local y otra cloud. Elige cuál conservar; Fixora no las mezclará automáticamente.");
+        return;
+      }
+      if (remote.draft) {
+        applyCalculatorDraft(remote.draft);
+        lastCloudDraftFingerprint.current = calculatorDraftFingerprint(remote.draft);
+        setCloudDraftReady(true);
+        setDraftStatus("Borrador cloud restaurado para este usuario y negocio.");
+        return;
+      }
+      if (local) {
+        setCloudDraftChoiceScope(calculatorDraftScope);
+        setCloudDraftNeedsChoice(true);
+        setDraftStatus("Encontramos un borrador local que aún no está en la nube. Puedes sincronizarlo explícitamente.");
+        return;
+      }
+      lastCloudDraftFingerprint.current = "";
+      setCloudDraftReady(true);
+      setDraftStatus("Borrador cloud listo. Los cambios nuevos se sincronizarán automáticamente.");
+    }).catch((error: unknown) => {
+      if (!active) return;
+      setCloudDraftNeedsReload(true);
+      setDraftStatus(error instanceof Error
+        ? `No se pudo comprobar el borrador cloud: ${error.message} La copia local se conserva.`
+        : "No se pudo comprobar el borrador cloud. La copia local se conserva.");
+    });
+    return () => { active = false; };
+  }, [authMode, businessId, calculatorDraftScope, calculatorDraftStorage, cloudCalculatorDraftService, cloudDraftReloadToken, draftHydratedScope]);
+
+  async function chooseCloudDraft() {
+    if (!cloudDraftCandidate || cloudDraftCandidateScope !== calculatorDraftScope) return;
+    const local = readCalculatorDraft(calculatorDraftStorage);
+    if (local) {
+      try {
+        calculatorDraftStorage.setItem(`fixora.calculator-draft.local-backup.v1:${businessId}`, JSON.stringify(local));
+        setLocalBackupDraft(local);
+        setLocalBackupDraftScope(calculatorDraftScope);
+      } catch {
+        setDraftStatus("No se pudo guardar una copia de seguridad local. No se cambió el borrador activo.");
+        return;
+      }
+    }
+    applyCalculatorDraft(cloudDraftCandidate);
+    lastCloudDraftFingerprint.current = calculatorDraftFingerprint(cloudDraftCandidate);
+    setCloudDraftNeedsChoice(false);
+    setCloudDraftReady(true);
+    setDraftStatus("Elegiste el borrador cloud. La copia local anterior se conserva como respaldo en este dispositivo.");
+  }
+
+  async function restoreLocalBackup() {
+    if (!businessId || !localBackupDraft || localBackupDraftScope !== calculatorDraftScope) return;
+    const saveScope = calculatorDraftScope;
+    setCloudDraftSaving(true);
+    try {
+      const nextVersion = await cloudCalculatorDraftService.save(businessId, localBackupDraft, cloudDraftVersion);
+      if (currentDraftScope.current !== saveScope) return;
+      applyCalculatorDraft(localBackupDraft);
+      setCloudDraftVersion(nextVersion);
+      lastCloudDraftFingerprint.current = calculatorDraftFingerprint(localBackupDraft);
+      setCloudDraftReady(true);
+      setCloudDraftNeedsReload(false);
+      setDraftStatus("La copia local anterior se restauró y sincronizó con la nube. El respaldo original se conserva.");
+    } catch (error) {
+      if (currentDraftScope.current !== saveScope) return;
+      setCloudDraftNeedsReload(true);
+      setDraftStatus(error instanceof Error ? error.message : "No fue posible restaurar la copia local anterior.");
+    } finally {
+      if (currentDraftScope.current === saveScope) setCloudDraftSaving(false);
+    }
+  }
+
+  async function chooseLocalDraft() {
+    if (!businessId || cloudDraftChoiceScope !== calculatorDraftScope) return;
+    const local = readCalculatorDraft(calculatorDraftStorage);
+    if (!local) {
+      setDraftStatus("No encontramos un borrador local válido para sincronizar.");
+      return;
+    }
+    const saveScope = calculatorDraftScope;
+    setCloudDraftSaving(true);
+    try {
+      const nextVersion = await cloudCalculatorDraftService.save(businessId, local, cloudDraftVersion);
+      if (currentDraftScope.current !== saveScope) return;
+      setCloudDraftVersion(nextVersion);
+      lastCloudDraftFingerprint.current = calculatorDraftFingerprint(local);
+      setCloudDraftNeedsChoice(false);
+      setCloudDraftReady(true);
+      setDraftStatus("El borrador local elegido se sincronizó con la nube. La copia del dispositivo se conserva.");
+    } catch (error) {
+      if (currentDraftScope.current !== saveScope) return;
+      setCloudDraftNeedsReload(true);
+      setDraftStatus(error instanceof Error ? error.message : "No fue posible sincronizar el borrador local.");
+    } finally {
+      if (currentDraftScope.current === saveScope) setCloudDraftSaving(false);
+    }
+  }
+
+  useEffect(() => {
+    if (authMode !== "cloud" || !businessId || draftHydratedScope !== calculatorDraftScope || !cloudDraftReady || cloudDraftNeedsChoice) return;
+    const timeout = window.setTimeout(() => {
+      if (cloudDraftSaveInFlight.current === calculatorDraftScope) return;
+      const saveScope = calculatorDraftScope;
+      const draft = readCalculatorDraft(calculatorDraftStorage);
+      if (!draft) return;
+      const fingerprint = calculatorDraftFingerprint(draft);
+      if (fingerprint === lastCloudDraftFingerprint.current) return;
+      cloudDraftSaveInFlight.current = saveScope;
+      setCloudDraftSaving(true);
+      void cloudCalculatorDraftService.save(businessId, draft, cloudDraftVersion).then((nextVersion) => {
+        if (currentDraftScope.current !== saveScope) return;
+        setCloudDraftVersion(nextVersion);
+        lastCloudDraftFingerprint.current = fingerprint;
+        setDraftStatus("Borrador sincronizado con la nube para este usuario y negocio.");
+      }).catch((error: unknown) => {
+        if (currentDraftScope.current !== saveScope) return;
+        setDraftStatus(error instanceof Error ? error.message : "No fue posible sincronizar el borrador. La copia local se conserva.");
+        if (error instanceof Error && error.message.includes("otro dispositivo")) {
+          setCloudDraftReady(false);
+          setCloudDraftNeedsReload(true);
+        }
+      }).finally(() => {
+        if (cloudDraftSaveInFlight.current === saveScope) cloudDraftSaveInFlight.current = null;
+        if (currentDraftScope.current === saveScope) setCloudDraftSaving(false);
+      });
+    }, 1000);
+    return () => window.clearTimeout(timeout);
+  }, [authMode, businessId, calculatorDraftScope, calculatorDraftStorage, cloudDraftReady, cloudDraftNeedsChoice, cloudDraftVersion, cloudCalculatorDraftService, breakEvenInput, currency, draftHydratedScope, input, name, selectedCatalogItem]);
+
+  useEffect(() => {
+    if (draftHydratedScope !== calculatorDraftScope) return;
     try {
       storage.setItem(BUSINESS_TYPE_KEY, businessType);
     } catch {
       setProfileMessage("No fue posible guardar el perfil en este navegador.");
     }
-  }, [businessType, storage]);
+  }, [businessType, calculatorDraftScope, draftHydratedScope, storage]);
 
   useEffect(() => {
     if (authMode !== "cloud" || !supabase) {
-      setLicenseAccess(null);
+      setLicenseAccess([]);
       setLicenseLoading(false);
       setLicenseError("");
       return;
@@ -239,9 +514,9 @@ export function App({
       if (!active) return;
       if (error) {
         setLicenseError("No fue posible consultar el estado de la licencia. Inténtalo más tarde.");
-        setLicenseAccess(null);
+        setLicenseAccess([]);
       } else {
-        setLicenseAccess(data?.[0] ?? null);
+        setLicenseAccess(data ?? []);
       }
       setLicenseLoading(false);
     });
@@ -249,13 +524,13 @@ export function App({
   }, [authMode, supabase]);
 
   useEffect(() => {
-    if (authMode === "cloud" || historyNeedsRecovery) return;
+    if (draftHydratedScope !== calculatorDraftScope || authMode === "cloud" || historyNeedsRecovery) return;
     try {
       historyRepository.save(history);
     } catch {
       setSavedMessage("No fue posible guardar en este navegador.");
     }
-  }, [authMode, history, historyNeedsRecovery, historyRepository]);
+  }, [authMode, calculatorDraftScope, draftHydratedScope, history, historyNeedsRecovery, historyRepository]);
 
   async function refreshLicenseAccess() {
     if (authMode !== "cloud" || !supabase) return;
@@ -264,7 +539,7 @@ export function App({
     if (error) {
       setLicenseError("No fue posible actualizar el estado de la licencia.");
     } else {
-      setLicenseAccess(data?.[0] ?? null);
+      setLicenseAccess(data ?? []);
       setLicenseError("");
     }
     setLicenseLoading(false);
@@ -314,11 +589,18 @@ export function App({
   }
 
   async function saveCalculation() {
+    if (savingCalculation) return;
+    if (draftHydratedScope !== calculatorDraftScope) {
+      setSavedMessage("Espera a que Fixora termine de cargar los datos del negocio seleccionado.");
+      return;
+    }
     if (authMode !== "cloud" && historyNeedsRecovery) {
       setSavedMessage("Revisa o reinicia el historial antes de guardar un cálculo nuevo.");
       return;
     }
     if (!calculation.result) return;
+    const saveScope = calculatorDraftScope;
+    setSavingCalculation(true);
     try {
       const snapshot = snapshotService.create({
         name: name.trim() || "Cálculo sin nombre",
@@ -326,7 +608,7 @@ export function App({
         pricingInput: input,
         catalogItem: selectedCatalogItem,
       });
-      let record: SavedCalculation = {
+      const record: SavedCalculation = {
         id: snapshot.id,
         name: snapshot.name,
         createdAt: snapshot.createdAt,
@@ -338,33 +620,21 @@ export function App({
         catalogItem: snapshot.catalogItem,
       };
       if (authMode === "cloud") {
-        if (!supabase || !businessId) throw new Error("No hay un negocio cloud seleccionado.");
-        const { data, error } = await supabase
-          .from("fixora_calculation_snapshots")
-          .insert({
-            business_id: businessId,
-            name: snapshot.name,
-            currency_code: snapshot.currency,
-            schema_version: snapshot.schemaVersion,
-            formula_version: snapshot.formulaVersion,
-            pricing_input: JSON.parse(JSON.stringify(snapshot.pricingInput)) as Json,
-            pricing_result: JSON.parse(JSON.stringify(snapshot.pricingResult)) as Json,
-            catalog_item_snapshot: snapshot.catalogItem
-              ? JSON.parse(JSON.stringify(snapshot.catalogItem)) as Json
-              : null,
-          })
-          .select("id, created_at")
-          .single();
-        if (error) throw error;
-        record = { ...record, id: data.id, createdAt: data.created_at };
-        setHistory((current) => [record, ...current].slice(0, 100));
+        if (!businessId) throw new Error("No hay un negocio cloud seleccionado.");
+        const cloudRecord = await cloudHistoryService.saveSnapshot(businessId, snapshot);
+        if (currentDraftScope.current !== saveScope) return;
+        setHistory((current) => [cloudRecord, ...current].slice(0, 100));
         setSavedMessage("Cálculo guardado en Supabase para este negocio.");
         return;
       }
       setHistory((current) => [record, ...current].slice(0, 100));
       setSavedMessage("Cálculo guardado en este dispositivo.");
     } catch (error) {
-      setSavedMessage(error instanceof Error ? error.message : "No fue posible guardar el cálculo. Revisa la moneda y los datos del catálogo.");
+      if (currentDraftScope.current === saveScope) {
+        setSavedMessage(error instanceof Error ? error.message : "No fue posible guardar el cálculo. Revisa la moneda y los datos del catálogo.");
+      }
+    } finally {
+      if (currentDraftScope.current === saveScope) setSavingCalculation(false);
     }
   }
 
@@ -429,6 +699,7 @@ export function App({
         <button type="button" onClick={() => { setView("catalog"); setMobileMoreOpen(false); }}><span className="mobile-menu-icon"><FixoraIcon name="package" /></span>Catálogo</button>
         <button type="button" onClick={() => { setView("kits"); setMobileMoreOpen(false); }}><span className="mobile-menu-icon"><FixoraIcon name="layers" /></span>Kits por negocio</button>
         <button type="button" onClick={() => { setView("account"); setMobileMoreOpen(false); }}><span className="mobile-menu-icon"><FixoraIcon name="user" /></span>Mi cuenta</button>
+        {authMode === "cloud" && businessId && <button type="button" onClick={() => { setView("import"); setMobileMoreOpen(false); }}><span className="mobile-menu-icon"><FixoraIcon name="download" /></span>Importar datos locales</button>}
         {authMode === "cloud" && <button type="button" onClick={() => { setView("support"); setMobileMoreOpen(false); }}><span className="mobile-menu-icon"><FixoraIcon name="support" /></span>Soporte</button>}
         {authMode === "cloud" && <button type="button" onClick={() => { setView("admin"); setMobileMoreOpen(false); }}><span className="mobile-menu-icon"><FixoraIcon name="shield" /></span>Administración</button>}
         <button type="button" onClick={() => { setView("guide"); setMobileMoreOpen(false); }}><span className="mobile-menu-icon"><FixoraIcon name="book" /></span>Guía de uso</button>
@@ -465,6 +736,7 @@ export function App({
           </button>
           <p className="nav-label nav-label-spaced">TU CUENTA</p>
           <button className={view === "account" ? "nav-item active" : "nav-item"} aria-current={view === "account" ? "page" : undefined} onClick={() => setView("account")}><FixoraIcon className="nav-icon" name="user" /> Mi cuenta</button>
+          {authMode === "cloud" && businessId && <button className={view === "import" ? "nav-item active" : "nav-item"} aria-current={view === "import" ? "page" : undefined} onClick={() => setView("import")}><FixoraIcon className="nav-icon" name="download" /> Importar datos locales</button>}
           {authMode === "cloud" && <button className={view === "support" ? "nav-item active" : "nav-item"} aria-current={view === "support" ? "page" : undefined} onClick={() => setView("support")}><FixoraIcon className="nav-icon" name="support" /> Soporte</button>}
           {authMode === "cloud" && <button className={view === "admin" ? "nav-item active" : "nav-item"} aria-current={view === "admin" ? "page" : undefined} onClick={() => setView("admin")}><FixoraIcon className="nav-icon" name="shield" /> Administración</button>}
           <button className={view === "about" ? "nav-item active" : "nav-item"} aria-current={view === "about" ? "page" : undefined} onClick={() => setView("about")}><FixoraIcon className="nav-icon" name="grid" /> Nuestra familia</button>
@@ -548,6 +820,29 @@ export function App({
               </div>
 
               {draftStatus && <p className="draft-status" role="status">{draftStatus}</p>}
+              {authMode === "cloud" && localBackupDraft && localBackupDraftScope === calculatorDraftScope && !cloudDraftNeedsChoice && !cloudDraftNeedsReload && (
+                <div className="history-actions">
+                  <span>Hay una copia local anterior disponible en este dispositivo.</span>
+                  <button className="outline-button" type="button" disabled={cloudDraftSaving} onClick={() => void restoreLocalBackup()}>Restaurar copia local anterior</button>
+                </div>
+              )}
+              {authMode === "cloud" && cloudDraftNeedsReload && (
+                <div className="guide-callout" role="status">
+                  <strong>Es necesario volver a consultar el borrador cloud.</strong>
+                  <p>Puede haber una versión más reciente en otro dispositivo. Tus datos locales siguen conservados.</p>
+                  <button className="outline-button" type="button" disabled={cloudDraftSaving} onClick={() => setCloudDraftReloadToken((value) => value + 1)}>Recargar versión cloud</button>
+                </div>
+              )}
+              {authMode === "cloud" && cloudDraftNeedsChoice && cloudDraftChoiceScope === calculatorDraftScope && (
+                <div className="guide-callout" role="group" aria-label="Elegir borrador para sincronizar">
+                  <strong>Elige qué versión conservar</strong>
+                  <p>Los borradores son privados por usuario y negocio. No combinaremos dos versiones ni eliminaremos la copia local automáticamente.</p>
+                  <div className="catalog-form-actions">
+                    {cloudDraftCandidate && <button className="outline-button" type="button" disabled={cloudDraftSaving} onClick={() => void chooseCloudDraft()}>Usar borrador cloud</button>}
+                    <button className="primary-button compact" type="button" disabled={cloudDraftSaving} onClick={() => void chooseLocalDraft()}>{cloudDraftSaving ? "Sincronizando…" : cloudDraftCandidate ? "Conservar local y reemplazar cloud" : "Sincronizar borrador local"} <span>↗</span></button>
+                  </div>
+                </div>
+              )}
 
               <div className="product-name-row">
                 <div className="product-name-field">
@@ -589,10 +884,23 @@ export function App({
                     </div>
                     <div className="field-grid">
                       <Field label="Comisiones del canal" value={input.variableFeeRate * 100} suffix="%" onChange={(v) => update("variableFeeRate", v, true)} />
+                      <label className="currency-select">
+                        <span>BASE DE COMISIÓN</span>
+                        <select
+                          value={input.variableFeeBasis ?? "discounted_price"}
+                          onChange={(event) => setInput((current) => ({
+                            ...current,
+                            variableFeeBasis: event.target.value as PricingFeeBasis,
+                          }))}
+                        >
+                          <option value="discounted_price">Precio con descuento</option>
+                          <option value="pre_discount">Precio original</option>
+                        </select>
+                      </label>
                       <Field label="Descuento al cliente" value={input.discountRate * 100} suffix="%" onChange={(v) => update("discountRate", v, true)} />
                       <Field label="Margen de ganancia deseado" value={input.targetMarginRate * 100} suffix="%" onChange={(v) => update("targetMarginRate", v, true)} />
                     </div>
-                    <p className="field-hint">El margen se calcula sobre el ingreso después de comisión. Configura aquí las tasas reales de tu canal.</p>
+                    <p className="field-hint">Elige la base que realmente usa tu canal: precio original o precio con descuento. El margen se calcula sobre el ingreso neto después de comisión; revisa las condiciones de tu plataforma.</p>
                   </section>
                 </div>
 
@@ -624,8 +932,8 @@ export function App({
                         </div>
                       </>
                     ) : null}
-                    <button className="primary-button" onClick={saveCalculation} disabled={!calculation.result || historyNeedsRecovery}>
-                      Guardar cálculo <span>↗</span>
+                    <button className="primary-button" onClick={saveCalculation} disabled={!calculation.result || (authMode !== "cloud" && historyNeedsRecovery) || savingCalculation || draftHydratedScope !== calculatorDraftScope}>
+                      {savingCalculation ? "Guardando…" : "Guardar cálculo"} <span>↗</span>
                     </button>
                     {savedMessage && <p className="save-message" role="status">{savedMessage}</p>}
                   </section>
@@ -669,14 +977,14 @@ export function App({
           )}
 
           {view === "expenses" && authMode === "cloud" && businessId
-            ? <CloudExpensesPage businessId={businessId} currency={initialCurrency ?? currency} formatMoney={formatMoney} />
+            ? <CloudExpensesPage businessId={businessId} currency={initialCurrency ?? currency} formatMoney={formatMoney} service={cloudExpensesService} />
             : view === "expenses" && <ExpensesPage service={expensesService} currency={currency} formatMoney={formatMoney} />}
           {view === "catalog" && authMode === "cloud" && businessId
-            ? <CloudCatalogPage businessId={businessId} currency={initialCurrency ?? currency} formatMoney={formatMoney} onUseInCalculator={useCatalogItem} />
+            ? <CloudCatalogPage businessId={businessId} currency={initialCurrency ?? currency} formatMoney={formatMoney} onUseInCalculator={useCatalogItem} service={cloudCatalogService} />
             : view === "catalog" && <CatalogPage service={catalogService} currency={currency} formatMoney={formatMoney} onUseInCalculator={useCatalogItem} />}
 
           {view === "history" && authMode === "cloud" && businessId
-            ? <CloudHistoryPage businessId={businessId} formatMoney={formatMoney} onOpenCalculation={openCalculation} onRecordsLoaded={setHistory} />
+            ? <CloudHistoryPage businessId={businessId} formatMoney={formatMoney} onOpenCalculation={openCalculation} onRecordsLoaded={setHistory} service={cloudHistoryService} />
             : view === "history" && (
             <div className="secondary-page">
               <p className="eyebrow">TU ACTIVIDAD <span> / </span> 02</p>
@@ -709,10 +1017,18 @@ export function App({
             </div>
           )}
 
+          {view === "import" && authMode === "cloud" && businessId && (
+            <LocalDataImportPage
+              businessId={businessId}
+              businessCurrency={initialCurrency ?? currency}
+              service={localImportService}
+              onBack={() => setView("account")}
+            />
+          )}
           {view === "support" && authMode === "cloud" && <SupportPage businessId={businessId} />}
           {view === "admin" && authMode === "cloud" && <AdminConsoleContainer />}
           {view === "guide" && <GuidePage />}
-          {view === "account" && <AccountPage onOpenGuide={() => setView("guide")} authMode={authMode} userEmail={userEmail} businessName={businessName} onSignOut={onSignOut} licenseAccess={licenseAccess} licenseLoading={licenseLoading} licenseError={licenseError} onLicenseActivated={refreshLicenseAccess} />}
+          {view === "account" && <AccountPage onOpenGuide={() => setView("guide")} authMode={authMode} userEmail={userEmail} businessName={businessName} businessTimezone={businessTimezone} businessCurrency={businessCurrency} profileDisplayName={profileDisplayName} profileLoading={profileLoading} profileError={profileError} onProfileUpdate={onProfileUpdate} onBusinessDetailsUpdate={onBusinessDetailsUpdate} onSignOut={onSignOut} licenseAccess={licenseAccess} licenseLoading={licenseLoading} licenseError={licenseError} onLicenseActivated={refreshLicenseAccess} />}
           {view === "about" && <AboutPage />}
           {view === "terms" && <LegalPage kind="terms" />}
           {view === "privacy" && <LegalPage kind="privacy" />}

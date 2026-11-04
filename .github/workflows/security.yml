@@ -1,0 +1,107 @@
+name: Security
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - "foundation/**"
+      - "security/**"
+      - "integration/**"
+  schedule:
+    - cron: "17 10 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fixora-security-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  workflow-audit:
+    name: GitHub Actions security (zizmor)
+    runs-on: ubuntu-latest
+    permissions: {}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Audit workflows
+        uses: zizmorcore/zizmor-action@53290badfa369cb0bf7ad16342cb62c2fa47ac7b # v0.8.0
+        with:
+          advanced-security: false
+          annotations: true
+          online-audits: false
+          min-severity: medium
+          version: v1.31.1
+
+  secret-scan:
+    name: Secret scanning (Gitleaks)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout full history
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Set up Go
+        uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6
+        with:
+          go-version: "1.24.x"
+          cache: false
+      - name: Install Gitleaks CLI
+        run: go install github.com/zricethezav/gitleaks/v8@v8.30.1
+      - name: Scan repository history (redacted)
+        shell: bash
+        run: |
+          set +e
+          "${HOME}/go/bin/gitleaks" git --redact --exit-code 1 --report-format json --report-path "${RUNNER_TEMP}/gitleaks.json" .
+          scan_status=$?
+          set -e
+          if [ -s "${RUNNER_TEMP}/gitleaks.json" ]; then
+            jq -r '.[] | "rule=\(.RuleID) file=\(.File) line=\(.StartLine) commit=\(.Commit) fingerprint=\(.Fingerprint)"' "${RUNNER_TEMP}/gitleaks.json"
+          fi
+          exit "$scan_status"
+
+  dependency-scan:
+    name: Dependency vulnerabilities (OSV-Scanner)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Scan lockfiles and dependency manifests
+        uses: google/osv-scanner-action/osv-scanner-action@0a65f82af05cd58cf587827b0bb0489548c18346 # v2.7.0
+        with:
+          scan-args: |-
+            --recursive
+            ./
+
+  repository-scan:
+    name: Vulnerabilities, secrets and misconfiguration (Trivy)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Scan filesystem
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          scanners: vuln,misconfig,secret
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"
+          skip-dirs: .git,node_modules

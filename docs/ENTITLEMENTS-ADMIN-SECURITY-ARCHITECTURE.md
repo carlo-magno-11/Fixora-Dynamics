@@ -19,7 +19,7 @@ Limitaciones observadas:
 
 - La activación de licencias está deshabilitada por defecto con VITE_FIXORA_LICENSE_ACTIVATION_ENABLED; no debe activarse hasta tener secretos y Edge Functions desplegados y probados.
 - La verificación Etsy actual acepta un único SKU de General; no reconoce SKUs de kits, paquetes ni derechos múltiples.
-- La rama de seguridad y la rama de gastos están divergidas; no integrar esta propuesta hasta reconciliar PR #8 con la base de trabajo de PR #2/#9/#10.
+- La línea de seguridad de PR #8 fue integrada en `integration/fixora-mainline-20261103` el 3-11-2026. Su código y pruebas forman parte de la rama central; las migraciones y Edge Functions todavía no se han desplegado en Supabase remoto.
 - La UI de administración no es un límite de seguridad. Toda acción sensible debe volver a verificar identidad, AAL2, estado y permiso en servidor.
 
 ## 2. Decisión de arquitectura: reutilizar y ampliar, no copiar un SaaS de licencias
@@ -57,7 +57,7 @@ La migración base ya define en el esquema privado:
 
 No crear product_catalog, product_components, license_grants, license_activations ni tablas de administración paralelas. La primera implementación debe extender el catálogo fixora_products y las funciones existentes con SKUs nuevos y claves de entitlement específicas. La tabla fixora_licenses tiene actualmente una relación única con purchase_order_id; para la primera versión, cada paquete bundle debe ser un SKU de producto único con la unión exacta de entitlements incluidos. Una compra add-on crea una licencia de SKU de complemento con solo el entitlement de ese kit. La autorización efectiva se calcula agregando las licencias vigentes del titular y aplicando el requisito de General.
 
-La compra y la licencia existentes se vinculan al user_id. La licencia actual dura 12 meses desde la primera activación y el límite de tres dispositivos está definido en fixora_products/fixora_licenses por licencia. Antes de vender add-ons, debe decidirse el alcance de la licencia (cuenta o business_id), cómo se comparte con business_memberships y si el máximo de tres instalaciones es por licencia o por cuenta. Recomendación: tres instalaciones únicas por cuenta, compartidas por General y todos los kits. Si se elige este límite global, la implementación debe contar dispositivos distintos entre todas las licencias del titular bajo un bloqueo transaccional por usuario/cuenta; bloquear solo una fila de licencia no evita carreras entre dos compras concurrentes. No ampliar silenciosamente la licencia a todos los negocios o miembros.
+La compra y la licencia existentes se vinculan al user_id. La licencia actual dura 12 meses desde la primera activación y el máximo confirmado es de tres dispositivos activos por licencia. La titularidad individual frente a negocio y la herencia a business_memberships siguen pendientes; esas decisiones no modifican el límite por licencia ya confirmado. Si General y un add-on se emiten como licencias separadas, cada licencia mantiene su propio máximo de tres dispositivos. No crear una cuota global por usuario/cuenta ni cambiar el conteo entre licencias sin una nueva decisión comercial explícita.
 
 ## 5. Contrato de autorización para abrir un módulo
 
@@ -118,9 +118,9 @@ Controles obligatorios:
 
 Fase A — lectura y reconciliación:
 1. Inspeccionar todas las migraciones y RPC actuales de compras, licencias, dispositivos, negocios y roles.
-2. Comparar PR #8 con PR #2 y la rama de gastos; resolver divergencia sin reset/force-push ni sobrescribir el trabajo concurrente.
+2. Revisar la integración ya realizada de PR #8 en la rama central; mantener el historial y no usar reset/force-push ni sobrescribir el trabajo concurrente.
 3. Crear matriz SKU → entitlements exactos → vigencia desde primera activación → límite de dispositivos → pruebas.
-4. Resolver antes del SQL si los tres dispositivos se comparten entre todas las licencias del titular. No lanzar add-ons con una cuota accidental de tres dispositivos por SKU.
+4. Mantener el máximo confirmado de tres dispositivos activos por licencia. No implementar una cuota global por usuario/cuenta ni contar dispositivos entre licencias sin una nueva decisión comercial explícita.
 
 Fase B — diseño de pruebas antes del SQL:
 1. Tests unitarios del resolver de entitlements.
@@ -151,7 +151,7 @@ Fase D — validación:
 - Kit A no concede Kit B.
 - Vencido/suspendido/revocado se bloquea en servidor, no solo en UI.
 - Bundle crea exactamente los entitlements de General + kit adquirido en el SKU bundle; compra add-on crea solo el entitlement de kit.
-- Los tres dispositivos máximos se aplican conforme a una política explícita y no se multiplican por comprar más kits.
+- Cada licencia tiene un máximo de tres dispositivos activos. Si una compra de kit crea otra licencia, se aplica su propio límite; comunicarlo con claridad y no presentarlo como una cuota global por cuenta.
 - Repetir un webhook/pedido no duplica licencias.
 - Ningún usuario puede autoasignarse roles ni invitar a un platform_owner.
 - Admin AAL1, suspendido o sin permiso recibe 401/403 en llamada directa.

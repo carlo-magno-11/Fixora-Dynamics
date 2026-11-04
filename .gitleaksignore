@@ -1,0 +1,11 @@
+# Reviewed findings only: one deterministic HMAC test fixture and four generic-api-key false positives.
+4bc81f16b998c6ff6cad5f2316139b1d95600e60:supabase/functions/_shared/crypto.test.ts:generic-api-key:19
+c455b2916666b81b8b2ace84278416b4682d2ba3:src/modules/expenses/infrastructure/browser-expenses-repository.ts:generic-api-key:4
+6503f4752546ef2d74e9cc217f11b2c358905946:src/modules/snapshots/infrastructure/browser-calculation-repository.ts:generic-api-key:4
+67dac82a1de7b18732ca19e2b90ad0b107f539cf:src/modules/expenses/ui/ExpensesPage.tsx:generic-api-key:5
+b73fe90572d2cf0dea700f6f6857442cf15eccd2:src/app/App.tsx:generic-api-key:16
+03bef73d4e04e784fc5fcd51551cf53b2c9a93d3:src/shared/infrastructure/storage-keys.ts:generic-api-key:2
+03bef73d4e04e784fc5fcd51551cf53b2c9a93d3:src/shared/infrastructure/storage-keys.ts:generic-api-key:3
+
+# False positive: randomized synthetic catalog SKU in disposable Playwright fixture, not a credential.
+df7b8467572b6875235230f8670f0abb5c907349:e2e/auth-tenant-isolation.spec.ts:generic-api-key:141

@@ -1,8 +1,9 @@
 import { PRICING_FORMULA_VERSION } from "../../pricing/domain/pricing";
 import { isSavedCalculation, type SavedCalculation } from "../domain/saved-calculation";
 import { resolveKeyValueStorage, type KeyValueStorageSource } from "../../../shared/infrastructure/key-value-storage";
+import { CALCULATION_HISTORY_STORAGE_KEY } from "../../../shared/infrastructure/storage-keys";
+export { CALCULATION_HISTORY_STORAGE_KEY } from "../../../shared/infrastructure/storage-keys";
 
-export const CALCULATION_HISTORY_STORAGE_KEY = "fixora.calculations.v1";
 const MAX_HISTORY_RECORDS = 100;
 
 export interface CalculationHistoryLoadState {

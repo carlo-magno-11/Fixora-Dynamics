@@ -606,3 +606,299 @@ Durante la revisión final detecté que el camino idempotente de un código ya r
 - Se confirmó que `authenticated` tiene USAGE sobre `fixora_private`; revocarlo rompe el RPC público de creación de negocio. No se cambió ese grant. Antes de producción hay que confirmar que el esquema no esté expuesto por PostgREST.
 - El bucket heredado `eyesite-media` sigue público y vacío; no se borró porque no hay acción Storage API en el conector actual.
 - El proyecto oficial EYESITE `xhvpvpvtkdgnnxdwdrkn` permanece intacto.
+
+
+## 2026-11-03 — Integridad remota y reconciliación de migraciones Fixora
+
+- Proyecto: `eyesite-security-test` (`dclaebknyalimmtgppeg`), exclusivamente para Fixora. El proyecto oficial EYESITE `xhvpvpvtkdgnnxdwdrkn` quedó fuera de alcance.
+- Se aplicaron en Supabase remoto seis migraciones aditivas del esquema Fixora: unidades enteras, rate limits server-side, duración por días, retención de rate limits, borradores privados y política explícita de denegación de acceso cliente a los buckets.
+- Versiones registradas: `20261103234930`, `20261103235325`, `20261103235337`, `20261103235349`, `20261103235357`, `20261103235603`.
+- Se alinearon los nombres de los archivos SQL versionados con las versiones reales de Supabase para evitar una segunda ejecución accidental.
+- Preflight: SKU General anual conservaba 12 meses; 0 licencias y 0 pedidos. No se alteraron licencias existentes.
+- Postflight: RLS activo en tablas públicas Fixora; `fixora_private` no expuesto; borradores limitados por usuario/negocio; tabla de rate limits sin grants de cliente y con política deny; RPC de rate limit/purga sólo para `service_role`.
+- Security Advisor: 0 hallazgos después de añadir la política explícita de denegación. Performance Advisor: 12 avisos INFO de índices sin uso y uno de configuración de conexiones Auth; no se borraron índices.
+- Ocho Edge Functions activas con `verify_jwt=true`; no se desplegó ni reemplazó ninguna función. `admin-support-inbox` sigue pendiente. No se tocó Storage ni objetos heredados de EYESITE.
+- Documento de evidencia: `docs/EXECUTION-STATUS-20261103.md`.
+- CI del HEAD consultado durante esta intervención: CI #1526 y Security #338 en ejecución; Database tests #1080 y CodeQL #186 pendientes. No se declaran verdes hasta revisar sus conclusiones.
+- Próxima etapa: terminar Auth y persistencia General con E2E multiusuario/multinegocio/multidispositivo, importación local→cloud y recuperación; después completar el vertical slice Retail.
+
+
+## 2026-11-03 — Reanudación: importación local → cloud
+
+- Se reanudó desde la rama central `integration/fixora-mainline-20261103`, HEAD observado `003b9fedf0c49af56c2b75e8ced002309c84b14c`, PR #14 abierto en draft. No se fusionó, rebobinó ni cambió ninguna rama.
+- La importación ya está implementada en la rama: dominio/validación local, servicio de aplicación, lectura legacy no destructiva, adaptador Supabase, UI de vista previa/selección/confirmación, RPC transaccional y pruebas pgTAP.
+- La migración `20261104010000_fixora_local_data_import.sql` existe en GitHub, pero no está aplicada al Supabase remoto. El historial remoto sigue terminando en `20261103235603`.
+- En el HEAD consultado: CI #1638 SUCCESS; Database tests #1192 CANCELLED; CodeQL #298 CANCELLED; Security #450 CANCELLED. Sólo CI se considera aprobado. No se afirma que la nueva migración haya pasado reconstrucción local ni pgTAP.
+- Se corrigió `docs/LOCAL-TO-CLOUD-IMPORT-SPEC.md` para reflejar el código real y separar lo implementado de lo pendiente. La RPC pública y el helper privado son SECURITY DEFINER con `search_path = ''`, permisos restringidos y autorización de negocio repetida en servidor.
+- Revisión pendiente: E2E con dos usuarios/negocios/dispositivos; timeout y reintento tras recargar; importaciones concurrentes con claves distintas y mismo ID de origen; advertencia explícita de que el localStorage legacy global no acredita quién es su propietario.
+- Próxima acción: renovar Database tests, CodeQL y Security en el HEAD actualizado; corregir fallos antes de considerar la migración para el Supabase remoto. No desplegar Edge Functions ni modificar Storage en esta etapa.
+
+## 2026-11-04 — Validación integrada de importación local y seguridad
+
+- Rama consultada: `integration/fixora-mainline-20261103`.
+- HEAD validado por GitHub Actions: `d446fba46d29fb341deb20c5f439f6b943325655`.
+- PR #14 continúa abierto y en borrador; no se fusionó ni se cambió de rama.
+- CI #1715: SUCCESS. Pasaron instalación congelada, TypeScript, Vitest, build web, comprobación de Edge Functions y 14 pruebas Deno.
+- Database tests #1269: SUCCESS. La base local aislada se reconstruyó desde las migraciones versionadas; pgTAP pasó con 304 pruebas en 13 archivos, incluida `fixora_local_data_import.test.sql`. También pasaron las pruebas de mutación RLS y las pruebas de concurrencia de activación de dispositivos y rate limit.
+- CodeQL #375: SUCCESS.
+- Security #527: SUCCESS. Pasaron Gitleaks, zizmor, OSV-Scanner y Trivy.
+- Supabase Security Advisor del proyecto Fixora `dclaebknyalimmtgppeg`: sin hallazgos (`lints: []`) en la consulta de esta revisión.
+- Performance Advisor: avisos informativos de índices no utilizados y asignación de conexiones Auth. No se borraron índices ni se cambió configuración; deben revisarse con carga representativa.
+- La migración `20261104010000_fixora_local_data_import.sql` y sus pruebas están versionadas y pasaron la reconstrucción/pgTAP local de CI. **No está aplicada en Supabase remoto**: el historial remoto consultado continúa hasta `20261103235603`.
+- No se ejecutó migración remota, SQL de escritura, despliegue de Edge Functions, cambio de Storage ni modificación de EYESITE oficial.
+- Pendientes de General: E2E de dos usuarios/dos negocios/dos dispositivos; conflicto, desconexión y reintento de importación; recuperación del resultado idempotente tras perder la respuesta; respaldo separado y recuperación cuando existen datos simultáneos en almacenamiento scoped y legacy; pruebas de backup/restauración.
+- Kits: Comercio y reventa conserva dominio inicial probado, pero siguen pendientes UI completa, persistencia transaccional, RLS, entitlements ejecutables y guía integrada.
+- No declarar sincronización integral, staging, dispositivo físico ni producción listos por estos resultados de CI.
+
+## 2026-11-04 — Auditoría de rama, seguridad heredada y puertas CI
+
+- Fuente única de trabajo confirmada: `integration/fixora-mainline-20261103`; HEAD `0efdeb9fa6609f1fb2454897535cfc91a9f2c058`. PR #14 continúa abierto, draft y mergeable; su base actual es `feat/licensing-duration-days-20261103`, antecesora directa del HEAD de integración. No se cambió la base ni se reescribió historia.
+- La rama `security/owasp-defense-in-depth-20261103` no necesita otra fusión: PR #8 está cerrado como merged en la rama central con merge commit `248d67fafe6225e2f1a26c5faa1336c5665febbe`. El compare remoto confirma que el head de seguridad es ancestro de la rama central (0 commits exclusivos de seguridad pendientes). Los workflows actuales ya ejecutan en el HEAD de integración.
+- `main` tiene cuatro commits únicos frente a integración: incorporación de `calculator-draft`, pruebas asociadas y dos commits que retiraron ese módulo de `main`. La integración contiene el trabajo cloud de borradores. No se cherry-pickearon ni se cambió la base del PR: la divergencia debe resolverse como decisión de integración separada, no mediante mezcla automática.
+- Database tests #1271: SUCCESS en el HEAD `0efdeb9fa6609f1fb2454897535cfc91a9f2c058`. Log verificado: reconstrucción local desde migraciones, 13 archivos pgTAP, 304 pruebas PASS; pruebas de mutación detectaron cuatro políticas RLS permisivas introducidas deliberadamente; concurrencia de dispositivos (1 aceptada, 1 rechazada, máximo 3 activos) y rate limit (3 permitidas, 9 rechazadas) PASS.
+- CI #1717: SUCCESS; Security #529: SUCCESS; CodeQL #377: SUCCESS, todos sobre el mismo HEAD `0efdeb9fa6609f1fb2454897535cfc91a9f2c058`.
+- Se comprobó que el repositorio aún no contiene Playwright/Cypress ni pruebas E2E dedicadas; sólo Vitest. Por tanto, no existe evidencia E2E de Auth/MFA, dos usuarios, dos negocios y dos dispositivos, importación tras timeout ni restauración.
+- La línea base de seguridad se alinea con OWASP Top 10:2025 y ASVS 5.0.0. Referencias oficiales: https://top10.owasp.org/2025/ y https://asvs.owasp.org/. Esto es una matriz de trabajo, no certificación.
+- Supabase remoto Fixora `dclaebknyalimmtgppeg`: historial de migraciones permanece hasta `20261103235603`; `20261104010000_fixora_local_data_import.sql` sigue sólo versionada y probada en reconstrucción local CI. No se aplicó ninguna migración remota ni se modificó EYESITE oficial.
+- Puerta siguiente: incorporar un harness E2E de navegador ligero (Playwright) con fixtures aislados y pruebas de importación/reintento y aislamiento multiusuario; antes de escribir, revisar el árbol y lockfile actual, elegir versión fijada y ejecutar CI completo. Luego preparar pruebas reales de staging con cuentas de prueba y MFA. No declarar General lista hasta completar esa evidencia.
+
+
+
+## 2026-11-04 — Reintentos de importación deterministas entre pestañas
+
+- Se cerró una carrera del cliente en la importación local→cloud: antes, dos pestañas abiertas al mismo tiempo podían generar claves aleatorias distintas antes de persistir el primer intento en localStorage.
+- El fingerprint SHA-256 identifica negocio, moneda, selección y contenido seleccionado. La clave de servidor ahora es un UUIDv5 determinista del negocio + fingerprint; recargas y pestañas concurrentes para la misma operación producen la misma clave sin depender del almacenamiento local.
+- Se eliminó la dependencia de localStorage para mantener el ledger de claves de reintento del navegador. No se guarda el contenido de origen en ese mecanismo.
+- Se añadieron pruebas para estabilidad entre pestañas/recargas, separación por negocio y payload, y entradas inválidas. La especificación `docs/LOCAL-TO-CLOUD-IMPORT-SPEC.md` refleja el contrato nuevo.
+- Commits: `64ef93a` (clave determinista), `9472f20` (integración UI), `9fd184e` (pruebas), `f085e26` (especificación).
+- Estado de validación: pendiente de CI, Database tests, CodeQL y Security sobre el HEAD documental más reciente. No se declara aprobado hasta consultar las ejecuciones.
+- No se modificó esquema ni migraciones. No se aplicó nada al Supabase remoto Fixora, no se desplegaron Edge Functions, no se tocaron Storage ni EYESITE oficial.
+
+
+## 2026-11-04 — Validación completa del HEAD b4fa053
+
+- HEAD validado: `b4fa053db43e4a66125b2436d80261a6cd19b43d`.
+- CI #1733: SUCCESS (TypeScript, Vitest, build web, Deno check y pruebas de utilidades).
+- Security #545: SUCCESS (Gitleaks, OSV-Scanner, Trivy y zizmor).
+- CodeQL #393: SUCCESS.
+- Database tests #1287: SUCCESS. Se reconstruyó la base aislada desde todas las migraciones versionadas; pgTAP: 13 archivos, 304 pruebas, PASS. Las cuatro mutaciones RLS permisivas se detectaron en businesses, catalog_items, support_tickets y support_messages. La prueba concurrente de activación aceptó una operación, rechazó otra y conservó tres dispositivos activos; rate limit concurrente: 3 solicitudes permitidas, 9 rechazadas, sin exceder el límite.
+- La corrección UUIDv5/SHA-256 de importación local→cloud ya pasó los controles automatizados de este HEAD. No modifica esquema ni migraciones.
+- PR #14 permanece draft/open/mergeable; base `feat/licensing-duration-days-20261103`, head `integration/fixora-mainline-20261103`. No se fusiona todavía.
+- Supabase remoto Fixora `dclaebknyalimmtgppeg`: última migración observada `20261103235603`; `20261104010000_fixora_local_data_import.sql` sigue sin aplicar. Security Advisor sin hallazgos; Performance Advisor mantiene avisos INFO (12 índices sin uso y configuración Auth de conexiones). No se aplicó SQL, migración ni despliegue remoto.
+- Siguiente puerta: E2E de navegador con entorno local aislado, pruebas multiusuario/negocio y flujos de importación/reintento/restauración. Después, staging real con MFA y dispositivos. CI/pgTAP verdes no sustituyen esa evidencia.
+
+
+## 2026-11-04 — Browser E2E y validación completa del HEAD a85d1d9
+
+- HEAD de código validado: `a85d1d9bb8d6eb100f5ab3c43e920f2e9e40ff03`.
+- CI #1751: SUCCESS (typecheck, Vitest, build web, Deno check y utilidades).
+- Security #563: SUCCESS (Gitleaks, OSV-Scanner, Trivy y zizmor).
+- CodeQL #411: SUCCESS.
+- Database tests #1305: SUCCESS. Reconstrucción desde todas las migraciones; pgTAP: 13 archivos, 304 pruebas PASS. Cuatro mutaciones RLS permisivas detectadas (businesses, catalog_items, support_tickets, support_messages). Concurrencia de activación: una aceptada, una rechazada y tres dispositivos activos; rate limit concurrente: 3 permitidas, 9 rechazadas.
+- Browser E2E #12: SUCCESS. Playwright 1.64.1 + Chromium sobre Supabase local desechable. Dos usuarios sintéticos, dos contextos de navegador, creación de un negocio por cuenta y consulta cruzada: el usuario B obtiene su propio negocio y cero filas del negocio A. Una prueba aprobada en 5.3 segundos. Los datos de prueba quedan en el proyecto local efímero del job y desaparecen al terminar; no se crean usuarios ni negocios en Supabase remoto.
+- Se corrigió la validación de URL Supabase: HTTP solo se acepta para localhost/127.0.0.1/::1 en modo desarrollo; producción y hosts públicos requieren HTTPS. Pruebas Vitest cubren loopback, HTTP público y HTTPS.
+- No se modificó el esquema ni las migraciones en este cambio. Supabase remoto Fixora `dclaebknyalimmtgppeg`: última migración observada `20261103235603`; `20261104010000_fixora_local_data_import.sql` sigue sin aplicar. No se ejecutó SQL remoto ni se desplegaron Edge Functions.
+- PR #14 sigue draft/open/mergeable, base `feat/licensing-duration-days-20261103`; no se fusiona.
+- Siguiente puerta: ampliar E2E con importación y respuesta perdida, conflicto y restauración de respaldos, cambio de negocio/dispositivo y MFA/AAL2. Después, staging HTTPS y validación física. El primer E2E no representa cobertura integral.
+
+
+## 2026-11-04 — Exportaciones separadas scoped/legacy y validación completa
+
+- Se cerró el bloqueo de respaldo cuando hay datos simultáneos en el almacenamiento namespaced de la cuenta/negocio y en el legacy global del navegador. La detección de conflicto continúa fail-closed: no se mezclan ni se importan automáticamente.
+- La pantalla ofrece dos descargas JSON independientes (scoped y legacy), con `sourceScope`, nombres diferenciados y contenido limitado a su propio almacenamiento. Los originales no se modifican. Cada respaldo se puede seleccionar después para revisión/restauración individual; el formato v1 anterior sigue siendo compatible.
+- Se añadieron pruebas para conflicto, contenido exacto por ámbito, fuentes vacías y ausencia de legacy. Vitest CI #1759: 40 archivos, 250 pruebas PASS.
+- Validación del HEAD `33b507261af5745e93442a5dd298f4b40e216e52`:
+  - CI #1759 SUCCESS (typecheck, 250 Vitest, build web, Deno check y utilidades).
+  - Security #571 SUCCESS (Gitleaks, OSV-Scanner, Trivy, zizmor).
+  - CodeQL #419 SUCCESS.
+  - Database tests #1313 SUCCESS: reconstrucción completa; 13 archivos pgTAP / 304 pruebas PASS; cuatro mutaciones RLS detectadas; límite concurrente de tres dispositivos y rate limit aprobados.
+  - Browser E2E #20 SUCCESS: Supabase local efímero, Playwright/Chromium, dos usuarios y dos contextos, creación de dos negocios y verificación de aislamiento. 1 prueba PASS en 4.7 s.
+- El primer CI de la exportación detectó errores de tipos en el puerto y el handler del botón; quedaron corregidos antes del HEAD validado. No se ocultó ni se dio por aprobado el intento fallido.
+- No se modificaron migraciones ni esquema. Supabase remoto Fixora `dclaebknyalimmtgppeg` sigue con última migración observada `20261103235603`; la migración de importación `20261104010000` sigue sin aplicar. No hubo SQL remoto, despliegue de funciones, ni cambios de Storage.
+- PR #14 permanece draft/open. Siguientes puertas: E2E de descarga/restauración, importación con respuesta perdida, MFA/AAL2, dispositivos, staging HTTPS y verificación física.
+
+## 2026-11-04 — E2E de respaldo/restauración y recuperación idempotente
+
+- Se amplió `e2e/auth-tenant-isolation.spec.ts` a dos escenarios de navegador con Playwright sobre Supabase local efímero.
+- Browser E2E #30 SUCCESS: 2 pruebas aprobadas en 7.5 s. Además del aislamiento entre dos usuarios/negocios, se verificó el conflicto scoped/legacy, las dos descargas JSON independientes, el contenido exacto de cada archivo y la conservación de los originales.
+- El mismo E2E restaura únicamente el respaldo scoped y verifica que el legacy no se importa ni modifica. Después deja que la RPC complete el lote pero descarta la respuesta HTTP; tras recargar, el cliente repite la solicitud y recupera el resultado idempotente sin duplicar el catálogo.
+- La prueba pgTAP del import local ya cubre misma clave/mismo payload, misma clave/payload diferente, dos import_keys para un mismo ID de origen, editor secundario, viewer no autorizado, rollback completo de categorías y límites de tamaño.
+- HEAD de código probado: `0dc9798ef4709100331cab518df4711f3fc09985`.
+  - CI #1769 SUCCESS.
+  - Security #581 SUCCESS (Gitleaks, OSV-Scanner, Trivy, zizmor).
+  - CodeQL #429 SUCCESS.
+  - Database tests #1323 SUCCESS: 13 archivos / 304 pruebas pgTAP, mutaciones RLS negativas y concurrencia de dispositivos/rate limit.
+  - Browser E2E #30 SUCCESS: 2 pruebas / 7.5 s.
+- Se registró la evidencia y los pendientes restantes en `docs/LAUNCH-GATES.md`; commit documental `8f384b4884074cdc356c37f264ebf0b02e71ddd0`.
+- Pendiente específico: doble clic explícito y concurrencia real entre solicitudes con distintas import_keys para el mismo ID de origen; también MFA/AAL2 real, dispositivos/revocación, staging HTTPS y dispositivos físicos.
+- Supabase remoto Fixora `dclaebknyalimmtgppeg`: la última migración observada sigue en `20261103235603`; `20261104010000_fixora_local_data_import.sql` no se aplicó. No hubo SQL de escritura, despliegues ni cambios de Storage. EYESITE oficial no se tocó.
+
+
+## 2026-11-04 — Concurrencia real de importación validada en navegador
+
+- Se añadió un tercer escenario Playwright para ejecutar dos llamadas RPC simultáneas contra Supabase local efímero.
+- Mismo import_key + mismo payload: las dos solicitudes concurrentes reciben el mismo `importId`, sin crear dos lotes.
+- Distintos import_keys + mismo ID de origen: las dos solicitudes pueden completar o una recibir conflicto de unicidad, pero la consulta final verifica exactamente un registro cloud por cada ID de origen.
+- Validación del HEAD `38135a25cd070ef199af6a2e6eb090bdf8c0f370`:
+  - CI #1775 SUCCESS.
+  - Security #587 SUCCESS (Gitleaks, OSV-Scanner, Trivy y zizmor).
+  - CodeQL #435 SUCCESS.
+  - Database tests #1329 SUCCESS: reconstrucción limpia, 13 archivos pgTAP / 304 pruebas, mutaciones negativas RLS y concurrencia de dispositivos/rate limit.
+  - Browser E2E #36 SUCCESS: 3 pruebas / 7.9 s; aislamiento multiusuario, exportación/restauración scoped/legacy, respuesta RPC perdida y concurrencia de importación.
+- La nueva prueba se ejecutó solo contra Supabase local descartable del workflow; no utilizó secretos ni datos del proyecto remoto.
+- Pendientes siguientes: MFA/AAL2 TOTP en E2E, pruebas de endpoints admin con AAL1/AAL2 y roles distintos, dos dispositivos/revocación, staging HTTPS, revisión visual/accesibilidad y pruebas físicas.
+- Proyecto remoto Fixora `dclaebknyalimmtgppeg`: última migración observada `20261103235603`; la migración local→cloud `20261104010000` continúa sin aplicar. No se ejecutó SQL de escritura ni despliegues remotos; EYESITE oficial no se tocó.
+
+## Corrección del parser HTTP y prueba directa de autorización — 2026-11-04
+
+**HEAD de código:** `71567243a5436ede36cb7c96ad5ee5b156c1bde7`.
+
+- [x] Se corrigió la validación de `Content-Length` en `readJsonObject`: ahora acepta cadenas numéricas válidas y conserva el rechazo de valores no numéricos, tamaños excesivos y cuerpos JSON inválidos.
+- [x] Se añadió una prueba Deno que entrega un cuerpo JSON con `Content-Length` numérico y comprueba que el objeto se interpreta correctamente.
+- [ ] Validar en CI la prueba unitaria y repetir Browser E2E del endpoint `admin-create-invite`. En el HEAD anterior, la prueba AAL2 sin rol recibió HTTP 400 por validación del cuerpo antes de llegar a la autorización; por tanto, esa ejecución no demostró todavía el rechazo 403 por falta de permiso.
+- [ ] Confirmar que, tras la corrección, el endpoint responde 403 para AAL1 y para AAL2 sin permiso `admins.manage`.
+- [ ] Revisar el orden de controles de `admin-create-invite`: la autenticación AAL2 y la autorización deben preceder cualquier operación con efectos; el rate limit debe mantenerse sin permitir bypass.
+- No se aplicaron migraciones ni se desplegaron funciones en Supabase remoto. El cambio está versionado en GitHub; validación CI pendiente.
+
+## 2026-11-04 — Investigación competitiva y validación de seguridad
+
+- Rama central: `integration/fixora-mainline-20261103`.
+- HEAD de código anterior a esta actualización documental: `c751013c762fd433f9ddb853a6b08031a2951203`.
+- El parser compartido `readJsonObject` ahora acepta `Content-Length` numérico válido y sigue rechazando longitudes inválidas o superiores al límite. Se añadió prueba Deno para cubrir la regresión.
+- Validación en HEAD `c751013`: CI #1815 SUCCESS (typecheck, Vitest, build, Deno checks y utilidades); Security #627 SUCCESS (Gitleaks, OSV-Scanner, Trivy, zizmor); CodeQL #475 SUCCESS; Database tests #1369 SUCCESS (reconstrucción desde migraciones, pgTAP, mutaciones RLS y concurrencia); Browser E2E #76 SUCCESS, 4 pruebas aprobadas. La prueba E2E del endpoint administrativo volvió a pasar tras la corrección.
+- Se creó `docs/KIT-MARKET-RESEARCH-AND-DIFFERENTIATION.md`: comparativa documental de competidores en México/Latinoamérica y referencias globales; brechas funcionales por kit; propuesta de valor, MVP, pruebas de realidad y umbrales internos de adopción.
+- Se amplió `docs/KIT-MODULES-IMPLEMENTATION-PLAN.md` con diferenciación, límites de alcance y puerta de adopción.
+- La investigación confirma que calculadoras de coste, recetas, agenda, inventario y cotización ya existen en competidores. Fixora no debe competir como ERP/POS/CRM completo; debe conectar operación sencilla, coste explicable, acción siguiente e historial auditable.
+- No se creó ni ejecutó migración de kits. ADR-004 sigue abierto: aunque se recomienda licencia individual, sin herencia a miembros, la titularidad y alcance deben cerrarse antes de crear tablas/RLS de los kits.
+- No se aplicaron migraciones ni se desplegaron Edge Functions en Supabase remoto en esta entrega. El siguiente HEAD documental debe volver a ejecutar workflows.
+
+## 2026-11-04 — Primer flujo de rentabilidad por pedido en Comercio y reventa
+
+- Se añadieron `src/modules/retail/domain/retail-order-profit.ts` y `retail-order-profit.test.ts`.
+- El nuevo dominio calcula contribución por pedido a partir de varias partidas, descuentos, reembolsos, envío cobrado y pagado, comisiones/cargos reales y asignación de coste fijo.
+- Se distingue el coste de mercancía vendida de unidades devueltas que sí fueron inspeccionadas y reingresadas al stock vendible. Una devolución reembolsada pero no reingresada conserva el coste de mercancía.
+- Se corrigió una ambigüedad detectada durante revisión: margen de contribución (antes de costes fijos) y margen operativo estimado (después de asignación fija) ahora son resultados distintos.
+- CI #1829 SUCCESS: typecheck, 41 archivos de pruebas Vitest / 260 pruebas PASS, build web, Deno check y 20 pruebas Deno PASS. La compilación mantiene una advertencia de chunk JavaScript >500 kB que queda como deuda de optimización, no como fallo.
+- Security #641 SUCCESS (Gitleaks, OSV-Scanner, Trivy y zizmor).
+- Database tests #1383 y Browser E2E #90 siguen en ejecución; CodeQL #489 sigue en ejecución al registrar esta nota. No declarar esos controles como aprobados todavía.
+- La investigación de mercado se amplió con señales anecdóticas de Reddit sobre complejidad/coste de inventario, fórmulas de panadería y conciliación de tarifas de Etsy; no son muestras representativas.
+- No hay interfaz ni persistencia de pedidos todavía; el dominio nuevo es lógica pura probada por CI. No se creó ni ejecutó migración en esta entrega.
+- Supabase remoto Fixora y EYESITE oficial no fueron modificados; no se desplegaron funciones.
+
+
+## 2026-11-04 — Reposición sugerida para Comercio y reventa
+
+- Se añadió `src/modules/retail/domain/retail-restock.ts`: cálculo determinista con demanda diaria promedio suministrada, inventario vendible, reservado y en camino, plazo de entrega, periodo de revisión, stock de seguridad, compra mínima y múltiplo.
+- La función no lee ventas ni inventario, no pronostica demanda, no crea órdenes de compra y no cambia existencias. No se anunciará como reposición automática.
+- Se añadieron pruebas unitarias para umbral, stock suficiente, demanda cero, múltiplo/MOQ, reservas superiores al stock vendible y validaciones de rango. La validación CI del nuevo HEAD aún debe confirmarse.
+- Se documentó el alcance y sus límites en `docs/KIT-MODULES-IMPLEMENTATION-PLAN.md`.
+- El dominio sigue sin UI, persistencia, conexión al ledger ni RLS. No se creó ni aplicó migración Supabase.
+
+
+## 2026-11-04 — Estrategia de producto basada en evidencia
+
+- Se revisó el documento de problemas del usuario y se separaron observaciones, hipótesis y afirmaciones que requieren validación.
+- Se investigaron estadísticas de INEGI (Censos Económicos 2024 y Medición de Economía Informal 2024), CNBV/ENIF/ENAFIN, BBVA Research, estudios de gestión de microempresas en México y ensayos de capacitación/analítica en Guatemala, Kenia, México y otros mercados.
+- Se documentó una definición más amplia del problema: decisiones de negocio bajo información incompleta, fragmentada y con fricción operativa; no se reduce a “analfabetización financiera”.
+- Se propuso posicionar Fixora como sistema de claridad y decisiones: registro mínimo → explicación → escenarios → acción → retroalimentación.
+- Se cuestionaron propuestas de automatización bancaria por SMS, asignación universal de porcentajes, score financiero de 10 preguntas, bloqueo rígido de cotizaciones y comunidad prematura.
+- Se compararon Treinta, Alegra, Bind ERP y CONTPAQi; la gestión básica ya tiene competidores, por lo que la diferenciación propuesta se centra en tiempo del dueño, dinero comprometido, escenarios y estimado vs real.
+- Documento completo: `docs/PRODUCT-STRATEGY-ROOT-PROBLEM-AND-COMMERCIAL-ROADMAP.md`.
+- No se modificó código de producto, esquema de base de datos, licencias ni precios. Es una estrategia propuesta para revisión, no un cambio de alcance aprobado.
+- No se ejecutaron migraciones remotas ni despliegues. El nuevo commit documental aún no tiene workflows de CI visibles.
+
+
+## 2026-11-04 — Descubrimiento, aprendizaje y retorno a Fixora
+
+- Se identificó una hipótesis de producto pendiente de validar: Fixora necesita un segundo motivo de retorno, además de resolver tareas operativas. La propuesta no es una red social ni un feed infinito, sino recursos breves y accionables conectados con problemas reales del negocio.
+- Se creó `docs/PRODUCT-DISCOVERY-RETENTION-EXPERIMENTS.md` con dos superficies propuestas: “Explora” (biblioteca de ideas, herramientas, casos y novedades reales) y “Mi semana en Fixora” (señales personalizadas basadas solo en datos disponibles y verificables).
+- Se definieron límites: sin rachas, scroll infinito, comunidad prematura, noticias genéricas, notificaciones diarias por defecto ni recomendaciones sin fuente/supuestos. Se propone validar primero una biblioteca editorial pequeña; el resumen personalizado y los recordatorios optativos son etapas posteriores.
+- Se consultó evidencia sobre notificaciones y retención: un ensayo microaleatorizado encontró efecto de apertura a corto plazo, pero no mejoró retención de 30 días con notificaciones fijas/aleatorias; un estudio exploratorio de recordatorios interactivos tuvo muestra pequeña. Las fuentes y limitaciones están dentro del documento.
+- Revisión de CI anterior: en el merge commit `2a827bca52aac70f5de783ed1137e23994e6522e` (PR head `e47789d`) fallaron 2 pruebas Vitest y pasaron 266. Una prueba de arquitectura confundía la palabra “window” en comentarios con uso del global; se ajustó el escaneo para ignorar comentarios. La prueba de overflow de reposición se ajustó para aislar el desbordamiento de la suma de días, en lugar de fallar antes por el punto de reposición.
+- Cambios de corrección en `a3442b20` y `5b1271b9`; documento de descubrimiento en `ff90e1d4`. El CI del HEAD nuevo debe volver a ejecutarse y aprobarse antes de marcar las correcciones como verificadas.
+- No se añadieron pantallas, contenido publicado, notificaciones, analítica, tablas, migraciones ni cambios de licencia/precio. Esta capa sigue como propuesta sujeta a entrevistas y pruebas de prototipo.
+- No se aplicaron migraciones ni SQL remoto, no se desplegaron Edge Functions y no se modificó el proyecto oficial EYESITE.
+
+
+## 2026-11-04 — Matriz de realidad y brechas de producto
+
+- Se inspeccionó el árbol real del repositorio, `src/app/App.tsx`, `AuthGate`, páginas de cuenta/guía/legal, licencias, soporte, administración, servicios cloud y dominios de Comercio y reventa.
+- Se creó `docs/PRODUCT-READINESS-GAP-MATRIX.md` para distinguir por área qué tiene UI, dominio, persistencia cloud, autorización, pruebas CI y qué sigue pendiente en staging/físico.
+- Se confirmó que la pantalla “Kits por negocio” actual selecciona el perfil de actividad; no es un kit especializado ejecutable ni concede derechos premium. Comercio y reventa tiene varios dominios probados, pero todavía carece del flujo UI/persistencia/RLS/entitlement de extremo a extremo. Los demás kits siguen en planificación.
+- Se confirmó que no hay una sección funcional “Explora”, resumen “Mi semana en Fixora” ni sistema de notificaciones en el código inspeccionado. La propuesta de descubrimiento permanece como experimento, no como alcance aprobado.
+- CI #1863: SUCCESS en el HEAD de código `3ceab3f`, incluyendo typecheck, Vitest, build web y checks Deno. El nuevo HEAD documental `7304832` tiene workflows recién en cola; no declarar aún Security, Database tests, Browser E2E ni CodeQL aprobados en ese HEAD.
+- No se modificó código de producto, esquema de base de datos, licencias, precios ni entitlements. No se aplicaron migraciones ni SQL remoto, no se desplegaron funciones y no se modificó EYESITE oficial.
+
+
+## 2026-11-04 — Corrección de regresiones detectadas por Browser E2E
+
+- HEAD de referencia antes de la corrección: `7ab852f2402b68731a736be37964630a45780ca6`.
+- En ese HEAD CI #1873, Database tests #1427, Security #685 y CodeQL #533 finalizaron SUCCESS. Browser E2E #134 finalizó FAILURE: 4 pruebas aprobaron y 2 fallaron.
+- Diagnóstico del E2E:
+  - El flujo de catálogo no encontraba el selector `Tipo` por usar un nombre accesible exacto que no coincide con el control compuesto; se sustituyó por un selector estable dentro del formulario.
+  - El flujo de gastos seleccionaba el periodo con un nombre accesible exacto frágil; se sustituyó por el selector dentro de `.expense-allocation`.
+  - Se detectó un defecto real en `CloudExpensesPage`: el guardado mostraba el mensaje de éxito y después llamaba a `loadData()`, que limpiaba el mensaje antes de que el usuario pudiera verlo. Ahora la confirmación se establece después de la recarga; si la escritura terminó pero la lectura posterior falla, se muestra una advertencia veraz.
+- Commits de corrección:
+  - `14028496593425f1b9818fc49d5c21c14f5a406d` — selectores E2E estables.
+  - `684ea58a32bf8530df578aaa0d8e2bf18f32faaa` — conservar confirmación del guardado cloud después de refrescar.
+- **Validación pendiente:** los cambios de estos commits todavía no tienen ejecuciones CI/Browser E2E asociadas visibles en GitHub. No se declara corregido ni aprobado el E2E hasta ejecutar de nuevo las pruebas sobre el HEAD corregido.
+- No se modificó esquema ni migraciones, no se ejecutó SQL remoto ni se desplegaron funciones. Supabase remoto Fixora y EYESITE oficial permanecen sin cambios.
+- ADR-004 sigue en estado de propuesta: el alcance individual frente a negocio, la herencia a miembros y las transferencias continúan pendientes de decisión. No crear tablas/RLS de kits ni migraciones de inventario hasta cerrar esa política.
+
+
+## 2026-11-04 — Diagnóstico de Browser E2E y persistencia de gastos
+
+- HEAD del PR #14 comprobado: `04e879ff90ef67c27e65597cdca1058d8028cdfd`; rama `integration/fixora-mainline-20261103`; PR continúa abierto y draft.
+- En el merge commit de PR `1fd1be20a747dc4f791ac64e08fd4817fee07120`: CI #1880 SUCCESS, Security #692 SUCCESS, CodeQL #540 SUCCESS y Database tests #1434 SUCCESS. Browser E2E #141 FAILURE: 5 de 6 pruebas aprobadas; falla el recorrido de gastos después de recargar la aplicación.
+- La prueba consulta directamente `fixora_expenses` inmediatamente después del guardado y confirma que Supabase devuelve las dos filas activas esperadas (Renta E2E y Empaque E2E). Tras recargar, el formulario aparece, pero no muestra esas filas. Esto acota el defecto al recorrido de lectura/selección de negocio/estado de UI posterior a la recarga; no demuestra todavía cuál de esos componentes es la causa.
+- El intento anterior Browser E2E #58 sobre el commit intermedio `137c45c` falló al iniciar TOTP porque la configuración local no habilitaba explícitamente MFA. La rama central ahora contiene `[auth.mfa.totp]` con `enroll_enabled = true` y `verify_enabled = true`. En el E2E posterior #141, la prueba TOTP ya no aparece entre los fallos; no declarar MFA completamente cerrado sin revisar el flujo entero y los siguientes checks.
+- Se confirmó en la documentación oficial de Supabase que `auth.mfa.totp.enroll_enabled` y `auth.mfa.totp.verify_enabled` son las claves correctas de configuración local. La configuración local no implica que el proyecto remoto haya cambiado.
+- Próximo diagnóstico: en el E2E de gastos, comprobar después de `page.reload()` el ID de negocio seleccionado en `sessionStorage`, volver a consultar las filas con el token de la sesión recargada y comparar ese ámbito con el `businessId` inicial. Si el ámbito coincide y la API devuelve filas, instrumentar la ruta de lectura del repositorio/UI sin convertir fallos de lectura en colecciones vacías.
+- No se modificó la lógica de gastos ni se debilitó la prueba en esta etapa. No se aplicaron migraciones remotas, no se ejecutó SQL remoto, no se desplegaron Edge Functions y no se modificó EYESITE oficial.
+
+
+## 2026-11-04 — Instrumentación adicional del E2E de gastos
+
+- HEAD comprobado: `826ca39ea92d3309c21fb1756aa52fc10f52ea69`; PR #14 sigue abierto y draft, base `feat/licensing-duration-days-20261103`.
+- Se amplió `e2e/essentials-core-flows.spec.ts` para separar las causas de la falla de lectura posterior a la recarga: ahora comprueba que se conserva el `businessId` seleccionado en sessionStorage, que la sesión conserva un access token y que el mismo token puede volver a leer las dos filas de gastos para ese negocio mediante PostgREST.
+- La nueva prueba no modifica datos ni relaja expectativas; solo añade diagnóstico de aislamiento/lectura tras reload.
+- Para HEAD `826ca39`: CI #1884 SUCCESS; Security #696 SUCCESS; CodeQL #544 SUCCESS; Database tests #1438 y Browser E2E #145 seguían IN_PROGRESS en la última consulta. No declarar la validación integral cerrada hasta que ambas terminen.
+- La lectura directa de los archivos confirma que `CloudExpensesPage.loadData()` consulta a través de `createSupabaseExpensesRepository`, que carga gastos activos y configuración de periodo/version en paralelo; errores de lectura deben quedar visibles y no convertirse en listas vacías. La instrumentación nueva permitirá distinguir sesión/ámbito de negocio de un fallo específico del servicio o la UI.
+- Revisión del ADR-004: el límite de tres dispositivos activos por licencia está confirmado; el modelo individual vs. negocio, herencia de derechos a miembros y transferencias siguen pendientes. La recomendación documentada para el MVP es licencia individual, sin herencia a miembros, y transferencias solo por soporte auditado; no tratar esa recomendación como decisión aprobada.
+- No se aplicaron migraciones ni SQL remotos, no se desplegaron Edge Functions, no se modificó el proyecto Supabase remoto de Fixora ni EYESITE.
+
+
+## 2026-11-04 — Seguimiento de validación y revisión de integración
+
+- HEAD central verificado: `3dcd2ae769d04a00c280714d07df999dc9d81372`; PR #14 continúa abierto y en draft.
+- Ejecuciones asociadas al HEAD:
+  - CI #1886: SUCCESS.
+  - Security #698: SUCCESS.
+  - CodeQL #546: SUCCESS.
+  - Browser E2E #147: IN_PROGRESS en la última consulta.
+  - Database tests #1440: IN_PROGRESS en la última consulta.
+- Se comparó la rama del PR contra su base actual `feat/licensing-duration-days-20261103`: la rama central está 437 commits adelante y 0 detrás; ambas referencias comparten el ancestro `1e51c55a6ce2ed6548b7f159eda963d5ec568b94`. No se cambió la base del PR. Antes de fusionar se debe confirmar cuál es la rama de integración que el equipo quiere usar como destino final; no hay indicio de divergencia que justifique un rebase automático.
+- Revisión de los contratos del dominio Retail: existen cálculos puros de costeo por lote, balance derivado de movimientos, sugerencia de reposición con demanda suministrada y rentabilidad por pedido. La matriz de preparación sigue siendo correcta: no se encontró en los archivos revisados una experiencia Retail integrada con persistencia transaccional, autorización de entitlement `kit.retail` y E2E de compra→recepción→venta→devolución.
+- No se añadieron tablas ni migraciones Retail porque ADR-004 sigue sin decisión final sobre licencia individual/negocio y acceso de miembros. El límite de tres dispositivos por licencia sí está confirmado.
+- Ningún cambio remoto de Supabase, despliegue, ni cambio al proyecto EYESITE.
+
+
+## 2026-11-04 — Actualización de ejecución de pruebas
+
+- La ejecución Database tests #1440 terminó con conclusión `CANCELLED`; no cuenta como aprobada ni como fallo funcional de las pruebas pgTAP. Debe obtenerse una ejecución completa no cancelada para cerrar esa puerta.
+- Browser E2E #147 seguía `IN_PROGRESS` en la última consulta; no se pudo obtener un log final mientras el job seguía ejecutándose.
+- No se repitió ni se modificó el test para forzar un resultado. Próximo paso: esperar el resultado/timeout del E2E, revisar el log del job y lanzar/revalidar la suite de base de datos en un HEAD de código estable cuando GitHub permita una ejecución no cancelada.
+- El último commit documental de esta actualización es `dff1a218174126d7b089a79aecfd5a1c2f21b723`; el PR #14 sigue draft, base sin cambios.
+
+
+## 2026-11-04 — Cierre de diagnóstico E2E de gastos y continuidad del plan
+
+- HEAD de código validado: `878757a969ae2ee892dd2aaca00e14f4f571ba74`; rama `integration/fixora-mainline-20261103`; PR #14 abierto y en borrador.
+- La suite Browser E2E #155 terminó SUCCESS. El recorrido de gastos comprueba después de recargar la aplicación los valores reales de los inputs de cada gasto (concepto e importe), además de conservar el diagnóstico de respuestas PostgREST y errores JavaScript.
+- El diagnóstico previo había confirmado que las dos filas esperadas existían en Supabase después del guardado. El fallo residual se debía a que la prueba buscaba los conceptos como texto plano dentro del contenedor, aunque la UI los representa como valores de campos de formulario. No se cambió el esquema, la política RLS ni la lógica de persistencia para forzar el resultado.
+- En el mismo HEAD finalizaron correctamente: CI #1894, Security #706, CodeQL #554, Browser E2E #155 y Database tests #1448.
+- La suite verde cierra este fallo específico de prueba/lectura visible; no equivale a cerrar todas las pruebas de Essentials, ni MFA/AAL2, staging, recuperación física o preparación comercial.
+- Revisión de Comercio y reventa: hay dominio probado para costeo, inventario derivado de movimientos, rentabilidad por pedido, comparación estimado-real y reposición determinista. Sigue sin existir el flujo comercial completo con UI integrada, persistencia transaccional, autorización `kit.retail`, RLS y E2E compra→recepción→venta→devolución.
+- ADR-004 está localizado en `docs/DECISIONS/ADR-004-license-scope-and-device-policy.md`. La regla de máximo tres dispositivos activos por licencia está confirmada. El modelo de licencia individual vs. negocio, herencia a miembros y transferencia siguen pendientes; el propio ADR recomienda MVP individual sin herencia, pero lo marca como recomendación, no como decisión aprobada. No crear migraciones de kits que dependan de ese alcance hasta cerrar la decisión.
+- Próxima secuencia: (1) ampliar E2E de Essentials para edición, desconexión/reintento y cambio de negocio; (2) completar validación MFA/AAL2 y permisos admin negativos en staging; (3) cerrar ADR-004; (4) diseñar persistencia/RPC transaccional de Retail y pruebas de concurrencia; (5) integrar UI del flujo Retail; (6) validar prototipo de Explora con usuarios antes de construir contenido dinámico o notificaciones.
+- No se aplicaron migraciones remotas, SQL remoto ni despliegues; no se modificó el proyecto oficial EYESITE.

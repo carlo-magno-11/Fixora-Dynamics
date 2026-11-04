@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import type { FormEvent } from "react";
 import { getMessages, type SupportedLocale } from "../i18n/messages";
 import { MfaSettings } from "../modules/auth/ui/MfaSettings";
 import { LicenseActivationPanel } from "../modules/licensing/ui/LicenseActivationPanel";
@@ -158,13 +159,146 @@ export function AboutPage({ locale }: PageProps) {
   );
 }
 
-export function AccountPage({ locale, onOpenGuide, authMode = "local", userEmail, businessName, onSignOut, licenseAccess, licenseLoading = false, licenseError, onLicenseActivated }: PageProps & {
+const entitlementLabels: Record<string, string> = {
+  "account.read": "Acceso a cuenta",
+  "history.read": "Historial de cálculos",
+  "data.export": "Exportación de datos",
+  "premium.tools": "Herramientas avanzadas de Essentials",
+  "kits.access": "Catálogo de kits (exploración; no habilita su uso)",
+  "kit.retail": "Kit Comercio y reventa",
+  "kit.services_beauty": "Kit Servicios y belleza",
+  "kit.food": "Kit Alimentos y repostería",
+  "kit.workshop": "Kit Taller y manufactura",
+  "kit.digital_products": "Kit Productos digitales y creativos",
+};
+
+function formatEntitlements(entitlements: string[]): string {
+  return entitlements.map((key) => entitlementLabels[key] ?? key).join(", ");
+}
+
+function AccountSettingsPanel({
+  authMode,
+  profileDisplayName,
+  profileLoading = false,
+  profileError,
+  businessName,
+  businessTimezone,
+  businessCurrency,
+  onProfileUpdate,
+  onBusinessDetailsUpdate,
+}: {
+  authMode: "cloud" | "local";
+  profileDisplayName?: string;
+  profileLoading?: boolean;
+  profileError?: string;
+  businessName?: string;
+  businessTimezone?: string;
+  businessCurrency?: "MXN" | "USD";
+  onProfileUpdate?: (input: { displayName: string }) => Promise<void>;
+  onBusinessDetailsUpdate?: (input: { name: string; timezone: string }) => Promise<void>;
+}) {
+  const [displayName, setDisplayName] = useState(profileDisplayName ?? "");
+  const [businessNameValue, setBusinessNameValue] = useState(businessName ?? "");
+  const [timezone, setTimezone] = useState(businessTimezone ?? "America/Merida");
+  const [profileBusy, setProfileBusy] = useState(false);
+  const [businessBusy, setBusinessBusy] = useState(false);
+  const [profileMessage, setProfileMessage] = useState("");
+  const [businessMessage, setBusinessMessage] = useState("");
+  const [profileFailure, setProfileFailure] = useState("");
+  const [businessFailure, setBusinessFailure] = useState("");
+
+  useEffect(() => setDisplayName(profileDisplayName ?? ""), [profileDisplayName]);
+  useEffect(() => setBusinessNameValue(businessName ?? ""), [businessName]);
+  useEffect(() => setTimezone(businessTimezone ?? "America/Merida"), [businessTimezone]);
+
+  async function saveProfile(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!onProfileUpdate) return;
+    setProfileBusy(true);
+    setProfileMessage("");
+    setProfileFailure("");
+    try {
+      await onProfileUpdate({ displayName: displayName.trim() });
+      setProfileMessage("Tu nombre visible se actualizó correctamente.");
+    } catch (error) {
+      setProfileFailure(error instanceof Error ? error.message : "No fue posible actualizar tu perfil.");
+    } finally {
+      setProfileBusy(false);
+    }
+  }
+
+  async function saveBusiness(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!onBusinessDetailsUpdate) return;
+    setBusinessBusy(true);
+    setBusinessMessage("");
+    setBusinessFailure("");
+    try {
+      await onBusinessDetailsUpdate({ name: businessNameValue.trim(), timezone: timezone.trim() });
+      setBusinessMessage("Los datos del negocio se actualizaron correctamente.");
+    } catch (error) {
+      setBusinessFailure(error instanceof Error ? error.message : "No fue posible actualizar el negocio. Comprueba que tu rol tenga permisos de administración.");
+    } finally {
+      setBusinessBusy(false);
+    }
+  }
+
+  if (authMode !== "cloud") {
+    return (
+      <section className="account-settings-panel">
+        <div className="account-settings-heading"><div><span className="eyebrow">CONFIGURACIÓN PERSONAL</span><h2>Tu perfil y negocio</h2></div></div>
+        <p className="local-storage-note">En modo local, estos datos no se sincronizan con una cuenta. Conecta tu cuenta cuando el acceso cloud esté habilitado para administrar tu perfil y negocio.</p>
+      </section>
+    );
+  }
+
+  return (
+    <section className="account-settings-panel" aria-labelledby="account-settings-title">
+      <div className="account-settings-heading">
+        <div><span className="eyebrow">CONFIGURACIÓN PERSONAL</span><h2 id="account-settings-title">Tu perfil y tu negocio</h2><p>Actualiza los datos básicos que identifican tu espacio de trabajo.</p></div>
+      </div>
+      <div className="account-settings-grid">
+        <form className="account-settings-card" onSubmit={saveProfile}>
+          <span className="eyebrow">TU CUENTA</span>
+          <h3>Perfil personal</h3>
+          <label className="field"><span>Nombre visible</span><input value={displayName} minLength={2} maxLength={80} required placeholder="Cómo quieres que te llamemos" onChange={(event) => setDisplayName(event.target.value)} /></label>
+          <p className="field-hint">Tu correo de acceso no cambia desde aquí. La contraseña y la autenticación multifactor se administran por separado.</p>
+          {profileLoading && <p className="account-settings-status" role="status">Cargando perfil…</p>}
+          {profileError && <p className="account-settings-error" role="alert">{profileError}</p>}
+          {profileFailure && <p className="account-settings-error" role="alert">{profileFailure}</p>}
+          {profileMessage && <p className="account-settings-status" role="status">{profileMessage}</p>}
+          <button className="primary-button compact" type="submit" disabled={profileBusy || profileLoading || !onProfileUpdate}>{profileBusy ? "Guardando…" : "Guardar perfil"}</button>
+        </form>
+        <form className="account-settings-card" onSubmit={saveBusiness}>
+          <span className="eyebrow">ESPACIO DE TRABAJO</span>
+          <h3>Datos del negocio</h3>
+          <label className="field"><span>Nombre comercial</span><input value={businessNameValue} minLength={2} maxLength={100} required placeholder="Nombre de tu negocio" onChange={(event) => setBusinessNameValue(event.target.value)} /></label>
+          <label className="field"><span>Zona horaria (IANA)</span><input value={timezone} maxLength={64} required placeholder="America/Merida" onChange={(event) => setTimezone(event.target.value)} /></label>
+          <p className="field-hint">Moneda principal: <strong>{businessCurrency ?? "MXN"}</strong>. Se mantiene de solo lectura para evitar reinterpretar importes e historiales ya guardados al cambiar de moneda.</p>
+          <p className="field-hint">La edición del nombre y la zona horaria requiere rol owner o admin en este negocio.</p>
+          {businessFailure && <p className="account-settings-error" role="alert">{businessFailure}</p>}
+          {businessMessage && <p className="account-settings-status" role="status">{businessMessage}</p>}
+          <button className="primary-button compact" type="submit" disabled={businessBusy || !onBusinessDetailsUpdate}>{businessBusy ? "Guardando…" : "Guardar negocio"}</button>
+        </form>
+      </div>
+    </section>
+  );
+}
+
+export function AccountPage({ locale, onOpenGuide, authMode = "local", userEmail, businessName, businessTimezone, businessCurrency, profileDisplayName, profileLoading, profileError, onProfileUpdate, onBusinessDetailsUpdate, onSignOut, licenseAccess, licenseLoading = false, licenseError, onLicenseActivated }: PageProps & {
   onOpenGuide: () => void;
   authMode?: "cloud" | "local";
   userEmail?: string;
   businessName?: string;
+  businessTimezone?: string;
+  businessCurrency?: "MXN" | "USD";
+  profileDisplayName?: string;
+  profileLoading?: boolean;
+  profileError?: string;
+  onProfileUpdate?: (input: { displayName: string }) => Promise<void>;
+  onBusinessDetailsUpdate?: (input: { name: string; timezone: string }) => Promise<void>;
   onSignOut?: () => void;
-  licenseAccess?: LicenseAccess | null;
+  licenseAccess?: LicenseAccess[];
   licenseLoading?: boolean;
   licenseError?: string;
   onLicenseActivated?: () => Promise<void>;
@@ -189,26 +323,31 @@ export function AccountPage({ locale, onOpenGuide, authMode = "local", userEmail
         <div><strong>{authMode === "cloud" ? "Cuenta y negocio conectados" : copy.authTitle}</strong><p>{authMode === "cloud" ? `Sesión activa para ${userEmail || "tu cuenta"} en ${businessName || "tu negocio"}.` : copy.authBody}</p></div>
         <span className={authMode === "cloud" ? "connected-pill" : "planned-pill"}>{authMode === "cloud" ? "CONECTADA" : copy.pending}</span>
       </section>
+      <AccountSettingsPanel authMode={authMode} profileDisplayName={profileDisplayName} profileLoading={profileLoading} profileError={profileError} businessName={businessName} businessTimezone={businessTimezone} businessCurrency={businessCurrency} onProfileUpdate={onProfileUpdate} onBusinessDetailsUpdate={onBusinessDetailsUpdate} />
       {authMode === "cloud" && <MfaSettings />}
       {authMode === "cloud" && <AdminInviteAcceptancePanel />}
       {authMode === "cloud" && <section className="guide-callout account-license-panel" aria-live="polite">
-        <strong>Estado de tu licencia</strong>
-        {licenseLoading ? <p>Consultando la licencia vinculada a tu cuenta…</p>
+        <strong>Estado de tus licencias</strong>
+        {licenseLoading ? <p>Consultando las licencias vinculadas a tu cuenta…</p>
           : licenseError ? <p role="alert">{licenseError}</p>
-          : licenseAccess ? <>
-            <p><b>{licenseAccess.product_sku}</b> · Estado: <b>{licenseAccess.status === "active" ? "Activa" : licenseAccess.status === "expired" ? "Vencida" : licenseAccess.status === "pending" ? "Pendiente" : licenseAccess.status}</b></p>
-            <p>Vigencia hasta: <b>{licenseAccess.expires_at ? new Date(licenseAccess.expires_at).toLocaleDateString("es-MX", { dateStyle: "long" }) : "Pendiente de activación"}</b></p>
-            <p>Dispositivos activos: <b>{licenseAccess.active_device_count} de {licenseAccess.max_active_devices}</b></p>
-            <p>Funciones habilitadas: {licenseAccess.available_entitlements.length ? licenseAccess.available_entitlements.join(", ") : "Ninguna disponible en este momento."}</p>
-          </>
-          : <p>Aún no hay una licencia vinculada a esta cuenta. La activación y la validación de compras se habilitarán cuando se complete la configuración segura del servicio.</p>}
+          : licenseAccess && licenseAccess.length > 0 ? <div className="account-license-list">
+            {licenseAccess.map((license) => (
+              <article className="account-license-item" key={license.license_id}>
+                <p><b>{license.product_sku}</b> · Estado: <b>{license.status === "active" ? "Activa" : license.status === "expired" ? "Vencida" : license.status === "pending" ? "Pendiente" : license.status}</b></p>
+                <p>Vigencia hasta: <b>{license.expires_at ? new Date(license.expires_at).toLocaleDateString("es-MX", { dateStyle: "long" }) : "Pendiente de activación"}</b></p>
+                <p>Dispositivos activos: <b>{license.active_device_count} de {license.max_active_devices}</b></p>
+                <p>Derechos disponibles o conservados: {license.available_entitlements.length ? formatEntitlements(license.available_entitlements) : "Ninguno disponible en este momento."}</p>
+              </article>
+            ))}
+          </div>
+          : <p>Aún no hay licencias vinculadas a esta cuenta. La activación y la validación de compras se habilitarán cuando se complete la configuración segura del servicio.</p>}
       </section>}
       {authMode === "cloud" && <LicenseActivationPanel onActivated={onLicenseActivated} />}
       <div className="account-summary-grid">
         {sections.map((section) => (
           <article className="account-section-card" key={section.title}>
             <span className="account-section-icon">{section.icon}</span>
-            <div><h2>{section.title}</h2><p>{section.detail}</p><span className="account-card-status">{authMode === "cloud" && (section.title === copy.profile || section.title === copy.business || (section.title === copy.license && Boolean(licenseAccess)) || (section.title === copy.devices && Boolean(licenseAccess))) ? "CONECTADO" : copy.pending}</span></div>
+            <div><h2>{section.title}</h2><p>{section.detail}</p><span className="account-card-status">{authMode === "cloud" && (section.title === copy.profile || section.title === copy.business || (section.title === copy.license && Boolean(licenseAccess?.length)) || (section.title === copy.devices && Boolean(licenseAccess?.length))) ? "CONECTADO" : copy.pending}</span></div>
           </article>
         ))}
       </div>

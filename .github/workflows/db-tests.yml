@@ -6,12 +6,13 @@ on:
     branches:
       - main
       - "foundation/**"
+      - "security/**"
 
 permissions:
   contents: read
 
 concurrency:
-  group: fixora-db-tests-${{ github.ref }}
+  group: fixora-db-tests-${{ github.head_ref || github.ref_name }}
   cancel-in-progress: true
 
 jobs:
@@ -20,10 +21,12 @@ jobs:
     timeout-minutes: 30
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Set up Supabase CLI
-        uses: supabase/setup-cli@v3
+        uses: supabase/setup-cli@689adcfb80d947100a1eab127289b97d1fb07b13 # v3
         with:
           version: 2.122.0
 
@@ -35,6 +38,7 @@ jobs:
           cd /tmp/fixora-db-ci
           supabase init
           sed -i 's/^major_version = .*/major_version = 17/' supabase/config.toml
+          sed -i 's/^port = 54322$/port = 54332/; s/^shadow_port = 54320$/shadow_port = 54330/' supabase/config.toml
           cp -R "$GITHUB_WORKSPACE/supabase/migrations" supabase/
           cp -R "$GITHUB_WORKSPACE/supabase/tests" supabase/
 
@@ -55,7 +59,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          database_url="postgresql://postgres:postgres@127.0.0.1:54322/postgres"
+          database_url="postgresql://postgres:postgres@127.0.0.1:54332/postgres"
           run_mutation() {
             policy_name="$1"
             table_name="$2"
@@ -86,4 +90,7 @@ jobs:
           supabase test db
 
       - name: Test concurrent license device activation limit
-        run: bash scripts/test-license-concurrency.sh "postgresql://postgres:postgres@127.0.0.1:54322/postgres"
+        run: bash scripts/test-license-concurrency.sh "postgresql://postgres:postgres@127.0.0.1:54332/postgres"
+
+      - name: Test concurrent server rate limit
+        run: bash scripts/test-rate-limit-concurrency.sh "postgresql://postgres:postgres@127.0.0.1:54332/postgres"

@@ -1,28 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { SavedCalculation } from "../domain/saved-calculation";
-import { isSavedCalculation } from "../domain/saved-calculation";
 import { calculationsToCsv } from "../domain/calculation-export";
-import type { CatalogItemSnapshot } from "../domain/calculation-snapshot";
-import type { PricingInput, PricingResult } from "../../pricing/domain/pricing";
-import type { Database } from "../../../shared/infrastructure/supabase/database.types";
-import { getSupabaseClient } from "../../../shared/infrastructure/supabase/client";
+import type { CloudCalculationHistoryApplicationService, SnapshotCursor } from "../application/cloud-calculation-history-service";
 
-type SnapshotRow = Database["public"]["Tables"]["fixora_calculation_snapshots"]["Row"];
-
-function mapSnapshotRow(row: SnapshotRow): SavedCalculation | null {
-  const record: SavedCalculation = {
-    id: row.id,
-    name: row.name,
-    createdAt: row.created_at,
-    currency: row.currency_code as "MXN" | "USD",
-    input: row.pricing_input as unknown as PricingInput,
-    result: row.pricing_result as unknown as PricingResult,
-    formulaVersion: row.formula_version as SavedCalculation["formulaVersion"],
-    snapshotVersion: row.schema_version as 1,
-    catalogItem: row.catalog_item_snapshot === null ? undefined : row.catalog_item_snapshot as unknown as CatalogItemSnapshot,
-  };
-  return isSavedCalculation(record) ? record : null;
-}
+const PAGE_SIZE = 100;
 
 function downloadCsv(records: readonly SavedCalculation[]) {
   const csv = calculationsToCsv(records.map((record) => ({
@@ -45,62 +26,98 @@ function downloadCsv(records: readonly SavedCalculation[]) {
   URL.revokeObjectURL(url);
 }
 
-export function CloudHistoryPage({ businessId, formatMoney, onOpenCalculation, onRecordsLoaded }: {
+export function CloudHistoryPage({ businessId, formatMoney, onOpenCalculation, onRecordsLoaded, service }: {
   businessId: string;
+  service: CloudCalculationHistoryApplicationService;
   formatMoney: (value: number, currency: "MXN" | "USD") => string;
   onOpenCalculation: (record: SavedCalculation) => void;
   onRecordsLoaded: (records: SavedCalculation[]) => void;
 }) {
-  const supabase = useMemo(() => getSupabaseClient(), []);
+  const requestId = useRef(0);
   const [records, setRecords] = useState<SavedCalculation[]>([]);
+  const [loadedBusinessId, setLoadedBusinessId] = useState<string | null>(null);
+  const [loadFailed, setLoadFailed] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [cursor, setCursor] = useState<SnapshotCursor | null>(null);
+  const [hasMore, setHasMore] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [invalidCount, setInvalidCount] = useState(0);
 
-  useEffect(() => {
-    let active = true;
-    async function load() {
-      if (!supabase) {
-        setErrorMessage("No se pudo inicializar la conexión con Supabase.");
-        setLoading(false);
-        return;
-      }
-      setLoading(true);
-      const { data, error } = await supabase
-        .from("fixora_calculation_snapshots")
-        .select("id, business_id, created_by, created_at, name, currency_code, schema_version, formula_version, pricing_input, pricing_result, catalog_item_snapshot")
-        .eq("business_id", businessId)
-        .order("created_at", { ascending: false })
-        .limit(100);
-      if (!active) return;
-      setLoading(false);
-      if (error) {
-        setErrorMessage(error.message);
-        return;
-      }
-      const mapped = (data ?? []).map(mapSnapshotRow);
-      const valid = mapped.filter((record): record is SavedCalculation => record !== null);
-      setRecords(valid);
-      setInvalidCount(mapped.length - valid.length);
-      setErrorMessage("");
-      onRecordsLoaded(valid);
+  const loadFirstPage = useCallback(async () => {
+    const currentRequest = ++requestId.current;
+    setLoading(true);
+    setLoadingMore(false);
+    setCursor(null);
+    setHasMore(false);
+    setRecords([]);
+    setLoadedBusinessId(null);
+    setLoadFailed(false);
+    onRecordsLoaded([]);
+    setInvalidCount(0);
+    setErrorMessage("");
+    try {
+      const page = await service.firstPage(businessId, PAGE_SIZE);
+      if (currentRequest !== requestId.current) return;
+      setRecords(page.records);
+      setLoadedBusinessId(businessId);
+      setLoadFailed(false);
+      setCursor(page.cursor);
+      setHasMore(page.hasMore);
+      setInvalidCount(page.invalidCount);
+      onRecordsLoaded(page.records);
+    } catch (error) {
+      if (currentRequest !== requestId.current) return;
+      setRecords([]);
+      setLoadedBusinessId(businessId);
+      setLoadFailed(true);
+      onRecordsLoaded([]);
+      setErrorMessage(error instanceof Error ? error.message : "No fue posible cargar el historial.");
+    } finally {
+      if (currentRequest === requestId.current) setLoading(false);
     }
-    void load();
-    return () => { active = false; };
-  }, [businessId, supabase, onRecordsLoaded]);
+  }, [businessId, onRecordsLoaded, service]);
+
+  useEffect(() => {
+    void loadFirstPage();
+    return () => { requestId.current += 1; };
+  }, [loadFirstPage]);
+
+  const loadMore = useCallback(async () => {
+    if (loadedBusinessId !== businessId || !cursor || loadingMore || loading || !hasMore) return;
+    const currentRequest = requestId.current;
+    setLoadingMore(true);
+    setErrorMessage("");
+    try {
+      const page = await service.nextPage(businessId, cursor, PAGE_SIZE);
+      if (currentRequest !== requestId.current) return;
+      const combined = [...records, ...page.records];
+      setRecords(combined);
+      onRecordsLoaded(combined);
+      setCursor(page.cursor);
+      setHasMore(page.hasMore);
+      setInvalidCount((count) => count + page.invalidCount);
+    } catch (error) {
+      if (currentRequest !== requestId.current) return;
+      setErrorMessage(error instanceof Error ? error.message : "No fue posible cargar más registros.");
+    } finally {
+      if (currentRequest === requestId.current) setLoadingMore(false);
+    }
+  }, [businessId, cursor, hasMore, loadedBusinessId, loading, loadingMore, onRecordsLoaded, records, service]);
 
   return (
     <div className="secondary-page">
       <p className="eyebrow">TU ACTIVIDAD <span> / </span> 02 · NUBE</p>
       <h1>Mis cálculos.</h1>
       <p className="page-lead">Consulta y recupera los análisis guardados en el negocio seleccionado. Cada registro conserva los valores y la versión de fórmula con que fue creado.</p>
+      <div className="history-actions"><span>Historial del negocio seleccionado</span><button className="outline-button" type="button" disabled={loading || loadingMore} onClick={() => void loadFirstPage()}>{loading ? "Actualizando…" : "Actualizar historial"}</button></div>
       {errorMessage && <p className="error-state" role="alert">{errorMessage}</p>}
       {invalidCount > 0 && <div className="guide-callout" role="alert"><strong>Algunos registros no se pudieron interpretar.</strong><p>{invalidCount} registros no coinciden con el esquema de cálculo actual. No se modificaron ni eliminaron.</p></div>}
-      {loading ? <p className="local-storage-note">Cargando historial…</p> : records.length === 0 ? (
+      {loading || loadedBusinessId !== businessId ? <p className="local-storage-note">Cargando historial del negocio seleccionado…</p> : loadFailed ? <div className="empty-state"><h2>No pudimos cargar el historial</h2><p>No asumimos que el historial esté vacío. Intenta consultar de nuevo.</p><button className="outline-button" type="button" onClick={() => void loadFirstPage()}>Volver a intentar</button></div> : records.length === 0 ? (
         <div className="empty-state"><span>◷</span><h2>Aún no hay cálculos guardados</h2><p>Cuando guardes un análisis, aparecerá aquí para que puedas consultarlo desde este negocio.</p></div>
       ) : (
         <>
-          <div className="history-actions"><span>{records.length} {records.length === 1 ? "registro" : "registros"}</span><button className="outline-button" onClick={() => downloadCsv(records)}>Exportar CSV ↓</button></div>
+          <div className="history-actions"><span>{records.length} {records.length === 1 ? "registro" : "registros"} cargados</span><button className="outline-button" onClick={() => downloadCsv(records)}>Exportar CSV ({records.length}) ↓</button></div>
           <div className="history-list">
             {records.map((record) => (
               <article className="history-row" key={record.id}>
@@ -111,6 +128,7 @@ export function CloudHistoryPage({ businessId, formatMoney, onOpenCalculation, o
               </article>
             ))}
           </div>
+          {hasMore && <div className="history-actions"><span>El archivo CSV incluye los registros cargados, no todo el historial pendiente.</span><button className="outline-button" disabled={loadingMore} onClick={() => void loadMore()}>{loadingMore ? "Cargando…" : "Cargar más cálculos"}</button></div>}
         </>
       )}
       <p className="local-storage-note">Este historial está guardado en Supabase y aislado por negocio. Los registros no se pueden eliminar desde esta vista.</p>

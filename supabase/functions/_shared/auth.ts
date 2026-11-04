@@ -1,6 +1,7 @@
-import { fromSupabaseUrl } from "npm:@supabase/server@1.9.2";
+import { resolveSupabaseAuthIssuer } from "./auth-config.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL");
+const configuredIssuer = Deno.env.get("SB_JWT_ISSUER");
 
 if (!supabaseUrl) {
   throw new Error("SUPABASE_URL is required");
@@ -8,6 +9,6 @@ if (!supabaseUrl) {
 
 export const userAuthConfig = {
   auth: "user" as const,
-  issuer: fromSupabaseUrl(supabaseUrl),
+  issuer: resolveSupabaseAuthIssuer(supabaseUrl, configuredIssuer),
   audience: "authenticated",
 };

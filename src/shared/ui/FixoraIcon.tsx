@@ -3,7 +3,7 @@ import type { SVGProps } from "react";
 export type FixoraIconName =
   | "grid" | "home" | "calculator" | "scale" | "receipt" | "package"
   | "layers" | "clock" | "user" | "support" | "shield" | "book"
-  | "file" | "lock" | "menu" | "plus" | "close" | "arrow-up-right";
+  | "file" | "lock" | "menu" | "plus" | "close" | "arrow-up-right" | "download";
 
 type FixoraIconProps = SVGProps<SVGSVGElement> & {
   name: FixoraIconName;
@@ -48,6 +48,8 @@ function IconShape({ name }: { name: FixoraIconName }) {
       return <><path d="m6 6 12 12M18 6 6 18"/></>;
     case "arrow-up-right":
       return <><path d="M7 17 17 7M8 7h9v9"/></>;
+    case "download":
+      return <><path d="M12 3v12m-5-5 5 5 5-5"/><path d="M5 17v3h14v-3"/></>;
   }
 }
 

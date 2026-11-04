@@ -44,6 +44,52 @@ describe("calculatePrice", () => {
     expect(result.effectiveMargin).toBeCloseTo(0.25);
   });
 
+  it("keeps discounted-price commission as the backward-compatible default", () => {
+    const common = {
+      ...base,
+      materials: 80,
+      fixedExpensesPerUnit: 20,
+      variableFeeRate: 0.05,
+      targetMarginRate: 0.25,
+      discountRate: 0.1,
+    };
+    expect(calculatePrice(common)).toEqual(calculatePrice({
+      ...common,
+      variableFeeBasis: "discounted_price",
+    }));
+  });
+
+  it("meets the target margin when the channel commission is based on the pre-discount price", () => {
+    const result = calculatePrice({
+      ...base,
+      materials: 80,
+      fixedExpensesPerUnit: 20,
+      variableFeeRate: 0.05,
+      targetMarginRate: 0.25,
+      discountRate: 0.1,
+      variableFeeBasis: "pre_discount",
+    });
+    expect(result.suggestedPrice).toBe(156.87);
+    expect(result.effectiveMargin).toBeGreaterThanOrEqual(0.25);
+    expect(result.effectiveMargin).toBeCloseTo(0.25);
+  });
+
+  it("rejects a commission and discount combination that leaves no positive revenue", () => {
+    expect(() => calculatePrice({
+      ...base,
+      variableFeeRate: 0.2,
+      discountRate: 0.8,
+      variableFeeBasis: "pre_discount",
+    })).toThrow("No existe un precio finito para estos parámetros.");
+  });
+
+  it("rejects an unsupported commission basis", () => {
+    expect(() => calculatePrice({
+      ...base,
+      variableFeeBasis: "unknown" as "discounted_price",
+    })).toThrow("Selecciona una base de comisión válida.");
+  });
+
   it("rounds the displayed price upward and calculates profit from that price", () => {
     const result = calculatePrice({
       ...base,

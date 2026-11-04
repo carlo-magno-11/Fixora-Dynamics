@@ -1,3 +1,5 @@
+import type { PricingFeeBasis } from "../../pricing/domain/pricing";
+
 export interface CalculationExportRecord {
   name: string;
   createdAt: string;
@@ -12,6 +14,7 @@ export interface CalculationExportRecord {
     variableFeeRate: number;
     targetMarginRate: number;
     discountRate: number;
+    variableFeeBasis?: PricingFeeBasis;
   };
   result: {
     materialCost: number;
@@ -43,6 +46,7 @@ const HEADERS = [
   "Gastos fijos por unidad",
   "Coste total unitario",
   "Comisión",
+  "Base de comisión",
   "Descuento",
   "Margen objetivo",
   "Precio sugerido",
@@ -80,6 +84,7 @@ export function calculationsToCsv(records: readonly CalculationExportRecord[]): 
     record.input.fixedExpensesPerUnit,
     record.result.totalUnitCost,
     record.input.variableFeeRate,
+    record.input.variableFeeBasis ?? "discounted_price",
     record.input.discountRate,
     record.input.targetMarginRate,
     record.result.suggestedPrice,

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { FormEvent, ReactNode } from "react";
 import type { Session } from "@supabase/supabase-js";
 import type { Database } from "../../../shared/infrastructure/supabase/database.types";
@@ -10,6 +10,7 @@ import {
 } from "../../../shared/infrastructure/supabase/client";
 
 type Business = Database["public"]["Tables"]["fixora_businesses"]["Row"];
+type ProfileSettings = Pick<Database["public"]["Tables"]["fixora_profiles"]["Row"], "display_name" | "locale">;
 type BusinessType = "general" | "retail" | "food" | "services_beauty" | "digital_products" | "workshop";
 type CurrencyCode = "MXN" | "USD";
 type AuthView = "sign-in" | "sign-up" | "recover" | "update-password";
@@ -20,6 +21,13 @@ export interface AuthWorkspaceProps {
   authMode: "cloud" | "local";
   userEmail?: string;
   businessName?: string;
+  businessTimezone?: string;
+  businessCurrency?: CurrencyCode;
+  profileDisplayName?: string;
+  profileLoading?: boolean;
+  profileError?: string;
+  onProfileUpdate?: (input: { displayName: string }) => Promise<void>;
+  onBusinessDetailsUpdate?: (input: { name: string; timezone: string }) => Promise<void>;
   initialBusinessType?: BusinessType;
   initialCurrency?: CurrencyCode;
   onSignOut?: () => void;
@@ -53,6 +61,11 @@ export function AuthGate({ children }: AuthGateProps) {
   const [session, setSession] = useState<Session | null>(null);
   const [sessionLoading, setSessionLoading] = useState(FIXORA_AUTH_MODE === "cloud");
   const [businesses, setBusinesses] = useState<Business[]>([]);
+  const [profile, setProfile] = useState<ProfileSettings | null>(null);
+  const [profileError, setProfileError] = useState("");
+  const [profileLoading, setProfileLoading] = useState(false);
+  const profileLoadRequest = useRef(0);
+  const businessLoadRequest = useRef(0);
   const [businessLoading, setBusinessLoading] = useState(false);
   const [selectedBusinessId, setSelectedBusinessId] = useState<string | null>(null);
   const [authView, setAuthView] = useState<AuthView>(
@@ -74,12 +87,14 @@ export function AuthGate({ children }: AuthGateProps) {
 
   const loadBusinesses = useCallback(async (userId: string) => {
     if (!supabase) return;
+    const currentRequest = ++businessLoadRequest.current;
     setBusinessLoading(true);
     setErrorMessage("");
     const { data, error } = await supabase
       .from("fixora_businesses")
       .select("id, name, business_type, currency_code, timezone, created_by, created_at, updated_at")
       .order("created_at", { ascending: true });
+    if (currentRequest !== businessLoadRequest.current) return;
     setBusinessLoading(false);
     if (error) {
       setErrorMessage(`No se pudieron cargar tus negocios: ${error.message}`);
@@ -111,6 +126,12 @@ export function AuthGate({ children }: AuthGateProps) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, nextSession) => {
       setSession(nextSession);
       if (event === "SIGNED_IN" || event === "SIGNED_OUT") {
+        businessLoadRequest.current += 1;
+        profileLoadRequest.current += 1;
+        setProfile(null);
+        setProfileError("");
+        setProfileLoading(false);
+        setBusinessLoading(false);
         setBusinesses([]);
         setSelectedBusinessId(null);
       }
@@ -130,6 +151,38 @@ export function AuthGate({ children }: AuthGateProps) {
     }
     void loadBusinesses(session.user.id);
   }, [session?.user.id, supabase, loadBusinesses]);
+
+  useEffect(() => {
+    const userId = session?.user.id;
+    if (!userId || !supabase) {
+      profileLoadRequest.current += 1;
+      setProfile(null);
+      setProfileError("");
+      setProfileLoading(false);
+      return;
+    }
+    const requestId = ++profileLoadRequest.current;
+    setProfile(null);
+    setProfileLoading(true);
+    setProfileError("");
+    void supabase.from("fixora_profiles")
+      .select("display_name, locale")
+      .eq("id", userId)
+      .maybeSingle()
+      .then(({ data, error }) => {
+        if (requestId !== profileLoadRequest.current) return;
+        setProfileLoading(false);
+        if (error) {
+          setProfile(null);
+          setProfileError("No fue posible cargar tu perfil. Puedes volver a intentarlo.");
+          return;
+        }
+        setProfile(data ?? null);
+      });
+    return () => {
+      if (profileLoadRequest.current === requestId) profileLoadRequest.current += 1;
+    };
+  }, [session?.user.id, supabase]);
 
   useEffect(() => {
     if (!session?.user.id || !supabase) {
@@ -293,6 +346,43 @@ export function AuthGate({ children }: AuthGateProps) {
     ));
   }
 
+  async function updateProfile(input: { displayName: string }) {
+    if (!supabase || !session?.user.id) throw new Error("Inicia sesión para actualizar tu perfil.");
+    const displayNameValue = input.displayName.trim();
+    if (displayNameValue.length < 2 || displayNameValue.length > 80) {
+      throw new Error("El nombre visible debe tener entre 2 y 80 caracteres.");
+    }
+    const { data, error } = await supabase.from("fixora_profiles")
+      .update({ display_name: displayNameValue })
+      .eq("id", session.user.id)
+      .select("display_name, locale")
+      .single();
+    if (error) throw error;
+    setProfile(data);
+  }
+
+  async function updateBusinessDetails(input: { name: string; timezone: string }) {
+    if (!supabase || !selectedBusiness) throw new Error("No hay un negocio seleccionado.");
+    const name = input.name.trim();
+    const timezone = input.timezone.trim();
+    if (name.length < 2 || name.length > 100) {
+      throw new Error("El nombre del negocio debe tener entre 2 y 100 caracteres.");
+    }
+    if (!timezone || timezone.length > 64) throw new Error("Escribe una zona horaria válida.");
+    try {
+      new Intl.DateTimeFormat("en-US", { timeZone: timezone }).format();
+    } catch {
+      throw new Error("La zona horaria no es válida. Usa un identificador IANA, por ejemplo America/Merida.");
+    }
+    const { data, error } = await supabase.from("fixora_businesses")
+      .update({ name, timezone })
+      .eq("id", selectedBusiness.id)
+      .select("id, name, business_type, currency_code, timezone, created_by, created_at, updated_at")
+      .single();
+    if (error) throw error;
+    setBusinesses((current) => current.map((business) => business.id === data.id ? data : business));
+  }
+
   if (FIXORA_AUTH_MODE === "local") {
     return <>{children({ authMode: "local" })}</>;
   }
@@ -424,6 +514,13 @@ export function AuthGate({ children }: AuthGateProps) {
         businessId: selectedBusiness.id,
         userEmail: session.user.email ?? "",
         businessName: selectedBusiness.name,
+        businessTimezone: selectedBusiness.timezone,
+        businessCurrency: selectedBusiness.currency_code === "USD" ? "USD" : "MXN",
+        profileDisplayName: profile?.display_name ?? (typeof session.user.user_metadata.display_name === "string" ? session.user.user_metadata.display_name : ""),
+        profileLoading,
+        profileError,
+        onProfileUpdate: updateProfile,
+        onBusinessDetailsUpdate: updateBusinessDetails,
         initialBusinessType: businessTypes.some((item) => item.value === selectedBusiness.business_type)
           ? selectedBusiness.business_type as BusinessType
           : "general",
