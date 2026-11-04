@@ -855,3 +855,14 @@ Durante la revisión final detecté que el camino idempotente de un código ya r
 - Se confirmó en la documentación oficial de Supabase que `auth.mfa.totp.enroll_enabled` y `auth.mfa.totp.verify_enabled` son las claves correctas de configuración local. La configuración local no implica que el proyecto remoto haya cambiado.
 - Próximo diagnóstico: en el E2E de gastos, comprobar después de `page.reload()` el ID de negocio seleccionado en `sessionStorage`, volver a consultar las filas con el token de la sesión recargada y comparar ese ámbito con el `businessId` inicial. Si el ámbito coincide y la API devuelve filas, instrumentar la ruta de lectura del repositorio/UI sin convertir fallos de lectura en colecciones vacías.
 - No se modificó la lógica de gastos ni se debilitó la prueba en esta etapa. No se aplicaron migraciones remotas, no se ejecutó SQL remoto, no se desplegaron Edge Functions y no se modificó EYESITE oficial.
+
+
+## 2026-11-04 — Instrumentación adicional del E2E de gastos
+
+- HEAD comprobado: `826ca39ea92d3309c21fb1756aa52fc10f52ea69`; PR #14 sigue abierto y draft, base `feat/licensing-duration-days-20261103`.
+- Se amplió `e2e/essentials-core-flows.spec.ts` para separar las causas de la falla de lectura posterior a la recarga: ahora comprueba que se conserva el `businessId` seleccionado en sessionStorage, que la sesión conserva un access token y que el mismo token puede volver a leer las dos filas de gastos para ese negocio mediante PostgREST.
+- La nueva prueba no modifica datos ni relaja expectativas; solo añade diagnóstico de aislamiento/lectura tras reload.
+- Para HEAD `826ca39`: CI #1884 SUCCESS; Security #696 SUCCESS; CodeQL #544 SUCCESS; Database tests #1438 y Browser E2E #145 seguían IN_PROGRESS en la última consulta. No declarar la validación integral cerrada hasta que ambas terminen.
+- La lectura directa de los archivos confirma que `CloudExpensesPage.loadData()` consulta a través de `createSupabaseExpensesRepository`, que carga gastos activos y configuración de periodo/version en paralelo; errores de lectura deben quedar visibles y no convertirse en listas vacías. La instrumentación nueva permitirá distinguir sesión/ámbito de negocio de un fallo específico del servicio o la UI.
+- Revisión del ADR-004: el límite de tres dispositivos activos por licencia está confirmado; el modelo individual vs. negocio, herencia de derechos a miembros y transferencias siguen pendientes. La recomendación documentada para el MVP es licencia individual, sin herencia a miembros, y transferencias solo por soporte auditado; no tratar esa recomendación como decisión aprobada.
+- No se aplicaron migraciones ni SQL remotos, no se desplegaron Edge Functions, no se modificó el proyecto Supabase remoto de Fixora ni EYESITE.
