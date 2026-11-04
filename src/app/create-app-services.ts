@@ -53,7 +53,7 @@ export function createAppServices(runtime: AppRuntime) {
       createSupabaseCalculatorDraftRepository(supabase),
     ),
     localImportService: createLocalImportService(
-      createBrowserLocalImportSource(runtime.legacyStorage ?? runtime.storage),
+      createBrowserLocalImportSource(runtime.storage, runtime.legacyStorage),
       createSupabaseLocalImportRepository(supabase),
     ),
   };
