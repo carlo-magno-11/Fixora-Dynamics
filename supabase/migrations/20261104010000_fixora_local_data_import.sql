@@ -206,12 +206,12 @@ begin
 
     if v_source_id is null or pg_catalog.char_length(v_source_id) > 80
       or pg_catalog.char_length(v_name) not between 1 and 100
-      or v_kind not in ('product', 'service')
+      or v_kind is null or v_kind not in ('product', 'service')
       or pg_catalog.char_length(v_unit) not between 1 and 40
       or pg_catalog.char_length(v_sku) > 40
-      or v_currency not in ('MXN', 'USD')
-      or jsonb_typeof(v_item -> 'referenceCost') <> 'number'
-      or jsonb_typeof(v_item -> 'active') <> 'boolean'
+      or v_currency is null or v_currency is null or v_currency is null or v_currency not in ('MXN', 'USD')
+      or jsonb_typeof(v_item -> 'referenceCost') is distinct from 'number'
+      or jsonb_typeof(v_item -> 'active') is distinct from 'boolean'
     then
       raise exception 'A catalog record contains invalid fields'
         using errcode = '22023';
@@ -285,11 +285,17 @@ begin
   end loop;
 
   if p_expenses is not null then
-    if jsonb_typeof(p_expenses -> 'fixed') <> 'array'
-      or jsonb_typeof(p_expenses -> 'variable') <> 'array'
-      or jsonb_array_length(p_expenses -> 'fixed') > 100
+    if jsonb_typeof(p_expenses -> 'fixed') is distinct from 'array'
+      or jsonb_typeof(p_expenses -> 'variable') is distinct from 'array'
+    then
+      raise exception 'Expense collections must be arrays'
+        using errcode = '22023';
+    end if;
+
+    if jsonb_array_length(p_expenses -> 'fixed') > 100
       or jsonb_array_length(p_expenses -> 'variable') > 100
-      or jsonb_typeof(p_expenses -> 'expectedUnits') <> 'number'
+      or jsonb_typeof(p_expenses -> 'expectedUnits') is distinct from 'number'
+      or p_expenses ->> 'period' is null
       or p_expenses ->> 'period' not in ('week', 'month', 'quarter', 'year')
       or p_expenses ->> 'currency' is distinct from v_business_currency
     then
@@ -320,7 +326,7 @@ begin
     loop
       if jsonb_typeof(v_item) <> 'object'
         or pg_catalog.char_length(pg_catalog.btrim(coalesce(v_item ->> 'name', ''))) not between 1 and 120
-        or jsonb_typeof(v_item -> 'amount') <> 'number'
+        or jsonb_typeof(v_item -> 'amount') is distinct from 'number'
       then
         raise exception 'A fixed expense contains invalid fields'
           using errcode = '22023';
@@ -336,7 +342,7 @@ begin
     loop
       if jsonb_typeof(v_item) <> 'object'
         or pg_catalog.char_length(pg_catalog.btrim(coalesce(v_item ->> 'name', ''))) not between 1 and 120
-        or jsonb_typeof(v_item -> 'costPerUnit') <> 'number'
+        or jsonb_typeof(v_item -> 'costPerUnit') is distinct from 'number'
       then
         raise exception 'A variable expense contains invalid fields'
           using errcode = '22023';
@@ -424,13 +430,23 @@ begin
         using errcode = '22023';
     end if;
 
+    if v_input ? 'variableFeeBasis'
+      and (
+        jsonb_typeof(v_input -> 'variableFeeBasis') is distinct from 'string'
+        or v_input ->> 'variableFeeBasis' not in ('discounted_price', 'pre_discount')
+      )
+    then
+      raise exception 'History commission basis is invalid'
+        using errcode = '22023';
+    end if;
+
     foreach v_key in array array[
       'materials', 'laborMinutes', 'hourlyRate', 'directExpenses',
       'wasteRate', 'fixedExpensesPerUnit', 'variableFeeRate',
       'targetMarginRate', 'discountRate'
     ]
     loop
-      if jsonb_typeof(v_input -> v_key) <> 'number' then
+      if jsonb_typeof(v_input -> v_key) is distinct from 'number' then
         raise exception 'A history input contains a missing or invalid numeric field'
           using errcode = '22023';
       end if;
@@ -453,7 +469,7 @@ begin
       'effectiveMargin', 'markup'
     ]
     loop
-      if jsonb_typeof(v_result_payload -> v_key) <> 'number' then
+      if jsonb_typeof(v_result_payload -> v_key) is distinct from 'number' then
         raise exception 'A history result contains a missing or invalid numeric field'
           using errcode = '22023';
       end if;
@@ -479,7 +495,7 @@ begin
         using errcode = '22023';
     end if;
 
-    if v_item ? 'createdAt' then
+    if v_item ? 'createdAt' and nullif(v_item ->> 'createdAt', '') is not null then
       begin
         v_created_at := (v_item ->> 'createdAt')::timestamptz;
       exception when others then
@@ -498,6 +514,20 @@ begin
           using errcode = '22023';
       end if;
       v_catalog_snapshot := v_item -> 'catalogItem';
+      if jsonb_typeof(v_catalog_snapshot -> 'id') is distinct from 'string'
+        or nullif(pg_catalog.btrim(v_catalog_snapshot ->> 'id'), '') is null
+        or jsonb_typeof(v_catalog_snapshot -> 'name') is distinct from 'string'
+        or nullif(pg_catalog.btrim(v_catalog_snapshot ->> 'name'), '') is null
+        or v_catalog_snapshot ->> 'kind' not in ('product', 'service')
+        or jsonb_typeof(v_catalog_snapshot -> 'unit') is distinct from 'string'
+        or nullif(pg_catalog.btrim(v_catalog_snapshot ->> 'unit'), '') is null
+        or jsonb_typeof(v_catalog_snapshot -> 'sku') is distinct from 'string'
+        or v_catalog_snapshot ->> 'currency' is distinct from v_currency
+        or jsonb_typeof(v_catalog_snapshot -> 'referenceCost') is distinct from 'number'
+      then
+        raise exception 'A catalog snapshot contains invalid fields'
+          using errcode = '22023';
+      end if;
     end if;
 
     v_source_hash := extensions.digest(
