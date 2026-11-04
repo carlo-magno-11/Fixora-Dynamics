@@ -16,12 +16,16 @@ function isLocalImportResult(value: Json): value is {
 } {
   if (!value || typeof value !== "object" || Array.isArray(value)) return false;
   const result = value as Record<string, Json>;
+  const counts = [
+    result.catalogImported,
+    result.catalogSkipped,
+    result.expensesImported,
+    result.historyImported,
+    result.historySkipped,
+  ];
   return typeof result.importId === "string"
-    && typeof result.catalogImported === "number"
-    && typeof result.catalogSkipped === "number"
-    && typeof result.expensesImported === "number"
-    && typeof result.historyImported === "number"
-    && typeof result.historySkipped === "number";
+    && result.importId.length > 0
+    && counts.every((count) => typeof count === "number" && Number.isSafeInteger(count) && count >= 0);
 }
 
 export function createSupabaseLocalImportRepository(
