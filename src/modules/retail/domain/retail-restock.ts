@@ -55,9 +55,9 @@ export function calculateRetailRestockRecommendation(
     throw new RangeError("La demanda diaria promedio debe ser finita y no negativa.");
   }
 
-  assertSafeWholeNumber(input.sellableUnits, "Las unidades vendibles");
-  assertSafeWholeNumber(input.reservedUnits, "Las unidades reservadas");
-  assertSafeWholeNumber(input.incomingUnits, "Las unidades en camino");
+  assertSafeWholeNumber(input.sellableUnits, "El inventario vendible");
+  assertSafeWholeNumber(input.reservedUnits, "El inventario reservado");
+  assertSafeWholeNumber(input.incomingUnits, "El inventario en camino");
   assertSafeWholeNumber(input.leadTimeDays, "El tiempo de entrega", 1);
   assertSafeWholeNumber(input.reviewPeriodDays, "El periodo de revisión");
   assertSafeWholeNumber(input.safetyStockUnits, "El stock de seguridad");
