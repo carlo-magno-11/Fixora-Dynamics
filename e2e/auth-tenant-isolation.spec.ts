@@ -217,7 +217,7 @@ test("exports scoped and legacy backups separately and restores only the selecte
 
   let firstResponseDropped = false;
   await page.route("**/rest/v1/rpc/fixora_import_local_bundle", async (route) => {
-    if (firstResponseDropped) {
+    if (route.request().method() !== "POST" || firstResponseDropped) {
       await route.continue();
       return;
     }
