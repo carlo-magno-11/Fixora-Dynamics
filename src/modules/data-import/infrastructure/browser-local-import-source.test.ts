@@ -73,6 +73,26 @@ describe("browser local import source", () => {
     });
   });
 
+  it("exports an exact read-only backup of the selected storage source", () => {
+    const source = createBrowserLocalImportSource(memoryStorage(localData));
+    const backup = JSON.parse(source.createBackup()) as {
+      format: string;
+      version: number;
+      data: { catalog: string; expenses: string; history: string };
+    };
+    expect(backup.format).toBe("fixora-local-backup");
+    expect(backup.version).toBe(1);
+    expect(backup.data).toEqual(localData);
+  });
+
+  it("refuses to export a backup when storage scopes are ambiguous", () => {
+    const source = createBrowserLocalImportSource(
+      memoryStorage({ [CATALOG_STORAGE_KEY]: "scoped" }),
+      memoryStorage({ [EXPENSES_STORAGE_KEY]: "legacy" }),
+    );
+    expect(() => source.createBackup()).toThrow("resolver el acceso o la mezcla");
+  });
+
   it("does not expose a write or delete operation", () => {
     const source = createBrowserLocalImportSource(memoryStorage());
     expect(Object.keys(source)).toEqual(["read"]);
