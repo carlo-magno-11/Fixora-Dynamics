@@ -39,7 +39,7 @@ jobs:
           cd /tmp/fixora-db-ci
           supabase init
           sed -i 's/^major_version = .*/major_version = 17/' supabase/config.toml
-          sed -i '/^\[db\]/a port = 54332\nshadow_port = 54330' supabase/config.toml
+          sed -i 's/^port = 54322$/port = 54332/; s/^shadow_port = 54320$/shadow_port = 54330/' supabase/config.toml
           cp -R "$GITHUB_WORKSPACE/supabase/migrations" supabase/
           cp -R "$GITHUB_WORKSPACE/supabase/tests" supabase/
 
