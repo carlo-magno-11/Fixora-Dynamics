@@ -1,3 +1,4 @@
+import { createHmac } from "node:crypto";
 import { expect, test, type Page } from "@playwright/test";
 
 const supabaseUrl = requiredEnv("FIXORA_SUPABASE_URL");
@@ -377,5 +378,95 @@ test("concurrent import submissions never duplicate a source record", async ({ b
   expect(rows).toHaveLength(2);
   expect(rows.filter((row) => row.name === firstCatalog[0].name)).toHaveLength(1);
   expect(rows.filter((row) => row.name === secondCatalog[0].name)).toHaveLength(1);
+  await context.close();
+});
+
+
+function decodeBase32Secret(secret: string): Buffer {
+  const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+  let bits = 0;
+  let value = 0;
+  const bytes: number[] = [];
+  for (const character of secret.toUpperCase().replace(/=+$/g, "")) {
+    const digit = alphabet.indexOf(character);
+    if (digit < 0) throw new Error("Invalid TOTP secret returned by Supabase Auth.");
+    value = (value << 5) | digit;
+    bits += 5;
+    if (bits >= 8) {
+      bytes.push((value >>> (bits - 8)) & 0xff);
+      bits -= 8;
+    }
+  }
+  return Buffer.from(bytes);
+}
+
+function currentTotp(secret: string, now = Date.now()): string {
+  const counter = Buffer.alloc(8);
+  counter.writeBigUInt64BE(BigInt(Math.floor(now / 30_000)));
+  const digest = createHmac("sha1", decodeBase32Secret(secret)).update(counter).digest();
+  const offset = digest[digest.length - 1] & 0x0f;
+  const binary = (digest[offset] & 0x7f) * 0x1000000
+    + (digest[offset + 1] & 0xff) * 0x10000
+    + (digest[offset + 2] & 0xff) * 0x100
+    + (digest[offset + 3] & 0xff);
+  return String(binary % 1_000_000).padStart(6, "0");
+}
+
+async function readSessionAccessToken(page: Page): Promise<string> {
+  const token = await page.evaluate(() => {
+    const key = Object.keys(window.localStorage).find((candidate) => candidate.endsWith("-auth-token"));
+    const raw = key ? window.localStorage.getItem(key) : null;
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { access_token?: unknown };
+    return typeof parsed.access_token === "string" ? parsed.access_token : null;
+  });
+  if (!token) throw new Error("The authenticated browser context has no Supabase access token.");
+  return token;
+}
+
+async function readAdminAccess(page: Page): Promise<{ allowed?: boolean; reason?: string }> {
+  const token = await readSessionAccessToken(page);
+  const response = await fetch(`${supabaseUrl}/functions/v1/admin-console`, {
+    headers: { apikey: anonKey, Authorization: `Bearer ${token}` },
+  });
+  if (!response.ok) throw new Error(`Admin console returned HTTP ${response.status}: ${await response.text()}`);
+  const body = await response.json() as { access?: { allowed?: boolean; reason?: string } };
+  if (!body.access) throw new Error("Admin console did not return an access decision.");
+  return body.access;
+}
+
+test("TOTP enrollment raises assurance to AAL2 and admin access still requires a role", async ({ browser }) => {
+  test.setTimeout(90_000);
+  const suffix = crypto.randomUUID();
+  const email = `e2e-mfa-${suffix}@fixora.test`;
+  const user = await createTestUser(email, "E2E MFA");
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  await signInAndCreateBusiness(page, user, `Negocio MFA ${suffix.slice(0, 8)}`);
+
+  expect(await readAdminAccess(page)).toEqual({ allowed: false, reason: "mfa_required", permissions: [] });
+
+  await page.getByRole("button", { name: "Abrir mi cuenta" }).click();
+  await page.getByRole("button", { name: "Configurar autenticador" }).click();
+  await expect(page.locator(".mfa-enrollment code")).toBeVisible();
+  const secret = (await page.locator(".mfa-enrollment code").textContent())?.trim();
+  if (!secret) throw new Error("Supabase Auth did not return a TOTP enrollment secret.");
+
+  await page.locator("#mfa-enroll-code").fill(currentTotp(secret));
+  await page.getByRole("button", { name: "Verificar y activar" }).click();
+  await expect(page.getByText("Autenticación multifactor activada correctamente para esta cuenta.")).toBeVisible();
+  expect(await readAdminAccess(page)).toEqual({ allowed: false, reason: "role_missing", permissions: [] });
+
+  await page.getByRole("button", { name: "Salir" }).click();
+  await expect(page.getByRole("heading", { name: "Qué gusto tenerte de vuelta." })).toBeVisible();
+  await page.getByLabel("Correo electrónico").fill(email);
+  await page.getByLabel("Contraseña").fill(password);
+  await page.getByRole("button", { name: "Iniciar sesión" }).click();
+
+  await expect(page.getByRole("heading", { name: "Confirma que eres tú." })).toBeVisible();
+  await page.getByLabel("Código de autenticación").fill(currentTotp(secret));
+  await page.getByRole("button", { name: "Verificar y continuar" }).click();
+  await expect(page.getByRole("button", { name: "Abrir mi cuenta" })).toBeVisible();
+  expect(await readAdminAccess(page)).toEqual({ allowed: false, reason: "role_missing", permissions: [] });
   await context.close();
 });
