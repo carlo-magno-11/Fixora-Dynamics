@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   parseLocalImportBundle,
+  parseLocalImportBackup,
   validateLocalImportCurrency,
   type LocalImportRawBundle,
 } from "./local-import";
@@ -148,5 +149,49 @@ describe("local import validation", () => {
       expect.objectContaining({ category: "expenses", code: "currency_mismatch" }),
     ]);
     expect(validateLocalImportCurrency(result.expenses, "MXN")).toEqual([]);
+  });
+});
+
+describe("Fixora local backup validation", () => {
+  const backup = JSON.stringify({
+    format: "fixora-local-backup",
+    version: 1,
+    exportedAt: "2026-11-04T12:00:00.000Z",
+    data: {
+      catalog: JSON.stringify([catalogItem]),
+      expenses: JSON.stringify(expenses),
+      history: JSON.stringify([history]),
+    },
+  });
+
+  it("restores raw category payloads from a compatible backup", () => {
+    expect(parseLocalImportBackup(backup)).toEqual(rawBundle());
+  });
+
+  it("rejects an unknown backup format or version", () => {
+    expect(() => parseLocalImportBackup(JSON.stringify({
+      format: "other",
+      version: 1,
+      exportedAt: "2026-11-04T12:00:00.000Z",
+      data: { catalog: null, expenses: null, history: null },
+    }))).toThrow("formato o la versión");
+  });
+
+  it("rejects malformed category values instead of coercing them", () => {
+    expect(() => parseLocalImportBackup(JSON.stringify({
+      format: "fixora-local-backup",
+      version: 1,
+      exportedAt: "2026-11-04T12:00:00.000Z",
+      data: { catalog: [], expenses: null, history: null },
+    }))).toThrow("formato no compatible");
+  });
+
+  it("rejects an invalid backup export timestamp", () => {
+    expect(() => parseLocalImportBackup(JSON.stringify({
+      format: "fixora-local-backup",
+      version: 1,
+      exportedAt: "not-a-date",
+      data: { catalog: null, expenses: null, history: null },
+    }))).toThrow("fecha de exportación");
   });
 });
