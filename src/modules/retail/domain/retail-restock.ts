@@ -88,8 +88,12 @@ export function calculateRetailRestockRecommendation(
     demandPerDay.mul(input.leadTimeDays).plus(safetyStock),
     "El punto de reposición",
   );
+  const replenishmentDays = safeInteger(
+    input.leadTimeDays + input.reviewPeriodDays,
+    "Los días de abastecimiento y revisión",
+  );
   const targetStockUnits = ceilUnits(
-    demandPerDay.mul(input.leadTimeDays + input.reviewPeriodDays).plus(safetyStock),
+    demandPerDay.mul(replenishmentDays).plus(safetyStock),
     "El inventario objetivo",
   );
 
@@ -97,10 +101,13 @@ export function calculateRetailRestockRecommendation(
   let suggestedOrderUnits = 0;
 
   if (shouldReorder) {
-    const unitsToTarget = Math.max(0, targetStockUnits - inventoryPositionUnits);
-    const orderBase = Math.max(input.minimumOrderQuantity, unitsToTarget);
+    const unitsToTarget = Decimal.max(
+      0,
+      new Decimal(targetStockUnits).minus(inventoryPositionUnits),
+    );
+    const orderBase = Decimal.max(input.minimumOrderQuantity, unitsToTarget);
     suggestedOrderUnits = ceilUnits(
-      new Decimal(orderBase).div(input.orderMultiple).toDecimalPlaces(0, Decimal.ROUND_CEIL)
+      orderBase.div(input.orderMultiple).toDecimalPlaces(0, Decimal.ROUND_CEIL)
         .mul(input.orderMultiple),
       "La cantidad sugerida de compra",
     );
