@@ -7,6 +7,7 @@ import {
 } from "../domain/local-import";
 export interface LocalImportSourcePort {
   read(): import("../domain/local-import").LocalImportRawBundle;
+  createBackup(): string;
 }
 
 export interface LocalImportCloudState {
@@ -136,7 +137,11 @@ export function createLocalImportService(
     });
   }
 
-  return { preview, importBundle };
+  return {
+    preview,
+    importBundle,
+    createBackup: () => source.createBackup(),
+  };
 }
 
 export type LocalImportService = ReturnType<typeof createLocalImportService>;
