@@ -154,6 +154,31 @@ describe("local import application service", () => {
     })).rejects.toThrow("No se sobrescribirán");
   });
 
+  it("can preview and import a recovered backup without reading browser storage", async () => {
+    const backupRaw = rawBundle();
+    const calls: Parameters<LocalImportRepositoryPort["importBundle"]>[0][] = [];
+    const service = createLocalImportService(source({
+      catalog: null,
+      expenses: null,
+      history: null,
+    }), repository(undefined, calls));
+    const preview = await service.previewData(backupRaw, "business-1", "MXN");
+    expect(preview.canImport).toBe(true);
+    const result = await service.importData({
+      raw: backupRaw,
+      businessId: "business-1",
+      businessCurrency: "MXN",
+      importKey: "55555555-5555-4555-8555-555555555555",
+      selection: { catalog: true, expenses: false, history: true },
+    });
+    expect(result.importId).toBe("import-1");
+    expect(calls[0]).toMatchObject({
+      catalog,
+      expenses: null,
+      history,
+    });
+  });
+
   it("rejects a selection with no categories", async () => {
     const service = createLocalImportService(source(rawBundle()), repository());
     await expect(service.importBundle({
