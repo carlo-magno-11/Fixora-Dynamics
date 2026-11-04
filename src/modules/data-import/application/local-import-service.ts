@@ -4,9 +4,11 @@ import {
   type ImportCurrency,
   type LocalImportBundle,
   type LocalImportIssue,
+  type LocalImportRawBundle,
 } from "../domain/local-import";
+
 export interface LocalImportSourcePort {
-  read(): import("../domain/local-import").LocalImportRawBundle;
+  read(): LocalImportRawBundle;
   createBackup(): string;
 }
 
@@ -56,11 +58,12 @@ export function createLocalImportService(
   source: LocalImportSourcePort,
   repository: LocalImportRepositoryPort,
 ) {
-  async function preview(
+  async function previewData(
+    raw: LocalImportRawBundle,
     businessId: string,
     businessCurrency: ImportCurrency,
   ): Promise<LocalImportPreview> {
-    const bundle = parseLocalImportBundle(source.read());
+    const bundle = parseLocalImportBundle(raw);
     const cloud = await repository.previewCloudState(businessId);
     const existingSkus = new Set(
       cloud.existingSkus.map((sku) => sku.trim().toLocaleLowerCase()).filter(Boolean),
@@ -88,7 +91,15 @@ export function createLocalImportService(
     };
   }
 
-  async function importBundle(input: {
+  async function preview(
+    businessId: string,
+    businessCurrency: ImportCurrency,
+  ): Promise<LocalImportPreview> {
+    return previewData(source.read(), businessId, businessCurrency);
+  }
+
+  async function importData(input: {
+    raw: LocalImportRawBundle;
     businessId: string;
     businessCurrency: ImportCurrency;
     importKey: string;
@@ -98,24 +109,24 @@ export function createLocalImportService(
       throw new Error("Selecciona al menos una categoría para importar.");
     }
 
-    const current = await preview(input.businessId, input.businessCurrency);
+    const current = await previewData(input.raw, input.businessId, input.businessCurrency);
     if (categoryHasIssues(current.issues, "storage")) {
-      throw new Error("No se pueden leer con seguridad los datos locales.");
+      throw new Error("No se pueden leer con seguridad los datos de origen.");
     }
     if (input.selection.catalog) {
       if (categoryHasIssues(current.issues, "catalog")) {
-        throw new Error("El catálogo local contiene registros inválidos. Corrígelos o excluye el catálogo.");
+        throw new Error("El catálogo de origen contiene registros inválidos. Corrígelos o excluye el catálogo.");
       }
-      if (current.catalog.length === 0) throw new Error("No hay productos o servicios locales para importar.");
+      if (current.catalog.length === 0) throw new Error("No hay productos o servicios para importar.");
       if (current.catalogConflicts.length > 0) {
         throw new Error("Hay SKU que ya existen en el negocio cloud. Excluye el catálogo o resuelve los SKU antes de continuar.");
       }
     }
     if (input.selection.expenses) {
       if (categoryHasIssues(current.issues, "expenses")) {
-        throw new Error("La configuración local de gastos no es válida. Corrígela o excluye los gastos.");
+        throw new Error("La configuración de gastos de origen no es válida. Corrígela o excluye los gastos.");
       }
-      if (!current.expenses) throw new Error("No hay una configuración local de gastos para importar.");
+      if (!current.expenses) throw new Error("No hay una configuración de gastos para importar.");
       if (current.currencyIssues.length > 0) throw new Error(current.currencyIssues[0].message);
       if (current.expensesConflict) {
         throw new Error("El negocio cloud ya tiene gastos configurados. No se sobrescribirán.");
@@ -123,9 +134,9 @@ export function createLocalImportService(
     }
     if (input.selection.history) {
       if (categoryHasIssues(current.issues, "history")) {
-        throw new Error("El historial local contiene registros inválidos. Corrígelos o excluye el historial.");
+        throw new Error("El historial de origen contiene registros inválidos. Corrígelos o excluye el historial.");
       }
-      if (current.history.length === 0) throw new Error("No hay cálculos locales para importar.");
+      if (current.history.length === 0) throw new Error("No hay cálculos para importar.");
     }
 
     return repository.importBundle({
@@ -137,9 +148,20 @@ export function createLocalImportService(
     });
   }
 
+  async function importBundle(input: {
+    businessId: string;
+    businessCurrency: ImportCurrency;
+    importKey: string;
+    selection: LocalImportSelection;
+  }): Promise<LocalImportResult> {
+    return importData({ ...input, raw: source.read() });
+  }
+
   return {
     preview,
+    previewData,
     importBundle,
+    importData,
     createBackup: () => source.createBackup(),
   };
 }
