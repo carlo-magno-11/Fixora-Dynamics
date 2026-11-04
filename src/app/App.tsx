@@ -112,6 +112,14 @@ interface AppProps {
   authMode?: "cloud" | "local";
   userEmail?: string;
   businessName?: string;
+  businessTimezone?: string;
+  businessCurrency?: CurrencyCode;
+  profileDisplayName?: string;
+  profileLocale?: "es-MX" | "en-US";
+  profileLoading?: boolean;
+  profileError?: string;
+  onProfileUpdate?: (input: { displayName: string; locale: "es-MX" | "en-US" }) => Promise<void>;
+  onBusinessDetailsUpdate?: (input: { name: string; timezone: string }) => Promise<void>;
   initialBusinessType?: BusinessType;
   initialCurrency?: CurrencyCode;
   onSignOut?: () => void;
@@ -125,6 +133,14 @@ export function App({
   authMode = "local",
   userEmail,
   businessName,
+  businessTimezone,
+  businessCurrency,
+  profileDisplayName,
+  profileLocale,
+  profileLoading,
+  profileError,
+  onProfileUpdate,
+  onBusinessDetailsUpdate,
   initialBusinessType,
   initialCurrency,
   onSignOut,
@@ -1002,7 +1018,7 @@ export function App({
           {view === "support" && authMode === "cloud" && <SupportPage businessId={businessId} />}
           {view === "admin" && authMode === "cloud" && <AdminConsoleContainer />}
           {view === "guide" && <GuidePage />}
-          {view === "account" && <AccountPage onOpenGuide={() => setView("guide")} authMode={authMode} userEmail={userEmail} businessName={businessName} onSignOut={onSignOut} licenseAccess={licenseAccess} licenseLoading={licenseLoading} licenseError={licenseError} onLicenseActivated={refreshLicenseAccess} />}
+          {view === "account" && <AccountPage onOpenGuide={() => setView("guide")} authMode={authMode} userEmail={userEmail} businessName={businessName} businessTimezone={businessTimezone} businessCurrency={businessCurrency} profileDisplayName={profileDisplayName} profileLocale={profileLocale} profileLoading={profileLoading} profileError={profileError} onProfileUpdate={onProfileUpdate} onBusinessDetailsUpdate={onBusinessDetailsUpdate} onSignOut={onSignOut} licenseAccess={licenseAccess} licenseLoading={licenseLoading} licenseError={licenseError} onLicenseActivated={refreshLicenseAccess} />}
           {view === "about" && <AboutPage />}
           {view === "terms" && <LegalPage kind="terms" />}
           {view === "privacy" && <LegalPage kind="privacy" />}
