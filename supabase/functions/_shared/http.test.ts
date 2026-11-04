@@ -14,6 +14,18 @@ Deno.test("readJsonObject accepts a valid JSON object within the size limit", as
   assert(value?.ticketId === "test-123", "expected parsed object");
 });
 
+Deno.test("readJsonObject accepts a valid numeric Content-Length", async () => {
+  const body = JSON.stringify({ email: "security@example.com", role: "auditor" });
+  const request = new Request("https://fixora.test", {
+    method: "POST",
+    headers: { "content-type": "application/json", "content-length": String(new TextEncoder().encode(body).byteLength) },
+    body,
+  });
+  const value = await readJsonObject(request);
+  assert(value?.email === "security@example.com", "numeric Content-Length must not reject a valid JSON object");
+  assert(value?.role === "auditor", "parsed role should be preserved");
+});
+
 Deno.test("readJsonObject rejects a declared body larger than the limit", async () => {
   const request = new Request("https://fixora.test", {
     method: "POST",
