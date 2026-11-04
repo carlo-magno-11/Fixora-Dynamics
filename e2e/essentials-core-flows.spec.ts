@@ -69,7 +69,7 @@ test("Essentials connects cloud catalog, pricing calculation and immutable histo
   await page.getByRole("button", { name: "Catálogo", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Tu catálogo de productos y servicios." })).toBeVisible();
   await page.getByLabel("Nombre", { exact: true }).fill(productName);
-  await page.getByLabel("Tipo", { exact: true }).selectOption("product");
+  await page.locator(".catalog-form select").nth(0).selectOption("product");
   await page.getByLabel("Unidad", { exact: true }).fill("pieza");
   await page.getByLabel("SKU / código (opcional)").fill(sku);
   await page.getByLabel("Coste de referencia (MXN)").fill("45.50");
@@ -136,7 +136,7 @@ test("cloud expenses persist fixed and variable costs with their period settings
   const variableEntry = page.locator(".expense-entry").nth(1);
   await variableEntry.locator("input").nth(0).fill("Empaque E2E");
   await variableEntry.locator("input").nth(1).fill("12.50");
-  await page.getByLabel("Periodo de registro").selectOption("month");
+  await page.locator(".expense-allocation select").selectOption("month");
   await page.getByLabel("Unidades estimadas en el periodo").fill("100");
   await page.getByRole("button", { name: "Guardar cambios" }).click();
   await expect(page.getByText("Gastos y asignación guardados en Supabase. Los cambios se aplicaron como una sola operación.")).toBeVisible();
