@@ -881,3 +881,11 @@ Durante la revisión final detecté que el camino idempotente de un código ya r
 - Revisión de los contratos del dominio Retail: existen cálculos puros de costeo por lote, balance derivado de movimientos, sugerencia de reposición con demanda suministrada y rentabilidad por pedido. La matriz de preparación sigue siendo correcta: no se encontró en los archivos revisados una experiencia Retail integrada con persistencia transaccional, autorización de entitlement `kit.retail` y E2E de compra→recepción→venta→devolución.
 - No se añadieron tablas ni migraciones Retail porque ADR-004 sigue sin decisión final sobre licencia individual/negocio y acceso de miembros. El límite de tres dispositivos por licencia sí está confirmado.
 - Ningún cambio remoto de Supabase, despliegue, ni cambio al proyecto EYESITE.
+
+
+## 2026-11-04 — Actualización de ejecución de pruebas
+
+- La ejecución Database tests #1440 terminó con conclusión `CANCELLED`; no cuenta como aprobada ni como fallo funcional de las pruebas pgTAP. Debe obtenerse una ejecución completa no cancelada para cerrar esa puerta.
+- Browser E2E #147 seguía `IN_PROGRESS` en la última consulta; no se pudo obtener un log final mientras el job seguía ejecutándose.
+- No se repitió ni se modificó el test para forzar un resultado. Próximo paso: esperar el resultado/timeout del E2E, revisar el log del job y lanzar/revalidar la suite de base de datos en un HEAD de código estable cuando GitHub permita una ejecución no cancelada.
+- El último commit documental de esta actualización es `dff1a218174126d7b089a79aecfd5a1c2f21b723`; el PR #14 sigue draft, base sin cambios.
