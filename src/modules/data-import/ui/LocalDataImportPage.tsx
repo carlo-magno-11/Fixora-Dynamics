@@ -3,6 +3,7 @@ import type { ChangeEvent } from "react";
 import type { LocalImportService, LocalImportResult, LocalImportPreview } from "../application/local-import-service";
 import type { LocalImportSelection } from "../application/local-import-service";
 import { parseLocalImportBackup, type LocalImportRawBundle } from "../domain/local-import";
+import { createLocalImportFingerprint, getOrCreateLocalImportKey } from "../infrastructure/local-import-idempotency";
 
 function hasIssue(preview: LocalImportPreview, category: "catalog" | "expenses" | "history" | "storage"): boolean {
   return preview.issues.some((issue) => issue.category === category);
@@ -31,7 +32,6 @@ export function LocalDataImportPage({
   const [error, setError] = useState("");
   const [backupMessage, setBackupMessage] = useState("");
   const [result, setResult] = useState<LocalImportResult | null>(null);
-  const [importKey, setImportKey] = useState(() => crypto.randomUUID());
   const [attempted, setAttempted] = useState(false);
   const [selection, setSelection] = useState<LocalImportSelection>({
     catalog: false,
@@ -66,7 +66,6 @@ export function LocalDataImportPage({
     setError("");
     setResult(null);
     setSelection({ catalog: false, expenses: false, history: false });
-    setImportKey(crypto.randomUUID());
     setAttempted(false);
     void service.preview(businessId, businessCurrency)
       .then((next) => { if (active) setPreview(next); })
@@ -89,7 +88,6 @@ export function LocalDataImportPage({
     setBackupMessage("");
     setResult(null);
     setSelection({ catalog: false, expenses: false, history: false });
-    setImportKey(crypto.randomUUID());
     setAttempted(false);
     try {
       if (file.size > 1_100_000) {
@@ -140,20 +138,28 @@ export function LocalDataImportPage({
     setAttempted(true);
     setError("");
     try {
-      const imported = backupBundle
-        ? await service.importData({
-          raw: backupBundle,
-          businessId,
-          businessCurrency,
-          importKey,
-          selection,
-        })
-        : await service.importBundle({
-          businessId,
-          businessCurrency,
-          importKey,
-          selection,
-        });
+      const raw = backupBundle ?? service.readSource();
+      if (raw.storageError || raw.storageConflict) {
+        throw new Error("No se puede importar hasta resolver el acceso o la mezcla de almacenamiento local.");
+      }
+      const fingerprint = await createLocalImportFingerprint({
+        businessId,
+        businessCurrency,
+        selection,
+        source: {
+          catalog: selection.catalog ? raw.catalog : null,
+          expenses: selection.expenses ? raw.expenses : null,
+          history: selection.history ? raw.history : null,
+        },
+      });
+      const importKey = getOrCreateLocalImportKey(window.localStorage, businessId, fingerprint);
+      const imported = await service.importData({
+        raw,
+        businessId,
+        businessCurrency,
+        importKey,
+        selection,
+      });
       setResult(imported);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "No fue posible completar la importación.");

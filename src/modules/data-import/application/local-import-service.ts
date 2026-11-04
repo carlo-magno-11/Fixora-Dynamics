@@ -160,6 +160,7 @@ export function createLocalImportService(
   return {
     preview,
     previewData,
+    readSource: () => source.read(),
     importBundle,
     importData,
     createBackup: () => source.createBackup(),
