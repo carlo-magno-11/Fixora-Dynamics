@@ -824,3 +824,22 @@ tr { border-color: var(--line); }
   .local-import-actions { display: grid; grid-template-columns: 1fr; }
   .local-import-actions button { width: 100%; }
 }
+
+.local-import-backup-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin: 20px 0;
+  padding: 17px 19px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: var(--surface, #fff);
+}
+.local-import-backup-actions > div { display: grid; gap: 5px; }
+.local-import-backup-actions strong { color: var(--fixora-deep); font-size: 12px; }
+.local-import-backup-actions p { margin: 0; color: var(--muted); font-size: 10px; line-height: 1.6; }
+@media (max-width: 620px) {
+  .local-import-backup-actions { align-items: stretch; flex-direction: column; padding: 14px; }
+  .local-import-backup-actions button { width: 100%; }
+}
