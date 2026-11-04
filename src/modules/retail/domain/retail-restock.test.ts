@@ -100,12 +100,12 @@ describe("calculateRetailRestockRecommendation", () => {
     expect(() => calculateRetailRestockRecommendation({
       ...base,
       sellableUnits: -1,
-    })).toThrow("Las unidades vendibles debe ser un entero seguro mayor o igual a 0.");
+    })).toThrow("El inventario vendible debe ser un entero seguro mayor o igual a 0.");
 
     expect(() => calculateRetailRestockRecommendation({
       ...base,
       reservedUnits: 1.5,
-    })).toThrow("Las unidades reservadas debe ser un entero seguro mayor o igual a 0.");
+    })).toThrow("El inventario reservado debe ser un entero seguro mayor o igual a 0.");
   });
 
   it("rejects zero lead time and invalid purchase constraints", () => {
