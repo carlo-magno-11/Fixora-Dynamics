@@ -732,3 +732,19 @@ Durante la revisión final detecté que el camino idempotente de un código ya r
 - Se registró la evidencia y los pendientes restantes en `docs/LAUNCH-GATES.md`; commit documental `8f384b4884074cdc356c37f264ebf0b02e71ddd0`.
 - Pendiente específico: doble clic explícito y concurrencia real entre solicitudes con distintas import_keys para el mismo ID de origen; también MFA/AAL2 real, dispositivos/revocación, staging HTTPS y dispositivos físicos.
 - Supabase remoto Fixora `dclaebknyalimmtgppeg`: la última migración observada sigue en `20261103235603`; `20261104010000_fixora_local_data_import.sql` no se aplicó. No hubo SQL de escritura, despliegues ni cambios de Storage. EYESITE oficial no se tocó.
+
+
+## 2026-11-04 — Concurrencia real de importación validada en navegador
+
+- Se añadió un tercer escenario Playwright para ejecutar dos llamadas RPC simultáneas contra Supabase local efímero.
+- Mismo import_key + mismo payload: las dos solicitudes concurrentes reciben el mismo `importId`, sin crear dos lotes.
+- Distintos import_keys + mismo ID de origen: las dos solicitudes pueden completar o una recibir conflicto de unicidad, pero la consulta final verifica exactamente un registro cloud por cada ID de origen.
+- Validación del HEAD `38135a25cd070ef199af6a2e6eb090bdf8c0f370`:
+  - CI #1775 SUCCESS.
+  - Security #587 SUCCESS (Gitleaks, OSV-Scanner, Trivy y zizmor).
+  - CodeQL #435 SUCCESS.
+  - Database tests #1329 SUCCESS: reconstrucción limpia, 13 archivos pgTAP / 304 pruebas, mutaciones negativas RLS y concurrencia de dispositivos/rate limit.
+  - Browser E2E #36 SUCCESS: 3 pruebas / 7.9 s; aislamiento multiusuario, exportación/restauración scoped/legacy, respuesta RPC perdida y concurrencia de importación.
+- La nueva prueba se ejecutó solo contra Supabase local descartable del workflow; no utilizó secretos ni datos del proyecto remoto.
+- Pendientes siguientes: MFA/AAL2 TOTP en E2E, pruebas de endpoints admin con AAL1/AAL2 y roles distintos, dos dispositivos/revocación, staging HTTPS, revisión visual/accesibilidad y pruebas físicas.
+- Proyecto remoto Fixora `dclaebknyalimmtgppeg`: última migración observada `20261103235603`; la migración local→cloud `20261104010000` continúa sin aplicar. No se ejecutó SQL de escritura ni despliegues remotos; EYESITE oficial no se tocó.
