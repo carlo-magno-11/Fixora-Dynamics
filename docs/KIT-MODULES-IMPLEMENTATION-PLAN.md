@@ -297,3 +297,17 @@ Antes de vender un kit: entrevistas con 5–8 usuarios del segmento; observar tr
 ### Orden
 
 Se conserva Comercio y reventa como piloto porque ya tiene dominio y pruebas. Se debe validar temprano Alimentos y repostería con entrevistas, porque el flujo de lote/rendimiento puede aportar más valor vertical, pero la complejidad y el riesgo de seguridad alimentaria son superiores. La priorización se puede cambiar si entrevistas reales contradicen esta hipótesis.
+
+### 10.1 Rentabilidad real por pedido — nuevo dominio en código
+
+Se añadió `src/modules/retail/domain/retail-order-profit.ts` con pruebas en `retail-order-profit.test.ts`. Complementa el coste/precio unitario: el pedido agrega partidas, cantidades, descuentos, mercancía reembolsada, envío cobrado/reembolsado, coste de envío pagado por el vendedor, comisiones reales de canal/procesamiento/publicidad y otros cargos por pedido.
+
+El resultado separa:
+- ingreso neto de mercancía y envío;
+- coste de mercancía vendida, excluyendo solo unidades que efectivamente regresaron a inventario vendible;
+- empaque y otros costes consumidos al despachar;
+- comisiones/cargos del pedido, cobrados una sola vez;
+- contribución antes de gastos fijos y margen de contribución;
+- contribución estimada después de asignación fija y margen operativo estimado.
+
+Los importes de tarifas se capturan como valores reales del pedido; el dominio no inventa las reglas de Etsy ni asume que impuestos, procesamiento y comisión usan la misma base. La conciliación automatizada por canal, el vínculo con ventas y movimientos persistidos siguen pendientes. El módulo aún no tiene UI, repositorio ni migración.

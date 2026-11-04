@@ -231,6 +231,17 @@ No inferir satisfacción por tests de software o por que una función compile. A
 - Mantener precios sugeridos como hipótesis hasta entrevistas y pruebas de pago.
 - No implementar tablas nuevas hasta cerrar ADR-004 sobre titularidad de licencia y alcance de negocio. Los datos operativos de los kits sí deben estar ligados a business_id y protegidos por RLS; el permiso comercial sigue siendo individual en el modelo recomendado inicial.
 
+
+## Señales anecdóticas de comunidades de usuarios
+
+Las conversaciones públicas consultadas no son una muestra estadística, pero ayudan a descubrir fricciones concretas:
+- En inventario, dueños de pequeños comercios describen el punto medio incómodo entre hojas de cálculo y sistemas demasiado caros/complejos; piden alertas de reposición, captura sencilla y conexión básica con ventas. También aparecen problemas de confiar en el stock cuando compras el mismo SKU en lotes a precios distintos.
+- En repostería, una conversación muy votada describe que costear ingredientes y tiempo puede convertirse en una hoja de cálculo laboriosa; otra destaca que el tiempo de decoración/trabajo cambia radicalmente el precio por pieza. Esto respalda incluir trabajo, rendimiento y empaque, no solo ingredientes.
+- En Etsy, vendedores comentan que la comisión efectiva anual puede diferir del porcentaje nominal y recomiendan revisar cargos reales de marketing y procesamiento. Fixora debe permitir guardar tarifas reales/fecha y distinguirlas de estimaciones.
+- En talleres, un propietario explica que materiales comprados se mezclan con otros trabajos si no se asignan al job cuando se reciben; la recomendación recurrente es capturar el gasto contra la orden en el momento, no reconstruirlo al cierre.
+
+Fuentes comunitarias: https://www.reddit.com/r/smallbusiness/comments/1tgrrcq/inventory_issues_it_either_costs_too_much_or_is/ ; https://www.reddit.com/r/InventoryManagement/comments/1vs8ru5/looking_for_inventory_management_software_for_my/ ; https://www.reddit.com/r/Baking/comments/12kwc4t/how_much_should_i_charge_for_my_treats/ ; https://www.reddit.com/r/EtsySellers/comments/1hoslij/ ; https://www.reddit.com/r/SmallBusinessOwners/comments/1vn9iex/job_costing/
+
 ## Fuentes consultadas
 
 - Mercado Pago México, comparativa de inventarios (17-jun-2026): https://www.mercadopago.com.mx/blog/software-gestion-inventario-para-negocios

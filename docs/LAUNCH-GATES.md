@@ -233,3 +233,12 @@ La concurrencia probada usa Supabase local efímero. No implica que se haya ejec
 - [ ] Taller y manufactura: validar cotización → orden → tiempo/materiales → merma/reproceso → cierre.
 - [ ] Productos digitales: validar inversión inicial/recurrente, fees por canal, bundles, reembolsos y coste de soporte.
 - [ ] Probar cada kit con usuarios reales y superar la puerta de adopción antes de habilitar venta.
+
+## 7. Comercio y reventa — rentabilidad por pedido (4-nov-2026)
+- [x] Dominio puro de rentabilidad por pedido: partidas, descuentos, reembolsos, envío, cargos reales por pedido y asignación fija.
+- [x] Diferencia entre margen de contribución y margen operativo estimado; devolución solo reduce COGS si las unidades se reingresaron al stock vendible.
+- [x] CI #1829: 260 Vitest + 20 Deno, typecheck y build PASS.
+- [x] Security #641 PASS.
+- [ ] Database tests #1383, Browser E2E #90 y CodeQL #489 pendientes al cierre de esta actualización.
+- [ ] Integrar el dominio en el flujo de UI; todavía no guarda pedidos ni se conecta al ledger de inventario.
+- [ ] Diseñar repositorio transaccional/RPC y migración versionada después de cerrar ADR-004; añadir pruebas de RLS, idempotencia y concurrencia.

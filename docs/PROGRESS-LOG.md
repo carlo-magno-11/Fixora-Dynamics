@@ -771,3 +771,16 @@ Durante la revisión final detecté que el camino idempotente de un código ya r
 - La investigación confirma que calculadoras de coste, recetas, agenda, inventario y cotización ya existen en competidores. Fixora no debe competir como ERP/POS/CRM completo; debe conectar operación sencilla, coste explicable, acción siguiente e historial auditable.
 - No se creó ni ejecutó migración de kits. ADR-004 sigue abierto: aunque se recomienda licencia individual, sin herencia a miembros, la titularidad y alcance deben cerrarse antes de crear tablas/RLS de los kits.
 - No se aplicaron migraciones ni se desplegaron Edge Functions en Supabase remoto en esta entrega. El siguiente HEAD documental debe volver a ejecutar workflows.
+
+## 2026-11-04 — Primer flujo de rentabilidad por pedido en Comercio y reventa
+
+- Se añadieron `src/modules/retail/domain/retail-order-profit.ts` y `retail-order-profit.test.ts`.
+- El nuevo dominio calcula contribución por pedido a partir de varias partidas, descuentos, reembolsos, envío cobrado y pagado, comisiones/cargos reales y asignación de coste fijo.
+- Se distingue el coste de mercancía vendida de unidades devueltas que sí fueron inspeccionadas y reingresadas al stock vendible. Una devolución reembolsada pero no reingresada conserva el coste de mercancía.
+- Se corrigió una ambigüedad detectada durante revisión: margen de contribución (antes de costes fijos) y margen operativo estimado (después de asignación fija) ahora son resultados distintos.
+- CI #1829 SUCCESS: typecheck, 41 archivos de pruebas Vitest / 260 pruebas PASS, build web, Deno check y 20 pruebas Deno PASS. La compilación mantiene una advertencia de chunk JavaScript >500 kB que queda como deuda de optimización, no como fallo.
+- Security #641 SUCCESS (Gitleaks, OSV-Scanner, Trivy y zizmor).
+- Database tests #1383 y Browser E2E #90 siguen en ejecución; CodeQL #489 sigue en ejecución al registrar esta nota. No declarar esos controles como aprobados todavía.
+- La investigación de mercado se amplió con señales anecdóticas de Reddit sobre complejidad/coste de inventario, fórmulas de panadería y conciliación de tarifas de Etsy; no son muestras representativas.
+- No hay interfaz ni persistencia de pedidos todavía; el dominio nuevo es lógica pura probada por CI. No se creó ni ejecutó migración en esta entrega.
+- Supabase remoto Fixora y EYESITE oficial no fueron modificados; no se desplegaron funciones.
