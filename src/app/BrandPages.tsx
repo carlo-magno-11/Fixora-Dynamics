@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import type { FormEvent } from "react";
 import { getMessages, type SupportedLocale } from "../i18n/messages";
 import { MfaSettings } from "../modules/auth/ui/MfaSettings";
 import { LicenseActivationPanel } from "../modules/licensing/ui/LicenseActivationPanel";
@@ -175,11 +176,127 @@ function formatEntitlements(entitlements: string[]): string {
   return entitlements.map((key) => entitlementLabels[key] ?? key).join(", ");
 }
 
-export function AccountPage({ locale, onOpenGuide, authMode = "local", userEmail, businessName, onSignOut, licenseAccess, licenseLoading = false, licenseError, onLicenseActivated }: PageProps & {
+function AccountSettingsPanel({
+  authMode,
+  profileDisplayName,
+  profileLoading = false,
+  profileError,
+  businessName,
+  businessTimezone,
+  businessCurrency,
+  onProfileUpdate,
+  onBusinessDetailsUpdate,
+}: {
+  authMode: "cloud" | "local";
+  profileDisplayName?: string;
+  profileLoading?: boolean;
+  profileError?: string;
+  businessName?: string;
+  businessTimezone?: string;
+  businessCurrency?: "MXN" | "USD";
+  onProfileUpdate?: (input: { displayName: string }) => Promise<void>;
+  onBusinessDetailsUpdate?: (input: { name: string; timezone: string }) => Promise<void>;
+}) {
+  const [displayName, setDisplayName] = useState(profileDisplayName ?? "");
+  const [businessNameValue, setBusinessNameValue] = useState(businessName ?? "");
+  const [timezone, setTimezone] = useState(businessTimezone ?? "America/Merida");
+  const [profileBusy, setProfileBusy] = useState(false);
+  const [businessBusy, setBusinessBusy] = useState(false);
+  const [profileMessage, setProfileMessage] = useState("");
+  const [businessMessage, setBusinessMessage] = useState("");
+  const [profileFailure, setProfileFailure] = useState("");
+  const [businessFailure, setBusinessFailure] = useState("");
+
+  useEffect(() => setDisplayName(profileDisplayName ?? ""), [profileDisplayName]);
+  useEffect(() => setBusinessNameValue(businessName ?? ""), [businessName]);
+  useEffect(() => setTimezone(businessTimezone ?? "America/Merida"), [businessTimezone]);
+
+  async function saveProfile(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!onProfileUpdate) return;
+    setProfileBusy(true);
+    setProfileMessage("");
+    setProfileFailure("");
+    try {
+      await onProfileUpdate({ displayName: displayName.trim() });
+      setProfileMessage("Tu nombre visible se actualizó correctamente.");
+    } catch (error) {
+      setProfileFailure(error instanceof Error ? error.message : "No fue posible actualizar tu perfil.");
+    } finally {
+      setProfileBusy(false);
+    }
+  }
+
+  async function saveBusiness(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!onBusinessDetailsUpdate) return;
+    setBusinessBusy(true);
+    setBusinessMessage("");
+    setBusinessFailure("");
+    try {
+      await onBusinessDetailsUpdate({ name: businessNameValue.trim(), timezone: timezone.trim() });
+      setBusinessMessage("Los datos del negocio se actualizaron correctamente.");
+    } catch (error) {
+      setBusinessFailure(error instanceof Error ? error.message : "No fue posible actualizar el negocio. Comprueba que tu rol tenga permisos de administración.");
+    } finally {
+      setBusinessBusy(false);
+    }
+  }
+
+  if (authMode !== "cloud") {
+    return (
+      <section className="account-settings-panel">
+        <div className="account-settings-heading"><div><span className="eyebrow">CONFIGURACIÓN PERSONAL</span><h2>Tu perfil y negocio</h2></div></div>
+        <p className="local-storage-note">En modo local, estos datos no se sincronizan con una cuenta. Conecta tu cuenta cuando el acceso cloud esté habilitado para administrar tu perfil y negocio.</p>
+      </section>
+    );
+  }
+
+  return (
+    <section className="account-settings-panel" aria-labelledby="account-settings-title">
+      <div className="account-settings-heading">
+        <div><span className="eyebrow">CONFIGURACIÓN PERSONAL</span><h2 id="account-settings-title">Tu perfil y tu negocio</h2><p>Actualiza los datos básicos que identifican tu espacio de trabajo.</p></div>
+      </div>
+      <div className="account-settings-grid">
+        <form className="account-settings-card" onSubmit={saveProfile}>
+          <span className="eyebrow">TU CUENTA</span>
+          <h3>Perfil personal</h3>
+          <label className="field"><span>Nombre visible</span><input value={displayName} minLength={2} maxLength={80} required placeholder="Cómo quieres que te llamemos" onChange={(event) => setDisplayName(event.target.value)} /></label>
+          <p className="field-hint">Tu correo de acceso no cambia desde aquí. La contraseña y la autenticación multifactor se administran por separado.</p>
+          {profileLoading && <p className="account-settings-status" role="status">Cargando perfil…</p>}
+          {profileError && <p className="account-settings-error" role="alert">{profileError}</p>}
+          {profileFailure && <p className="account-settings-error" role="alert">{profileFailure}</p>}
+          {profileMessage && <p className="account-settings-status" role="status">{profileMessage}</p>}
+          <button className="primary-button compact" type="submit" disabled={profileBusy || profileLoading || !onProfileUpdate}>{profileBusy ? "Guardando…" : "Guardar perfil"}</button>
+        </form>
+        <form className="account-settings-card" onSubmit={saveBusiness}>
+          <span className="eyebrow">ESPACIO DE TRABAJO</span>
+          <h3>Datos del negocio</h3>
+          <label className="field"><span>Nombre comercial</span><input value={businessNameValue} minLength={2} maxLength={100} required placeholder="Nombre de tu negocio" onChange={(event) => setBusinessNameValue(event.target.value)} /></label>
+          <label className="field"><span>Zona horaria (IANA)</span><input value={timezone} maxLength={64} required placeholder="America/Merida" onChange={(event) => setTimezone(event.target.value)} /></label>
+          <p className="field-hint">Moneda principal: <strong>{businessCurrency ?? "MXN"}</strong>. Se mantiene de solo lectura para evitar reinterpretar importes e historiales ya guardados al cambiar de moneda.</p>
+          <p className="field-hint">La edición del nombre y la zona horaria requiere rol owner o admin en este negocio.</p>
+          {businessFailure && <p className="account-settings-error" role="alert">{businessFailure}</p>}
+          {businessMessage && <p className="account-settings-status" role="status">{businessMessage}</p>}
+          <button className="primary-button compact" type="submit" disabled={businessBusy || !onBusinessDetailsUpdate}>{businessBusy ? "Guardando…" : "Guardar negocio"}</button>
+        </form>
+      </div>
+    </section>
+  );
+}
+
+export function AccountPage({ locale, onOpenGuide, authMode = "local", userEmail, businessName, businessTimezone, businessCurrency, profileDisplayName, profileLoading, profileError, onProfileUpdate, onBusinessDetailsUpdate, onSignOut, licenseAccess, licenseLoading = false, licenseError, onLicenseActivated }: PageProps & {
   onOpenGuide: () => void;
   authMode?: "cloud" | "local";
   userEmail?: string;
   businessName?: string;
+  businessTimezone?: string;
+  businessCurrency?: "MXN" | "USD";
+  profileDisplayName?: string;
+  profileLoading?: boolean;
+  profileError?: string;
+  onProfileUpdate?: (input: { displayName: string }) => Promise<void>;
+  onBusinessDetailsUpdate?: (input: { name: string; timezone: string }) => Promise<void>;
   onSignOut?: () => void;
   licenseAccess?: LicenseAccess[];
   licenseLoading?: boolean;
@@ -206,6 +323,7 @@ export function AccountPage({ locale, onOpenGuide, authMode = "local", userEmail
         <div><strong>{authMode === "cloud" ? "Cuenta y negocio conectados" : copy.authTitle}</strong><p>{authMode === "cloud" ? `Sesión activa para ${userEmail || "tu cuenta"} en ${businessName || "tu negocio"}.` : copy.authBody}</p></div>
         <span className={authMode === "cloud" ? "connected-pill" : "planned-pill"}>{authMode === "cloud" ? "CONECTADA" : copy.pending}</span>
       </section>
+      <AccountSettingsPanel authMode={authMode} profileDisplayName={profileDisplayName} profileLoading={profileLoading} profileError={profileError} businessName={businessName} businessTimezone={businessTimezone} businessCurrency={businessCurrency} onProfileUpdate={onProfileUpdate} onBusinessDetailsUpdate={onBusinessDetailsUpdate} />
       {authMode === "cloud" && <MfaSettings />}
       {authMode === "cloud" && <AdminInviteAcceptancePanel />}
       {authMode === "cloud" && <section className="guide-callout account-license-panel" aria-live="polite">
