@@ -448,8 +448,15 @@ test("TOTP enrollment raises assurance to AAL2 and admin access still requires a
 
   await page.getByRole("button", { name: "Abrir mi cuenta" }).click();
   await page.getByRole("button", { name: "Configurar autenticador" }).click();
-  await expect(page.locator(".mfa-enrollment code")).toBeVisible();
-  const secret = (await page.locator(".mfa-enrollment code").textContent())?.trim();
+  const enrollmentCode = page.locator(".mfa-enrollment code");
+  const enrollmentError = page.getByTestId("mfa-error");
+  await expect(enrollmentCode.or(enrollmentError)).toBeVisible();
+  if (await enrollmentError.isVisible()) {
+    const errorCode = await enrollmentError.getAttribute("data-error-code");
+    const errorMessage = await enrollmentError.textContent();
+    throw new Error(`TOTP enrollment failed in the account UI (code=${errorCode ?? "unavailable"}): ${errorMessage ?? "No diagnostic message"}`);
+  }
+  const secret = (await enrollmentCode.textContent())?.trim();
   if (!secret) throw new Error("Supabase Auth did not return a TOTP enrollment secret.");
 
   await page.locator("#mfa-enroll-code").fill(currentTotp(secret));
