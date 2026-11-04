@@ -160,6 +160,30 @@ test("cloud expenses persist fixed and variable costs with their period settings
   ]);
 
   await page.reload();
+
+  const reloadedScope = await page.evaluate(() => ({
+    selectedBusinessId: Object.entries(sessionStorage)
+      .find(([key]) => key.startsWith("fixora.selected-business."))?.[1] ?? null,
+    accessToken: (() => {
+      const key = Object.keys(localStorage).find((candidate) => candidate.endsWith("-auth-token"));
+      const raw = key ? localStorage.getItem(key) : null;
+      if (!raw) return null;
+      const parsed = JSON.parse(raw) as { access_token?: unknown };
+      return typeof parsed.access_token === "string" ? parsed.access_token : null;
+    })(),
+  }));
+  expect(reloadedScope.selectedBusinessId, "the same business must remain selected after reload").toBe(businessId);
+  expect(reloadedScope.accessToken, "the authenticated session must survive reload").toBeTruthy();
+  const reloadedRowsResponse = await fetch(
+    `${supabaseUrl}/rest/v1/fixora_expenses?select=name,expense_type,amount&business_id=eq.${businessId}&is_active=eq.true&order=expense_type.asc,name.asc`,
+    { headers: { apikey: anonKey, Authorization: `Bearer ${reloadedScope.accessToken}` } },
+  );
+  expect(reloadedRowsResponse.ok, "the reloaded session must still read its own expenses").toBeTruthy();
+  expect(await reloadedRowsResponse.json()).toEqual([
+    { name: "Renta E2E", expense_type: "fixed", amount: 5000 },
+    { name: "Empaque E2E", expense_type: "variable", amount: 12.5 },
+  ]);
+
   await page.getByRole("button", { name: "Control de gastos", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Controla tus gastos." })).toBeVisible();
   await expect(page.locator(".expense-entry").filter({ hasText: "Renta E2E" })).toBeVisible();
