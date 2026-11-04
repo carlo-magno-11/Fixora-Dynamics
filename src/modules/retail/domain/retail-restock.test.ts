@@ -128,8 +128,10 @@ describe("calculateRetailRestockRecommendation", () => {
   it("rejects replenishment day totals that exceed the safe integer range", () => {
     expect(() => calculateRetailRestockRecommendation({
       ...base,
+      averageDailyDemand: 1,
       leadTimeDays: Number.MAX_SAFE_INTEGER,
       reviewPeriodDays: 1,
+      safetyStockUnits: 0,
     })).toThrow("Los días de abastecimiento y revisión excede el rango numérico permitido.");
   });
 });
