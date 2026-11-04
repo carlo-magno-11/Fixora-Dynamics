@@ -793,3 +793,16 @@ Durante la revisión final detecté que el camino idempotente de un código ya r
 - Se añadieron pruebas unitarias para umbral, stock suficiente, demanda cero, múltiplo/MOQ, reservas superiores al stock vendible y validaciones de rango. La validación CI del nuevo HEAD aún debe confirmarse.
 - Se documentó el alcance y sus límites en `docs/KIT-MODULES-IMPLEMENTATION-PLAN.md`.
 - El dominio sigue sin UI, persistencia, conexión al ledger ni RLS. No se creó ni aplicó migración Supabase.
+
+
+## 2026-11-04 — Estrategia de producto basada en evidencia
+
+- Se revisó el documento de problemas del usuario y se separaron observaciones, hipótesis y afirmaciones que requieren validación.
+- Se investigaron estadísticas de INEGI (Censos Económicos 2024 y Medición de Economía Informal 2024), CNBV/ENIF/ENAFIN, BBVA Research, estudios de gestión de microempresas en México y ensayos de capacitación/analítica en Guatemala, Kenia, México y otros mercados.
+- Se documentó una definición más amplia del problema: decisiones de negocio bajo información incompleta, fragmentada y con fricción operativa; no se reduce a “analfabetización financiera”.
+- Se propuso posicionar Fixora como sistema de claridad y decisiones: registro mínimo → explicación → escenarios → acción → retroalimentación.
+- Se cuestionaron propuestas de automatización bancaria por SMS, asignación universal de porcentajes, score financiero de 10 preguntas, bloqueo rígido de cotizaciones y comunidad prematura.
+- Se compararon Treinta, Alegra, Bind ERP y CONTPAQi; la gestión básica ya tiene competidores, por lo que la diferenciación propuesta se centra en tiempo del dueño, dinero comprometido, escenarios y estimado vs real.
+- Documento completo: `docs/PRODUCT-STRATEGY-ROOT-PROBLEM-AND-COMMERCIAL-ROADMAP.md`.
+- No se modificó código de producto, esquema de base de datos, licencias ni precios. Es una estrategia propuesta para revisión, no un cambio de alcance aprobado.
+- No se ejecutaron migraciones remotas ni despliegues. El nuevo commit documental aún no tiene workflows de CI visibles.
