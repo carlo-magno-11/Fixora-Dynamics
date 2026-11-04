@@ -843,3 +843,28 @@ tr { border-color: var(--line); }
   .local-import-backup-actions { align-items: stretch; flex-direction: column; padding: 14px; }
   .local-import-backup-actions button { width: 100%; }
 }
+
+.local-import-file-field {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  color: var(--fixora-forest);
+  font-size: 11px;
+  font-weight: 650;
+}
+.local-import-file-field input {
+  max-width: 100%;
+  color: var(--ink-soft);
+  font-size: 10px;
+  font-weight: 400;
+}
+.local-import-file-field input::file-selector-button {
+  margin-right: 9px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--canvas);
+  color: var(--fixora-deep);
+  cursor: pointer;
+}
+.local-import-file-field input:disabled { cursor: not-allowed; opacity: .6; }
