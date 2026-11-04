@@ -49,7 +49,10 @@ const history = [{
 }];
 
 function source(raw: LocalImportRawBundle): LocalImportSourcePort {
-  return { read: () => raw };
+  return {
+    read: () => raw,
+    createBackup: () => JSON.stringify(raw),
+  };
 }
 
 function repository(
