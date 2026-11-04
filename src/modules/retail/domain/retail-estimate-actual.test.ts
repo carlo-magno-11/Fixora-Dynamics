@@ -83,7 +83,8 @@ describe("compareRetailEstimateWithActual", () => {
     const result = compareRetailEstimateWithActual(zeroEstimate, actualOrder());
 
     expect(result.variance.contributionBeforeFixedRate).toBeNull();
-    expect(result.variance.estimatedContributionAfterFixedRate).toBeNull();
+    expect(result.variance.estimatedContributionAfterFixedRate).toBeUndefined();
+    expect(result.variance.estimatedContributionAfterFixedRateRate).toBeNull();
   });
 
   it("rejects estimates and actuals with different currencies", () => {
@@ -102,6 +103,34 @@ describe("compareRetailEstimateWithActual", () => {
       { ...estimate, costOfGoodsSold: -0.01 },
       actualOrder(),
     )).toThrow("El campo costOfGoodsSold debe ser finito y no negativo.");
+  });
+
+  it("rejects non-finite or negative values in deserialized actual snapshots", () => {
+    const valid = actualOrder();
+    expect(() => compareRetailEstimateWithActual(
+      estimate,
+      { ...valid, costOfGoodsSold: Number.NaN },
+    )).toThrow("El campo actual.costOfGoodsSold debe ser finito y no negativo.");
+    expect(() => compareRetailEstimateWithActual(
+      estimate,
+      { ...valid, orderFees: -1 },
+    )).toThrow("El campo actual.orderFees debe ser finito y no negativo.");
+    expect(() => compareRetailEstimateWithActual(
+      estimate,
+      { ...valid, contributionBeforeFixed: Number.POSITIVE_INFINITY },
+    )).toThrow("El campo actual.contributionBeforeFixed debe ser finito.");
+  });
+
+  it("rejects internally inconsistent deserialized actual snapshots", () => {
+    const valid = actualOrder();
+    expect(() => compareRetailEstimateWithActual(
+      estimate,
+      { ...valid, contributionBeforeFixed: valid.contributionBeforeFixed + 10 },
+    )).toThrow("El resultado real contiene una inconsistencia en contributionBeforeFixed.");
+    expect(() => compareRetailEstimateWithActual(
+      estimate,
+      { ...valid, estimatedContributionAfterFixed: valid.estimatedContributionAfterFixed - 5 },
+    )).toThrow("El resultado real contiene una inconsistencia en estimatedContributionAfterFixed.");
   });
 
   it("keeps negative actual contribution visible instead of clamping it to zero", () => {
