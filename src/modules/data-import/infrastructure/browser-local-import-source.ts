@@ -4,7 +4,8 @@ import {
   EXPENSES_STORAGE_KEY,
 } from "../../../shared/infrastructure/storage-keys";
 import { resolveKeyValueStorage, type KeyValueStorageSource } from "../../../shared/infrastructure/key-value-storage";
-import type { LocalImportBackupScope, LocalImportRawBundle } from "../application/local-import-service";
+import type { LocalImportBackupScope, LocalImportSourcePort } from "../application/local-import-service";
+import type { LocalImportRawBundle } from "../domain/local-import";
 
 function readKeys(storageSource: KeyValueStorageSource): Omit<LocalImportRawBundle, "storageError" | "storageConflict"> {
   const storage = resolveKeyValueStorage(storageSource);

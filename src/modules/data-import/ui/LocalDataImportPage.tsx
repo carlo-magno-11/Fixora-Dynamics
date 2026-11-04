@@ -208,7 +208,7 @@ export function LocalDataImportPage({
 
       <div className="local-import-backup-actions">
         <div><strong>{backupBundle ? "Restaurar desde un respaldo existente." : "Primero, conserva una copia independiente."}</strong><p>{backupBundle ? "El contenido del archivo se valida y se importa sin modificar el archivo original." : "Puedes descargar una copia JSON o recuperar datos desde un respaldo creado anteriormente."}</p></div>
-        {!backupBundle && <button className="outline-button" type="button" disabled={loading || saving || backupUnavailable} onClick={downloadBackup}>Descargar respaldo JSON ↓</button>}
+        {!backupBundle && <button className="outline-button" type="button" disabled={loading || saving || backupUnavailable} onClick={() => downloadBackup()}>Descargar respaldo JSON ↓</button>}
         <label className="local-import-file-field">
           <span>{backupBundle ? "Elegir otro respaldo" : "Seleccionar respaldo JSON"}</span>
           <input type="file" accept=".json,application/json" disabled={loading || saving || attempted} onChange={(event) => void loadBackupFile(event)} />
