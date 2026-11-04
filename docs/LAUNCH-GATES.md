@@ -44,6 +44,7 @@ Estado al 3 de noviembre de 2026. Este documento separa evidencia existente de t
 - [x] En el inventario de tablas, los datos operativos Fixora están en cero filas; fixora_products contiene un SKU y la matriz de permisos admin 18 filas. No se observaron órdenes, licencias, tickets ni negocios de clientes.
 - [ ] Revisar cambios manualmente y probar endpoints con usuario anónimo, autenticado AAL1, admin sin permiso y admin AAL2.
 - [ ] Completar MFA real y recuperación de cuenta en staging.
+- [ ] Validar parser HTTP con `Content-Length` numérico y confirmar en Browser E2E los 403 del endpoint `admin-create-invite` para AAL1 y AAL2 sin permiso; el intento anterior quedó bloqueado por un HTTP 400 de validación.
 - [ ] Definir bootstrap de platform_owner fuera de banda, auditado y sin registro público.
 - [ ] Confirmar rate limits Auth/WAF y protección contra creación masiva de cuentas.
 - [ ] Revisar Storage buckets y policies en el proyecto correcto; no asumir que un bucket heredado pertenece a Fixora.
