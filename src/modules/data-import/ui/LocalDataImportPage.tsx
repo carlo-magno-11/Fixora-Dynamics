@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { LocalImportService, LocalImportResult, LocalImportPreview } from "../application/local-import-service";
 import type { LocalImportSelection } from "../application/local-import-service";
+import { parseLocalImportBackup, type LocalImportRawBundle } from "../domain/local-import";
 
 function hasIssue(preview: LocalImportPreview, category: "catalog" | "expenses" | "history" | "storage"): boolean {
   return preview.issues.some((issue) => issue.category === category);
@@ -22,6 +23,8 @@ export function LocalDataImportPage({
   onBack: () => void;
 }) {
   const [preview, setPreview] = useState<LocalImportPreview | null>(null);
+  const [backupBundle, setBackupBundle] = useState<LocalImportRawBundle | null>(null);
+  const backupRequest = useRef(0);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -41,7 +44,9 @@ export function LocalDataImportPage({
     setResult(null);
     setSelection({ catalog: false, expenses: false, history: false });
     try {
-      const next = await service.preview(businessId, businessCurrency);
+      const next = backupBundle
+        ? await service.previewData(backupBundle, businessId, businessCurrency)
+        : await service.preview(businessId, businessCurrency);
       setPreview(next);
     } catch (cause) {
       setPreview(null);
@@ -54,7 +59,9 @@ export function LocalDataImportPage({
   useEffect(() => {
     let active = true;
     setLoading(true);
+    backupRequest.current += 1;
     setPreview(null);
+    setBackupBundle(null);
     setError("");
     setResult(null);
     setSelection({ catalog: false, expenses: false, history: false });
@@ -68,6 +75,38 @@ export function LocalDataImportPage({
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
   }, [businessId, businessCurrency, service]);
+
+  async function loadBackupFile(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.currentTarget.files?.[0];
+    event.currentTarget.value = "";
+    if (!file) return;
+    const requestId = ++backupRequest.current;
+    setLoading(true);
+    setError("");
+    setPreview(null);
+    setBackupBundle(null);
+    setResult(null);
+    setSelection({ catalog: false, expenses: false, history: false });
+    setImportKey(crypto.randomUUID());
+    setAttempted(false);
+    try {
+      if (file.size > 1_100_000) {
+        throw new Error("El archivo supera el límite admitido. Divide los datos y genera respaldos más pequeños.");
+      }
+      const raw = parseLocalImportBackup(await file.text());
+      const next = await service.previewData(raw, businessId, businessCurrency);
+      if (requestId !== backupRequest.current) return;
+      setBackupBundle(raw);
+      setPreview(next);
+      setBackupMessage("Respaldo leído. El archivo original no se modifica.");
+    } catch (cause) {
+      if (requestId === backupRequest.current) {
+        setError(cause instanceof Error ? cause.message : "No fue posible leer el respaldo.");
+      }
+    } finally {
+      if (requestId === backupRequest.current) setLoading(false);
+    }
+  }
 
   function downloadBackup() {
     try {
@@ -98,12 +137,20 @@ export function LocalDataImportPage({
     setAttempted(true);
     setError("");
     try {
-      const imported = await service.importBundle({
-        businessId,
-        businessCurrency,
-        importKey,
-        selection,
-      });
+      const imported = backupBundle
+        ? await service.importData({
+          raw: backupBundle,
+          businessId,
+          businessCurrency,
+          importKey,
+          selection,
+        })
+        : await service.importBundle({
+          businessId,
+          businessCurrency,
+          importKey,
+          selection,
+        });
       setResult(imported);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "No fue posible completar la importación.");
@@ -122,7 +169,7 @@ export function LocalDataImportPage({
     <div className="secondary-page local-import-page">
       <p className="eyebrow">MI NEGOCIO <span> / </span> MIGRACIÓN SEGURA</p>
       <h1>Trae tus datos locales a la nube.</h1>
-      <p className="page-lead">Revisa lo que está guardado en este navegador y elige qué copiar al negocio conectado. La importación no elimina ni modifica los datos originales.</p>
+      <p className="page-lead">Revisa lo que está guardado en este navegador y elige qué copiar al negocio conectado. La importación no elimina ni modifica los datos originales ni el archivo de respaldo.</p>
 
       <section className="surface-card local-import-safety">
         <div className="section-heading">
@@ -139,15 +186,19 @@ export function LocalDataImportPage({
       </section>
 
       <div className="local-import-backup-actions">
-        <div><strong>Primero, conserva una copia independiente.</strong><p>La exportación guarda el contenido local original, incluso si alguna categoría necesita revisión.</p></div>
-        <button className="outline-button" type="button" disabled={loading || saving || Boolean(preview && hasIssue(preview, "storage"))} onClick={downloadBackup}>Descargar respaldo JSON ↓</button>
+        <div><strong>{backupBundle ? "Restaurar desde un respaldo existente." : "Primero, conserva una copia independiente."}</strong><p>{backupBundle ? "El contenido del archivo se valida y se importa sin modificar el archivo original." : "Puedes descargar una copia JSON o recuperar datos desde un respaldo creado anteriormente."}</p></div>
+        {!backupBundle && <button className="outline-button" type="button" disabled={loading || saving || Boolean(preview && hasIssue(preview, "storage"))} onClick={downloadBackup}>Descargar respaldo JSON ↓</button>}
+        <label className="local-import-file-field">
+          <span>{backupBundle ? "Elegir otro respaldo" : "Seleccionar respaldo JSON"}</span>
+          <input type="file" accept=".json,application/json" disabled={loading || saving || attempted} onChange={(event) => void loadBackupFile(event)} />
+        </label>
       </div>
       {backupMessage && <p className="save-message" role="status">{backupMessage}</p>}
 
       <section className="surface-card local-import-preview">
         <div className="section-heading">
           <div className="section-number">02</div>
-          <div><h2>Revisión de datos</h2><p>Destino: negocio seleccionado · Moneda: {businessCurrency}</p></div>
+          <div><h2>Revisión de datos</h2><p>Origen: {backupBundle ? "archivo de respaldo" : "almacenamiento de este navegador"} · Destino: negocio seleccionado · Moneda: {businessCurrency}</p></div>
           <button className="outline-button" type="button" disabled={loading || saving || attempted} onClick={() => void loadPreview()}>{loading ? "Revisando…" : "Volver a analizar"}</button>
         </div>
 
