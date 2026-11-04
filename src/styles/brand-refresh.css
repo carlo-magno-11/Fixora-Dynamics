@@ -703,3 +703,65 @@ tr { border-color: var(--line); }
   .theme-swatch small, .theme-swatch code { font-size: 8px; }
   .theme-color-grid { grid-template-columns: 1fr; }
 }
+
+.account-settings-panel {
+  margin: 1.5rem 0;
+  padding: clamp(1rem, 2.4vw, 1.6rem);
+  border: 1px solid color-mix(in srgb, var(--fixora-deep, #6E0D25) 16%, transparent);
+  border-radius: 1.2rem;
+  background: color-mix(in srgb, var(--surface, #fff) 94%, var(--fixora-copper, #DCAB6B));
+}
+.account-settings-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+.account-settings-heading h2 {
+  margin: .25rem 0 .4rem;
+}
+.account-settings-heading p {
+  max-width: 46rem;
+  margin: 0;
+  color: var(--ink-soft);
+}
+.account-settings-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+.account-settings-card {
+  display: grid;
+  align-content: start;
+  gap: .85rem;
+  min-width: 0;
+  padding: 1.15rem;
+  border: 1px solid color-mix(in srgb, var(--fixora-deep, #6E0D25) 12%, transparent);
+  border-radius: 1rem;
+  background: var(--surface, #fff);
+}
+.account-settings-card h3 {
+  margin: -.35rem 0 .1rem;
+}
+.account-settings-card .field {
+  margin: 0;
+}
+.account-settings-card .field-hint {
+  margin: 0;
+}
+.account-settings-status {
+  margin: 0;
+  color: var(--fixora-forest, #16302B);
+  font-size: .9rem;
+}
+.account-settings-error {
+  margin: 0;
+  color: #9f2638;
+  font-size: .9rem;
+}
+@media (max-width: 760px) {
+  .account-settings-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
