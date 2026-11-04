@@ -237,6 +237,17 @@ test("switching businesses isolates the catalog view and cloud records", async (
   await page.getByRole("button", { name: "Añadir al catálogo" }).click();
   await expect(page.getByText("Elemento añadido al catálogo cloud.")).toBeVisible();
 
+  await page.getByRole("button", { name: "Control de gastos", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Controla tus gastos." })).toBeVisible();
+  await page.getByRole("button", { name: "+ Añadir gasto fijo" }).click();
+  const firstBusinessExpense = page.locator(".expense-entry").first();
+  await firstBusinessExpense.locator("input").nth(0).fill("Renta solo principal");
+  await firstBusinessExpense.locator("input").nth(1).fill("3200");
+  await page.getByRole("button", { name: "Guardar cambios" }).click();
+  await expect(page.getByText("Gastos y asignación guardados en Supabase. Los cambios se aplicaron como una sola operación.")).toBeVisible();
+  await page.getByRole("button", { name: "Catálogo", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Tu catálogo de productos y servicios." })).toBeVisible();
+
   const token = await page.evaluate(() => {
     const key = Object.keys(localStorage).find((candidate) => candidate.endsWith("-auth-token"));
     const raw = key ? localStorage.getItem(key) : null;
@@ -288,6 +299,23 @@ test("switching businesses isolates the catalog view and cloud records", async (
   await page.getByRole("button", { name: "Catálogo", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Tu catálogo de productos y servicios." })).toBeVisible();
   await expect(page.locator(".catalog-row").filter({ hasText: productName })).toHaveCount(0);
+
+  await page.getByRole("button", { name: "Control de gastos", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Controla tus gastos." })).toBeVisible();
+  await expect(page.locator(".expense-entry")).toHaveCount(0);
+
+  await page.getByRole("button", { name: "Cambiar negocio" }).click();
+  await expect(page.getByRole("heading", { name: "Elige tu espacio." })).toBeVisible();
+  await page.getByRole("button", { name: new RegExp(firstBusinessName) }).click();
+  await expect(page.locator(".topbar-caption")).toHaveText(firstBusinessName);
+  await page.getByRole("button", { name: "Control de gastos", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Controla tus gastos." })).toBeVisible();
+  const restoredExpense = page.locator(".expense-entry").filter({ has: page.getByPlaceholder("Ej. renta del local") });
+  await expect(restoredExpense.locator("input").first()).toHaveValue("Renta solo principal");
+  await expect(restoredExpense.locator("input").nth(1)).toHaveValue("3200");
+
+  await page.getByRole("button", { name: "Catálogo", exact: true }).click();
+  await expect(page.locator(".catalog-row").filter({ hasText: productName })).toHaveCount(1);
 
   await context.close();
 });
