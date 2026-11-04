@@ -1,7 +1,7 @@
 # Especificación — importación local a Fixora Cloud
 
 Estado: implementación inicial en la rama central; no habilitada en Supabase remoto ni aprobada para staging.
-Fecha de revisión: 3 de noviembre de 2026.
+Fecha de revisión: 4 de noviembre de 2026.
 Rama: integration/fixora-mainline-20261103.
 
 ## 1. Objetivo y límites
@@ -73,13 +73,22 @@ Estado consultado para HEAD `003b9fedf0c49af56c2b75e8ced002309c84b14c`:
 
 Por tanto, la compilación y pruebas de aplicación pasaron en ese HEAD, pero la reconstrucción de base, pgTAP, CodeQL y Security no están aprobados en ese mismo HEAD. No afirmar que la migración está validada.
 
+
+## 6.1 Reintentos deterministas entre recargas y pestañas — 4 de noviembre de 2026
+
+- El cliente calcula un fingerprint SHA-256 sobre negocio, moneda, categorías seleccionadas y contenido seleccionado. El fingerprint no se guarda junto con el contenido de origen.
+- La clave enviada al servidor se deriva como UUIDv5 del negocio y del fingerprint mediante el namespace URL de UUID. Dos pestañas, recargas o reintentos para la misma selección generan exactamente la misma clave sin depender de una escritura previa en localStorage.
+- Un cambio de negocio, categoría o contenido produce otra clave. El servidor conserva la autoridad final: la RPC vuelve a comprobar membresía, destino, hash del payload y unicidad de la importación.
+- Esto elimina la carrera de creación inicial de claves entre pestañas y el fallo de cuota/limpieza de localStorage para el ledger de reintentos del navegador. No reemplaza las pruebas de concurrencia de la restricción única ni las pruebas E2E con respuestas perdidas.
+- Pruebas Vitest añadidas para estabilidad entre recargas/pestañas, separación por negocio/payload y rechazo de entradas inválidas. Deben ejecutarse en CI del nuevo HEAD antes de considerar validado este cambio.
+
 ## 7. Pendientes antes de activar
 
 1. Reejecutar Database tests desde una reconstrucción limpia y corregir cualquier fallo de migración/pgTAP.
 2. Reejecutar CodeQL y Security sobre el mismo HEAD.
 3. Revisar carrera entre importaciones simultáneas, incluidos dos import_keys diferentes con el mismo ID de origen; verificar que la restricción única hace rollback completo y que el reintento es recuperable.
 4. Añadir E2E con dos usuarios, dos negocios y al menos dos dispositivos; probar cambio de negocio durante una operación, doble clic, timeout, desconexión y reintento.
-5. Comprobar que el resultado de una importación ya completada se puede recuperar después de recargar o perder la respuesta; documentar el uso de la misma clave idempotente.
+5. Comprobar en E2E que el resultado de una importación ya completada se recupera después de recargar o perder la respuesta; la clave UUIDv5 determinista ya conserva la misma identidad entre pestañas y recargas.
 6. Revisar el caso de navegador compartido: los datos legacy globales no tienen propietario verificable; la UI debe advertir que la persona confirme que reconoce esos datos antes de copiarlos a su cuenta.
 7. Verificar conteos y muestras de catálogo/gastos/historial después de importar.
 8. Probar exportación y restauración de los originales locales.
