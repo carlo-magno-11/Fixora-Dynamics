@@ -7,30 +7,57 @@ import {
 } from "../../../shared/infrastructure/storage-keys";
 import type { KeyValueStorage } from "../../../shared/infrastructure/key-value-storage";
 
-function memoryStorage(values: Record<string, string>): KeyValueStorage {
+function memoryStorage(values: Record<string, string> = {}): KeyValueStorage {
   return {
     getItem: (key) => values[key] ?? null,
     setItem: () => { throw new Error("Import source must be read-only"); },
   };
 }
 
+const localData = {
+  [CATALOG_STORAGE_KEY]: '[{"id":"local-item"}]',
+  [EXPENSES_STORAGE_KEY]: '{"fixed":[]}',
+  [CALCULATION_HISTORY_STORAGE_KEY]: '[{"id":"local-history"}]',
+};
+
 describe("browser local import source", () => {
-  it("reads the legacy catalog, expenses and history without writing or deleting", () => {
-    const values = {
-      [CATALOG_STORAGE_KEY]: '[{"id":"local-item"}]',
-      [EXPENSES_STORAGE_KEY]: '{"fixed":[]}',
-      [CALCULATION_HISTORY_STORAGE_KEY]: '[{"id":"local-history"}]',
-    };
-    const source = createBrowserLocalImportSource(memoryStorage(values));
+  it("reads current scoped data when no legacy data exists", () => {
+    const source = createBrowserLocalImportSource(memoryStorage(localData), memoryStorage());
     expect(source.read()).toEqual({
-      catalog: values[CATALOG_STORAGE_KEY],
-      expenses: values[EXPENSES_STORAGE_KEY],
-      history: values[CALCULATION_HISTORY_STORAGE_KEY],
+      catalog: localData[CATALOG_STORAGE_KEY],
+      expenses: localData[EXPENSES_STORAGE_KEY],
+      history: localData[CALCULATION_HISTORY_STORAGE_KEY],
     });
-    expect(values).toEqual({
-      [CATALOG_STORAGE_KEY]: '[{"id":"local-item"}]',
-      [EXPENSES_STORAGE_KEY]: '{"fixed":[]}',
-      [CALCULATION_HISTORY_STORAGE_KEY]: '[{"id":"local-history"}]',
+  });
+
+  it("falls back to unscoped legacy data only when the current scope is empty", () => {
+    const source = createBrowserLocalImportSource(memoryStorage(), memoryStorage(localData));
+    expect(source.read()).toEqual({
+      catalog: localData[CATALOG_STORAGE_KEY],
+      expenses: localData[EXPENSES_STORAGE_KEY],
+      history: localData[CALCULATION_HISTORY_STORAGE_KEY],
+    });
+  });
+
+  it("refuses to silently merge current-account and legacy browser data", () => {
+    const source = createBrowserLocalImportSource(
+      memoryStorage({ [CATALOG_STORAGE_KEY]: '[{"id":"scoped"}]' }),
+      memoryStorage({ [EXPENSES_STORAGE_KEY]: '{"fixed":[]}' }),
+    );
+    expect(source.read()).toMatchObject({
+      catalog: null,
+      expenses: null,
+      history: null,
+      storageConflict: true,
+    });
+  });
+
+  it("reads once when both sources are the same storage object", () => {
+    const storage = memoryStorage(localData);
+    expect(createBrowserLocalImportSource(storage, storage).read()).toEqual({
+      catalog: localData[CATALOG_STORAGE_KEY],
+      expenses: localData[EXPENSES_STORAGE_KEY],
+      history: localData[CALCULATION_HISTORY_STORAGE_KEY],
     });
   });
 
@@ -47,7 +74,7 @@ describe("browser local import source", () => {
   });
 
   it("does not expose a write or delete operation", () => {
-    const source = createBrowserLocalImportSource(memoryStorage({}));
+    const source = createBrowserLocalImportSource(memoryStorage());
     expect(Object.keys(source)).toEqual(["read"]);
   });
 });
