@@ -35,8 +35,6 @@ export function MfaSettings() {
         setErrorCode(readSafeErrorCode(requestError));
       } else {
         setFactors(data.totp.map((factor) => ({ id: factor.id, friendly_name: factor.friendly_name, status: factor.status })));
-        setError("");
-        setErrorCode(null);
       }
     } catch (requestError) {
       setError("No fue posible consultar los factores de seguridad. Comprueba tu conexión e inténtalo de nuevo.");
