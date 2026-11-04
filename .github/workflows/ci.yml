@@ -26,4 +26,4 @@ jobs:
       - name: Check Supabase Edge Functions
         run: deno check supabase/functions/activate-license/index.ts supabase/functions/admin-verify-etsy-purchase/index.ts supabase/functions/admin-reissue-activation-code/index.ts supabase/functions/admin-revoke-device/index.ts supabase/functions/admin-support-reply/index.ts supabase/functions/admin-create-invite/index.ts supabase/functions/admin-accept-invite/index.ts supabase/functions/admin-console/index.ts supabase/functions/admin-support-inbox/index.ts
       - name: Test Edge Function utilities
-        run: deno test supabase/functions/_shared/crypto.test.ts supabase/functions/_shared/http.test.ts supabase/functions/_shared/rate-limit.test.ts
+        run: deno test supabase/functions/_shared/auth-config.test.ts supabase/functions/_shared/crypto.test.ts supabase/functions/_shared/http.test.ts supabase/functions/_shared/rate-limit.test.ts
