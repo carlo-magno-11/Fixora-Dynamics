@@ -41,7 +41,7 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p supabase/functions
-          printf 'SB_JWT_ISSUER=http://127.0.0.1:54321/auth/v1\\n' > supabase/functions/.env
+          printf '%s\n' 'SB_JWT_ISSUER=http://127.0.0.1:54321/auth/v1' > supabase/functions/.env
           supabase start
           supabase db reset
           supabase status -o env > /tmp/fixora-supabase.env
