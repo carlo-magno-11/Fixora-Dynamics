@@ -82,7 +82,11 @@ describe("browser local import source", () => {
     };
     expect(backup.format).toBe("fixora-local-backup");
     expect(backup.version).toBe(1);
-    expect(backup.data).toEqual(localData);
+    expect(backup.data).toEqual({
+      catalog: localData[CATALOG_STORAGE_KEY],
+      expenses: localData[EXPENSES_STORAGE_KEY],
+      history: localData[CALCULATION_HISTORY_STORAGE_KEY],
+    });
   });
 
   it("refuses to export a backup when storage scopes are ambiguous", () => {
