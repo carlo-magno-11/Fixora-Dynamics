@@ -138,3 +138,5 @@ export function createLocalImportService(
 
   return { preview, importBundle };
 }
+
+export type LocalImportService = ReturnType<typeof createLocalImportService>;
