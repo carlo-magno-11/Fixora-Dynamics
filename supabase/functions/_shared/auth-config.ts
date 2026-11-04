@@ -1,8 +1,15 @@
-import { fromSupabaseUrl } from "npm:@supabase/server@1.9.2";
-
 export function resolveSupabaseAuthIssuer(supabaseUrl: string, configuredIssuer?: string): string {
   if (!supabaseUrl.trim()) throw new Error("SUPABASE_URL is required");
-  if (!configuredIssuer?.trim()) return fromSupabaseUrl(supabaseUrl);
+
+  if (!configuredIssuer?.trim()) {
+    let projectUrl: URL;
+    try {
+      projectUrl = new URL(supabaseUrl);
+    } catch {
+      throw new Error("SUPABASE_URL must be a valid absolute URL");
+    }
+    return `${projectUrl.origin}/auth/v1`;
+  }
 
   let parsed: URL;
   try {
@@ -11,7 +18,7 @@ export function resolveSupabaseAuthIssuer(supabaseUrl: string, configuredIssuer?
     throw new Error("SB_JWT_ISSUER must be a valid absolute URL");
   }
 
-  const localHosts = new Set(["localhost", "127.0.0.1", "::1"]);
+  const localHosts = new Set(["localhost", "127.0.0.1", "::1", "[::1]"]);
   const isLocalHttp = parsed.protocol === "http:" && localHosts.has(parsed.hostname);
   if (parsed.protocol !== "https:" && !isLocalHttp) {
     throw new Error("SB_JWT_ISSUER must use HTTPS except for loopback development");
