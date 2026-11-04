@@ -1,7 +1,7 @@
 \set ON_ERROR_STOP on
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
-SELECT plan(20);
+SELECT plan(31);
 SELECT has_table('fixora_private','fixora_import_batches','Import ledger exists');
 SELECT has_table('fixora_private','fixora_import_source_records','Source map exists');
 SELECT ok((SELECT relrowsecurity AND relforcerowsecurity FROM pg_class WHERE oid='fixora_private.fixora_import_batches'::regclass),'Import ledger forces RLS');
@@ -33,5 +33,153 @@ SELECT is((SELECT count(*) FROM public.fixora_calculation_snapshots WHERE busine
 SELECT is(public.fixora_import_local_bundle(current_setting('app.fixora_test_business_id')::uuid,'dddddddd-dddd-4ddd-8ddd-dddddddddd41',current_setting('app.fixora_import_catalog')::jsonb,current_setting('app.fixora_import_expenses')::jsonb,current_setting('app.fixora_import_history')::jsonb)::text,current_setting('app.fixora_import_result'),'Same import key is idempotent');
 SELECT throws_ok($sql$SELECT public.fixora_import_local_bundle(current_setting('app.fixora_test_business_id')::uuid,'dddddddd-dddd-4ddd-8ddd-dddddddddd41','[{"id":"local-catalog-1","name":"Changed","kind":"product","unit":"pieza","sku":"TAZA-01","currency":"MXN","referenceCost":48.5,"active":true}]'::jsonb,null,'[]'::jsonb)$sql$,'22023',NULL,'Import key cannot be reused with a different payload');
 SELECT throws_ok($sql$SELECT public.fixora_import_local_bundle(current_setting('app.fixora_test_business_id')::uuid,'ffffffff-ffff-4fff-8fff-fffffffffff2','[]'::jsonb,'{"fixed":[],"variable":[],"expectedUnits":100.5,"period":"month","currency":"MXN"}'::jsonb,'[]'::jsonb)$sql$,'22023',NULL,'Fractional units are rejected');
+SELECT is(
+  (public.fixora_import_local_bundle(
+    current_setting('app.fixora_test_business_id')::uuid,
+    'eeeeeeee-eeee-4eee-8eee-eeeeeeeeee41',
+    current_setting('app.fixora_import_catalog')::jsonb,
+    null,
+    '[]'::jsonb
+  )->>'catalogSkipped')::integer,
+  1,
+  'A new import key cannot duplicate a previously imported local catalog ID'
+);
+
+SELECT is(
+  (public.fixora_import_local_bundle(
+    current_setting('app.fixora_test_business_id')::uuid,
+    'eeeeeeee-eeee-4eee-8eee-eeeeeeeeee42',
+    '[]'::jsonb,
+    null,
+    current_setting('app.fixora_import_history')::jsonb
+  )->>'historySkipped')::integer,
+  1,
+  'A new import key cannot duplicate a previously imported local history ID'
+);
+
+SELECT throws_ok(
+  $sql$SELECT public.fixora_import_local_bundle(
+    current_setting('app.fixora_test_business_id')::uuid,
+    'ffffffff-ffff-4fff-8fff-fffffffffff9',
+    '[{"id":"local-catalog-duplicate","name":"Duplicate SKU","kind":"product","unit":"pieza","sku":"TAZA-01","currency":"MXN","referenceCost":1,"active":true}]'::jsonb,
+    null,
+    '[]'::jsonb
+  )$sql$,
+  '23505',
+  NULL,
+  'Existing cloud SKU conflicts are rejected'
+);
+
+SELECT throws_ok(
+  $sql$SELECT public.fixora_import_local_bundle(
+    current_setting('app.fixora_test_business_id')::uuid,
+    'ffffffff-ffff-4fff-8fff-fffffffffff0',
+    '[]'::jsonb,
+    '{"fixed":[],"variable":[],"expectedUnits":100,"period":"month","currency":"USD"}'::jsonb,
+    '[]'::jsonb
+  )$sql$,
+  '22023',
+  NULL,
+  'Expense currency mismatch is rejected without conversion'
+);
+
+SELECT throws_ok(
+  $sql$SELECT public.fixora_import_local_bundle(
+    current_setting('app.fixora_test_business_id')::uuid,
+    'ffffffff-ffff-4fff-8fff-fffffffffff1',
+    '[{"id":"local-catalog-rollback","name":"Rollback item","kind":"product","unit":"pieza","sku":"ROLLBACK-01","currency":"MXN","referenceCost":1,"active":true}]'::jsonb,
+    null,
+    '[{"id":"invalid-history","name":"Invalid history","createdAt":"2026-11-03T12:00:00Z","currency":"MXN","input":{},"result":{}}]'::jsonb
+  )$sql$,
+  '22023',
+  NULL,
+  'A failure in one category rolls back the whole import'
+);
+
+SELECT is(
+  (SELECT count(*) FROM public.fixora_catalog_items WHERE business_id=current_setting('app.fixora_test_business_id')::uuid),
+  1::bigint,
+  'A failed import leaves no partial catalog rows'
+);
+
+SELECT throws_ok(
+  $sql$SELECT public.fixora_import_local_bundle(
+    current_setting('app.fixora_test_business_id')::uuid,
+    'ffffffff-ffff-4fff-8fff-fffffffffff3',
+    (SELECT jsonb_agg(jsonb_build_object(
+      'id', 'too-many-' || g,
+      'name', 'Item ' || g,
+      'kind', 'product',
+      'unit', 'pieza',
+      'sku', 'SKU-' || g,
+      'currency', 'MXN',
+      'referenceCost', 1,
+      'active', true
+    )) FROM generate_series(1, 501) AS g),
+    null,
+    '[]'::jsonb
+  )$sql$,
+  '22023',
+  NULL,
+  'Import rejects more than five hundred catalog records'
+);
+
+SELECT throws_ok(
+  $sql$SELECT public.fixora_import_local_bundle(
+    current_setting('app.fixora_test_business_id')::uuid,
+    'ffffffff-ffff-4fff-8fff-fffffffffff4',
+    '[]'::jsonb,
+    jsonb_build_object('padding', pg_catalog.repeat('x', 1049000)),
+    '[]'::jsonb
+  )$sql$,
+  '22023',
+  NULL,
+  'Import rejects payloads larger than one mebibyte'
+);
+
+RESET ROLE;
+INSERT INTO public.fixora_business_memberships (business_id, user_id, role, status)
+SELECT id, 'cccccccc-cccc-4ccc-8ccc-cccccccccc43', 'viewer', 'active'
+FROM public.fixora_businesses
+WHERE name = 'Local Import A';
+
+SET LOCAL ROLE authenticated;
+SET LOCAL request.jwt.claim.sub='bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbb42';
+
+SELECT throws_ok(
+  $sql$SELECT public.fixora_import_local_bundle(
+    current_setting('app.fixora_test_business_id')::uuid,
+    'ffffffff-ffff-4fff-8fff-fffffffffff5',
+    '[{"id":"other-user-item","name":"Other user","kind":"product","unit":"pieza","sku":"OTHER-USER","currency":"MXN","referenceCost":1,"active":true}]'::jsonb,
+    null,
+    '[]'::jsonb
+  )$sql$,
+  '42501',
+  NULL,
+  'A non-member cannot import into another users business'
+);
+
+SET LOCAL request.jwt.claim.sub='cccccccc-cccc-4ccc-8ccc-cccccccccc43';
+
+SELECT throws_ok(
+  $sql$SELECT public.fixora_import_local_bundle(
+    current_setting('app.fixora_test_business_id')::uuid,
+    'ffffffff-ffff-4fff-8fff-fffffffffff6',
+    '[{"id":"viewer-item","name":"Viewer item","kind":"product","unit":"pieza","sku":"VIEWER-ITEM","currency":"MXN","referenceCost":1,"active":true}]'::jsonb,
+    null,
+    '[]'::jsonb
+  )$sql$,
+  '42501',
+  NULL,
+  'A viewer cannot import records into the business'
+);
+
+RESET ROLE;
+SELECT is(
+  (SELECT count(*) FROM fixora_private.fixora_import_batches WHERE business_id=current_setting('app.fixora_test_business_id')::uuid AND status='completed'),
+  3::bigint,
+  'Only the three successful, idempotent import batches are completed'
+);
+
 SELECT * FROM finish();
 ROLLBACK;
