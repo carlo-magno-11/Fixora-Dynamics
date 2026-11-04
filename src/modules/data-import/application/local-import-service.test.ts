@@ -38,13 +38,13 @@ const history = [{
   result: {
     materialCost: 48.5,
     laborCost: 60,
-    wasteCost: 2.425,
-    directCost: 3.5,
-    totalUnitCost: 129.425,
-    suggestedPrice: 190,
-    profitAtSuggestedPrice: 60.575,
-    effectiveMargin: 0.3188,
-    markup: 0.468,
+    wasteCost: 2.43,
+    directCost: 114.43,
+    totalUnitCost: 129.43,
+    suggestedPrice: 192.6,
+    profitAtSuggestedPrice: 55.47,
+    effectiveMargin: 0.3000118985808238,
+    markup: 0.42859571180220205,
   },
 }];
 
