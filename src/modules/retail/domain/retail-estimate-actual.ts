@@ -42,7 +42,7 @@ export interface RetailEstimateActualComparison {
 }
 
 const D = (value: number) => new Decimal(value);
-const ROUNDING_TOLERANCE = D("0.02");
+const ROUNDING_TOLERANCE = D(0.02);
 
 function assertAmount(value: number, field: string): void {
   if (!Number.isFinite(value) || value < 0) {
