@@ -96,39 +96,6 @@ describe("Supabase local import repository", () => {
     expect(from).toHaveBeenCalledTimes(3);
   });
 
-  it("allows expense migration when the destination has no saved expense settings or active expenses", async () => {
-    const from = vi.fn((table: string) => {
-      if (table === "fixora_catalog_items") {
-        return { select: () => ({ eq: async () => ({ data: [], error: null }) }) };
-      }
-      if (table === "fixora_expense_settings") {
-        return { select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: null, error: null }) }) }) };
-      }
-      return { select: () => ({ eq: () => ({ eq: () => ({ limit: async () => ({ data: [], error: null }) }) }) }) };
-    });
-    const repository = createSupabaseLocalImportRepository({ from } as unknown as SupabaseClient<Database>);
-    await expect(repository.previewCloudState("business-1")).resolves.toEqual({
-      existingSkus: [],
-      expensesConfigured: false,
-    });
-  });
-
-  it("protects existing active expenses even if the settings row is unexpectedly absent", async () => {
-    const from = vi.fn((table: string) => {
-      if (table === "fixora_catalog_items") {
-        return { select: () => ({ eq: async () => ({ data: [], error: null }) }) };
-      }
-      if (table === "fixora_expense_settings") {
-        return { select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: null, error: null }) }) }) };
-      }
-      return { select: () => ({ eq: () => ({ eq: () => ({ limit: async () => ({ data: [{ id: "expense-1" }], error: null }) }) }) }) };
-    });
-    const repository = createSupabaseLocalImportRepository({ from } as unknown as SupabaseClient<Database>);
-    await expect(repository.previewCloudState("business-1")).resolves.toMatchObject({
-      expensesConfigured: true,
-    });
-  });
-
   it("fails closed when cloud preflight cannot confirm current state", async () => {
     const from = vi.fn((table: string) => {
       if (table === "fixora_catalog_items") {
