@@ -4,7 +4,6 @@ import {
   EXPENSES_STORAGE_KEY,
 } from "../../../shared/infrastructure/storage-keys";
 import { resolveKeyValueStorage, type KeyValueStorageSource } from "../../../shared/infrastructure/key-value-storage";
-import type { LocalImportRawBundle } from "../domain/local-import";
 import type { LocalImportSourcePort } from "../application/local-import-service";
 
 export function createBrowserLocalImportSource(
