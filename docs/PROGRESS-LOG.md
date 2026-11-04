@@ -866,3 +866,18 @@ Durante la revisión final detecté que el camino idempotente de un código ya r
 - La lectura directa de los archivos confirma que `CloudExpensesPage.loadData()` consulta a través de `createSupabaseExpensesRepository`, que carga gastos activos y configuración de periodo/version en paralelo; errores de lectura deben quedar visibles y no convertirse en listas vacías. La instrumentación nueva permitirá distinguir sesión/ámbito de negocio de un fallo específico del servicio o la UI.
 - Revisión del ADR-004: el límite de tres dispositivos activos por licencia está confirmado; el modelo individual vs. negocio, herencia de derechos a miembros y transferencias siguen pendientes. La recomendación documentada para el MVP es licencia individual, sin herencia a miembros, y transferencias solo por soporte auditado; no tratar esa recomendación como decisión aprobada.
 - No se aplicaron migraciones ni SQL remotos, no se desplegaron Edge Functions, no se modificó el proyecto Supabase remoto de Fixora ni EYESITE.
+
+
+## 2026-11-04 — Seguimiento de validación y revisión de integración
+
+- HEAD central verificado: `3dcd2ae769d04a00c280714d07df999dc9d81372`; PR #14 continúa abierto y en draft.
+- Ejecuciones asociadas al HEAD:
+  - CI #1886: SUCCESS.
+  - Security #698: SUCCESS.
+  - CodeQL #546: SUCCESS.
+  - Browser E2E #147: IN_PROGRESS en la última consulta.
+  - Database tests #1440: IN_PROGRESS en la última consulta.
+- Se comparó la rama del PR contra su base actual `feat/licensing-duration-days-20261103`: la rama central está 437 commits adelante y 0 detrás; ambas referencias comparten el ancestro `1e51c55a6ce2ed6548b7f159eda963d5ec568b94`. No se cambió la base del PR. Antes de fusionar se debe confirmar cuál es la rama de integración que el equipo quiere usar como destino final; no hay indicio de divergencia que justifique un rebase automático.
+- Revisión de los contratos del dominio Retail: existen cálculos puros de costeo por lote, balance derivado de movimientos, sugerencia de reposición con demanda suministrada y rentabilidad por pedido. La matriz de preparación sigue siendo correcta: no se encontró en los archivos revisados una experiencia Retail integrada con persistencia transaccional, autorización de entitlement `kit.retail` y E2E de compra→recepción→venta→devolución.
+- No se añadieron tablas ni migraciones Retail porque ADR-004 sigue sin decisión final sobre licencia individual/negocio y acceso de miembros. El límite de tres dispositivos por licencia sí está confirmado.
+- Ningún cambio remoto de Supabase, despliegue, ni cambio al proyecto EYESITE.
