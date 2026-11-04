@@ -115,7 +115,6 @@ interface AppProps {
   businessTimezone?: string;
   businessCurrency?: CurrencyCode;
   profileDisplayName?: string;
-  profileLocale?: "es-MX" | "en-US";
   profileLoading?: boolean;
   profileError?: string;
   onProfileUpdate?: (input: { displayName: string }) => Promise<void>;
@@ -136,7 +135,6 @@ export function App({
   businessTimezone,
   businessCurrency,
   profileDisplayName,
-  profileLocale,
   profileLoading,
   profileError,
   onProfileUpdate,
