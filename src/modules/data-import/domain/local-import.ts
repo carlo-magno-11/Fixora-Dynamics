@@ -85,7 +85,8 @@ function hasDuplicateIds(items: readonly { id: string }[]): boolean {
 
 export function parseLocalImportBundle(raw: LocalImportRawBundle): LocalImportBundle {
   const issues: LocalImportIssue[] = [];
-  const foundLocalData = raw.catalog !== null || raw.expenses !== null || raw.history !== null;
+  const foundLocalData = Boolean(raw.storageError || raw.storageConflict)
+    || raw.catalog !== null || raw.expenses !== null || raw.history !== null;
   if (raw.storageError || raw.storageConflict) {
     issues.push({
       category: "storage",
