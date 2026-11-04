@@ -438,6 +438,16 @@ export type Database = {
         }
         Returns: string
       }
+      fixora_import_local_bundle: {
+        Args: {
+          p_business_id: string
+          p_import_key: string
+          p_catalog?: Json
+          p_expenses?: Json | null
+          p_history?: Json
+        }
+        Returns: Json
+      }
       fixora_save_calculator_draft: {
         Args: {
           p_business_id: string
