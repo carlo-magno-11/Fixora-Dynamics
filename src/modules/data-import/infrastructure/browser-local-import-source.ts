@@ -25,6 +25,22 @@ export function createBrowserLocalImportSource(
   legacyStorage?: KeyValueStorageSource,
 ): LocalImportSourcePort {
   return {
+    createBackup() {
+      const bundle = this.read();
+      if (bundle.storageError || bundle.storageConflict) {
+        throw new Error("No se puede crear una copia fiable hasta resolver el acceso o la mezcla de almacenamiento local.");
+      }
+      return JSON.stringify({
+        format: "fixora-local-backup",
+        version: 1,
+        exportedAt: new Date().toISOString(),
+        data: {
+          catalog: bundle.catalog,
+          expenses: bundle.expenses,
+          history: bundle.history,
+        },
+      }, null, 2);
+    },
     read() {
       try {
         const scoped = readKeys(scopedStorage);
