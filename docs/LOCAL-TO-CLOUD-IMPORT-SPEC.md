@@ -1,103 +1,90 @@
 # Especificación — importación local a Fixora Cloud
 
-Estado: contrato y validación local inicial implementados; RPC, interfaz de revisión y pruebas E2E pendientes.
-Fecha: 3 de noviembre de 2026.
+Estado: implementación inicial en la rama central; no habilitada en Supabase remoto ni aprobada para staging.
+Fecha de revisión: 3 de noviembre de 2026.
 Rama: integration/fixora-mainline-20261103.
 
 ## 1. Objetivo y límites
 
-Permitir que una persona que ya usaba Fixora en un navegador transfiera sus registros locales a un negocio cloud sin mezclar cuentas, sobrescribir información cloud ni borrar el origen local.
+Permitir que una persona transfiera registros heredados del navegador a un negocio cloud mediante una operación explícita, unidireccional, con revisión, selección y confirmación. No es sincronización offline.
 
-La importación no es sincronización offline. Es una operación explícita, de una sola dirección, con vista previa y confirmación.
+La importación no debe mezclar negocios, sobrescribir silenciosamente información cloud, borrar el origen local ni confiar en la vista previa del navegador como control de autorización.
 
-## 2. Fuentes locales existentes
+## 2. Fuentes y alcance
 
-La versión web actual conserva estas claves heredadas en localStorage:
+El adaptador browser lee únicamente las claves legacy definidas por el núcleo:
+- catálogo: `fixora.catalog.v1`;
+- gastos: `fixora.expenses.v1`;
+- historial: `fixora.calculations.v1`.
 
-| Clave | Contenido | Límite vigente |
-|---|---|---:|
-| fixora.catalog.v1 | Catálogo de productos y servicios | 500 elementos |
-| fixora.expenses.v1 | Gastos fijos/variables, unidades, periodo y moneda | 100 líneas por tipo |
-| fixora.calculations.v1 | Snapshots del historial local | 100 registros |
-| Borrador del calculador | Último cálculo y punto de equilibrio | Se importa por su flujo privado separado |
+No recorre ni copia claves namespaced de otros usuarios o negocios. El borrador del calculador conserva su flujo privado independiente y no forma parte de este lote.
 
-En modo cloud, el almacenamiento de trabajo está namespaced por usuario y negocio. La importación debe leer exclusivamente las claves heredadas globales, no copiar claves namespaced de otra cuenta/negocio.
+Límites: 500 elementos de catálogo, 100 gastos fijos y 100 variables, 100 snapshots y 1 MiB de payload agregado. No se admiten adjuntos, imágenes, credenciales, tokens ni códigos de activación.
 
-## 3. Validación local ya implementada
+## 3. Implementación presente en la rama
 
-Módulo: src/modules/data-import/domain/local-import.ts.
+- Dominio puro: `src/modules/data-import/domain/local-import.ts`.
+- Servicio de aplicación: `src/modules/data-import/application/local-import-service.ts`.
+- Adaptador de lectura legacy: `src/modules/data-import/infrastructure/browser-local-import-source.ts`.
+- Adaptador Supabase: `src/modules/data-import/infrastructure/supabase-local-import-repository.ts`.
+- Interfaz: `src/modules/data-import/ui/LocalDataImportPage.tsx`.
+- Composición: `src/app/create-app-services.ts`.
+- Migración propuesta: `supabase/migrations/20261104010000_fixora_local_data_import.sql`.
+- Pruebas SQL: `supabase/tests/fixora_local_data_import.test.sql`.
 
-- Valida la estructura completa de catálogo, gastos e historial.
-- Rechaza unidades fraccionarias; no redondea ni corrige datos silenciosamente.
-- Rechaza SKU e identificadores duplicados dentro del catálogo/historial.
-- Valida cada snapshot mediante el validador del dominio de historial.
-- Limita el payload agregado a 1 MiB, catálogo a 500, gastos a 100 por tipo e historial a 100.
-- Bloquea la importación completa si detecta registros inválidos; no presenta una colección dañada como vacía.
-- Detecta incompatibilidad de moneda de gastos y nunca realiza conversión implícita.
-- No escribe ni elimina claves locales.
+La validación local rechaza JSON dañado, formas incompatibles, unidades fraccionarias, duplicados, snapshots inválidos, monedas no soportadas y payloads excesivos. No corrige datos ni modifica localStorage. Una categoría inválida puede excluirse; no se debe tratar un error de lectura como una colección vacía.
 
-Las pruebas unitarias cubren datos válidos, ausencia de datos, JSON dañado, JSON con forma incorrecta, unidades fraccionarias, SKU duplicados, snapshots inválidos, tamaño máximo y moneda incompatible.
+La vista previa compara SKU y estado de gastos cloud. El destino y la moneda se muestran antes de confirmar. Los gastos cloud existentes y los SKU conflictivos se bloquean; no hay conversión de moneda implícita.
 
-## 4. Experiencia requerida
+## 4. Contrato de servidor implementado en código, pendiente de CI
 
-1. En Mi cuenta → Datos y privacidad, mostrar si existen datos locales heredados.
-2. Seleccionar el negocio cloud destino y mostrar claramente su moneda.
-3. Vista previa separada por categoría: válidos, inválidos, duplicados y conflictos.
-4. Permitir excluir una categoría completa antes de continuar; no permitir editar el contenido silenciosamente durante la importación.
-5. Catálogo: comparar SKU normalizado con el catálogo cloud. No reemplazar automáticamente una fila existente. La persona podrá excluir los conflictos y reintentar.
-6. Gastos: importar únicamente si el negocio cloud aún no tiene gastos configurados/cambiados. Si ya existen datos cloud, mantenerlos y pedir una decisión explícita en una fase posterior; no sobrescribirlos por defecto.
-7. Historial: agregar snapshots inmutables; conservar fechas, moneda, fórmula y entradas/resultados históricos.
-8. Confirmación final con resumen exacto de lo que se enviará.
-9. Mostrar el resultado del servidor y un identificador de importación para soporte.
-10. Conservar los datos locales originales después de una importación exitosa. La limpieza local será una acción separada, nunca parte automática del import.
+La migración crea:
+- `fixora_private.fixora_import_batches`: ledger privado con usuario, negocio, clave idempotente, hash SHA-256, estado y resumen;
+- `fixora_private.fixora_import_source_records`: mapeo privado de IDs locales a registros cloud para deduplicar catálogo e historial incluso con otra clave de importación;
+- helper `fixora_private.import_local_bundle`;
+- RPC `public.fixora_import_local_bundle`.
 
-## 5. Contrato servidor propuesto
+El helper comprueba `auth.uid()`, membresía activa con rol owner/admin/editor, negocio destino, estructura, límites, tipos, cantidades, moneda, SKU, fórmulas y snapshots. El hash se calcula en servidor. La misma clave con el mismo payload devuelve el resultado previo; la misma clave con contenido distinto se rechaza. Una importación completa ocurre en una transacción PostgreSQL: cualquier error revierte todas las categorías seleccionadas.
 
-Migración futura (no creada aún): fixora_local_data_import.
+La RPC pública está declarada SECURITY DEFINER con `search_path = ''` para invocar el helper privado cuyo EXECUTE está revocado a roles cliente. El helper también es SECURITY DEFINER con `search_path = ''`; sus permisos de ejecución están revocados a PUBLIC/anon/authenticated/service_role. La RPC pública concede EXECUTE únicamente a authenticated y revoca PUBLIC/anon. La autorización de negocio se vuelve a comprobar dentro del helper. Esta elevación debe conservar revisión explícita y pruebas negativas; no sustituirla por confianza en la UI.
 
-- Tabla privada fixora_private.fixora_import_batches: usuario, negocio, clave idempotente, hash del payload, estado, resumen y fecha.
-- Tabla privada fixora_private.fixora_import_source_records: relación entre IDs locales y IDs cloud para evitar importar el mismo registro dos veces con una clave nueva.
-- RPC pública invoker fixora_import_local_bundle, que delega a una función privada SECURITY DEFINER.
-- La función privada tendrá search_path = '', validará auth.uid(), membresía activa con permisos de escritura y tamaño/cantidad/tipos de cada elemento.
-- El servidor calculará el hash del payload; no confiará en un hash enviado por el navegador.
-- Clave idempotente por usuario + negocio + importación. Misma clave y mismo payload devuelven el resultado anterior; misma clave con payload diferente se rechaza.
-- El servidor volverá a comprobar SKU duplicados y existencia de gastos dentro de la misma transacción. La vista previa del cliente no es autoridad.
-- IDs cloud generados en servidor; los IDs locales se conservan como claves de origen privadas.
-- Inserción de catálogo, gastos e historial y registro del lote ocurren en una sola transacción. Si cualquier categoría falla, todo el lote seleccionado hace rollback.
-- Grants mínimos: RPC para authenticated; helper privado no ejecutable directamente por anon/authenticated; tablas privadas sin acceso directo cliente.
-- El payload se limita a 1 MiB; no se admiten imágenes, adjuntos, credenciales, códigos de activación ni tokens.
+Las tablas del ledger y del mapeo tienen RLS + FORCE RLS, políticas de denegación para clientes y ningún acceso directo concedido a roles cliente ni service_role.
 
-## 6. Política de conflictos
+## 5. Política de conflictos y conservación
 
-- SKU existente: no reemplazar; excluir del lote o resolver manualmente en una etapa posterior.
-- Gastos cloud ya configurados: no sobrescribir en MVP. La importación de gastos se deshabilita hasta que exista una elección explícita de reemplazo/conciliación.
-- Moneda de gastos distinta de la moneda del negocio: no importar gastos y no convertir.
-- Snapshot ya importado: reconocerlo por ID local de origen y omitirlo.
-- Registro local inválido: excluir la importación completa hasta que se corrija o la persona decida excluir esa categoría.
-- Negocio destino no autorizado: el servidor rechaza toda la operación.
+- SKU existente: el servidor rechaza la transacción; la UI informa del conflicto y no reemplaza.
+- Gastos cloud configurados o con versión modificada: no se sobrescriben.
+- Moneda de gastos distinta a la del negocio: se rechaza; no hay conversión automática.
+- ID local de catálogo/historial ya importado con el mismo hash: se omite.
+- ID local ya importado con contenido distinto: se rechaza para evitar reemplazos encubiertos.
+- Usuario sin membresía de escritura, viewer o negocio ajeno: el servidor rechaza.
+- Los snapshots conservan fecha, moneda, versión de fórmula, entradas, resultados y snapshot de catálogo.
+- Los datos originales locales permanecen en el navegador después del éxito. No se limpia localStorage ni se ofrece rollback destructivo de registros cloud.
 
-## 7. Rollback y recuperación
+## 6. Pruebas presentes y estado real
 
-- La transacción garantiza rollback total cuando falla cualquier validación o escritura.
-- Los originales locales se conservan como respaldo incluso después de un éxito.
-- No se ofrecerá un botón de “deshacer importación” que borre filas cloud hasta diseñar y probar un procedimiento que preserve ediciones posteriores y referencias. El rollback transaccional y la copia local son las garantías iniciales.
-- No borrar ni resetear localStorage como efecto secundario.
+La suite `fixora_local_data_import.test.sql` declara 33 aserciones pgTAP y cubre estructura/permisos, importación de catálogo/gastos/historial, reintento idempotente, payload distinto con misma clave, IDs de origen repetidos, SKU existente, moneda, unidades fraccionarias, rollback total, límites, tamaño y aislamiento de owner/editor/viewer/no miembro.
 
-## 8. Pruebas de aceptación pendientes
+Estado consultado para HEAD `003b9fedf0c49af56c2b75e8ced002309c84b14c`:
+- CI #1638: SUCCESS.
+- Database tests #1192: CANCELLED.
+- CodeQL #298: CANCELLED.
+- Security #450: CANCELLED.
 
-- pgTAP: autorización, payload inválido/grande, claves repetidas, hash distinto, SKU duplicado, moneda, unidades fraccionarias, límites de tamaño, aislamiento entre negocios, rollback y mapeo de IDs.
-- Concurrencia: dos solicitudes simultáneas con la misma clave; debe existir un solo lote.
-- E2E: usuario A importa a negocio A; usuario B no puede ver ni importar a negocio A; cambio de negocio no altera el destino de una importación en curso.
-- E2E: desconexión antes/durante/después de confirmar; reintento con la misma clave no duplica datos.
-- E2E: comparar conteos y muestras de origen/destino, volver a entrar y verificar historial.
-- Recuperación: exportar originales locales y confirmar que siguen disponibles después del import.
+Por tanto, la compilación y pruebas de aplicación pasaron en ese HEAD, pero la reconstrucción de base, pgTAP, CodeQL y Security no están aprobados en ese mismo HEAD. No afirmar que la migración está validada.
 
-## 9. Orden de implementación
+## 7. Pendientes antes de activar
 
-1. Validación pura local — implementada y con CI de aplicación SUCCESS en el commit 077c3d9.
-2. Adaptador browser para leer las claves legacy sin mutarlas.
-3. Migración RPC transaccional + pgTAP; reconstrucción local antes de cualquier aplicación remota.
-4. Adaptador Supabase y servicio de aplicación.
-5. Panel de vista previa/confirmación en Mi cuenta.
-6. E2E multiusuario/multinegocio y recuperación.
-7. Activar en staging; no anunciar sincronización offline.
+1. Reejecutar Database tests desde una reconstrucción limpia y corregir cualquier fallo de migración/pgTAP.
+2. Reejecutar CodeQL y Security sobre el mismo HEAD.
+3. Revisar carrera entre importaciones simultáneas, incluidos dos import_keys diferentes con el mismo ID de origen; verificar que la restricción única hace rollback completo y que el reintento es recuperable.
+4. Añadir E2E con dos usuarios, dos negocios y al menos dos dispositivos; probar cambio de negocio durante una operación, doble clic, timeout, desconexión y reintento.
+5. Comprobar que el resultado de una importación ya completada se puede recuperar después de recargar o perder la respuesta; documentar el uso de la misma clave idempotente.
+6. Revisar el caso de navegador compartido: los datos legacy globales no tienen propietario verificable; la UI debe advertir que la persona confirme que reconoce esos datos antes de copiarlos a su cuenta.
+7. Verificar conteos y muestras de catálogo/gastos/historial después de importar.
+8. Probar exportación y restauración de los originales locales.
+9. Sólo después de CI/pgTAP aprobar, preparar revisión de migración remota Fixora; no aplicarla automáticamente.
+
+## 8. Separación de entornos
+
+La migración `20261104010000_fixora_local_data_import` está en GitHub, pero no aparece en el historial remoto de Supabase consultado. No se ha aplicado a `dclaebknyalimmtgppeg`. No hay staging E2E validado. El proyecto oficial EYESITE `xhvpvpvtkdgnnxdwdrkn` queda fuera de alcance.
