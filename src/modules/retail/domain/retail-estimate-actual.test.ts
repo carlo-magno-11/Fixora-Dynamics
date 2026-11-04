@@ -83,7 +83,6 @@ describe("compareRetailEstimateWithActual", () => {
     const result = compareRetailEstimateWithActual(zeroEstimate, actualOrder());
 
     expect(result.variance.contributionBeforeFixedRate).toBeNull();
-    expect(result.variance.estimatedContributionAfterFixedRate).toBeUndefined();
     expect(result.variance.estimatedContributionAfterFixedRate).toBeNull();
   });
 
