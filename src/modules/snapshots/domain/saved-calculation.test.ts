@@ -42,6 +42,27 @@ describe("isSavedCalculation", () => {
     })).toBe(true);
   });
 
+  it("rejects source identifiers and names outside cloud import limits", () => {
+    expect(isSavedCalculation({ ...base, id: "x".repeat(81) })).toBe(false);
+    expect(isSavedCalculation({ ...base, name: "x".repeat(121) })).toBe(false);
+  });
+
+  it("rejects embedded catalog snapshots outside cloud import limits", () => {
+    const catalogItem = {
+      id: "catalog-1",
+      name: "Producto",
+      kind: "product",
+      unit: "pieza",
+      sku: "SKU-1",
+      currency: "MXN",
+      referenceCost: 10,
+    };
+    expect(isSavedCalculation({ ...base, catalogItem: { ...catalogItem, id: "x".repeat(81) } })).toBe(false);
+    expect(isSavedCalculation({ ...base, catalogItem: { ...catalogItem, name: "x".repeat(101) } })).toBe(false);
+    expect(isSavedCalculation({ ...base, catalogItem: { ...catalogItem, unit: "x".repeat(41) } })).toBe(false);
+    expect(isSavedCalculation({ ...base, catalogItem: { ...catalogItem, sku: "x".repeat(41) } })).toBe(false);
+  });
+
   it("rejects an unsupported commission basis", () => {
     expect(isSavedCalculation({
       ...base,
