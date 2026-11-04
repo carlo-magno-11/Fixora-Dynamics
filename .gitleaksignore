@@ -6,3 +6,6 @@ c455b2916666b81b8b2ace84278416b4682d2ba3:src/modules/expenses/infrastructure/bro
 b73fe90572d2cf0dea700f6f6857442cf15eccd2:src/app/App.tsx:generic-api-key:16
 03bef73d4e04e784fc5fcd51551cf53b2c9a93d3:src/shared/infrastructure/storage-keys.ts:generic-api-key:2
 03bef73d4e04e784fc5fcd51551cf53b2c9a93d3:src/shared/infrastructure/storage-keys.ts:generic-api-key:3
+
+# False positive: randomized synthetic catalog SKU in disposable Playwright fixture, not a credential.
+df7b8467572b6875235230f8670f0abb5c907349:e2e/auth-tenant-isolation.spec.ts:generic-api-key:141

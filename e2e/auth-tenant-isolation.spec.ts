@@ -140,7 +140,7 @@ test("exports scoped and legacy backups separately and restores only the selecte
   const scopedKey = `fixora:${encodeURIComponent(namespace)}:fixora.catalog.v1`;
   const legacyKey = "fixora.expenses.v1";
   const productName = `Producto scoped ${suffix.slice(0, 8)}`;
-  const sku = `E2E-${suffix.slice(0, 8).toUpperCase()}`;
+  const sku = suffix.slice(0, 8).toUpperCase();
   const scopedCatalog = JSON.stringify([{
     id: `scoped-${suffix}`,
     name: productName,
