@@ -118,7 +118,7 @@ interface AppProps {
   profileLocale?: "es-MX" | "en-US";
   profileLoading?: boolean;
   profileError?: string;
-  onProfileUpdate?: (input: { displayName: string; locale: "es-MX" | "en-US" }) => Promise<void>;
+  onProfileUpdate?: (input: { displayName: string }) => Promise<void>;
   onBusinessDetailsUpdate?: (input: { name: string; timezone: string }) => Promise<void>;
   initialBusinessType?: BusinessType;
   initialCurrency?: CurrencyCode;
