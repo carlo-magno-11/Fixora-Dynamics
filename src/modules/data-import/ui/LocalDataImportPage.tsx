@@ -165,6 +165,9 @@ export function LocalDataImportPage({
   const catalogBlocked = !preview || hasIssue(preview, "catalog") || preview.catalogConflicts.length > 0 || preview.catalog.length === 0;
   const expensesBlocked = !preview || hasIssue(preview, "expenses") || preview.expensesConflict || preview.currencyIssues.length > 0 || preview.expenses === null;
   const historyBlocked = !preview || hasIssue(preview, "history") || preview.history.length === 0;
+  const backupUnavailable = Boolean(preview?.issues.some((issue) =>
+    issue.code === "storage_unavailable" || issue.code === "storage_conflict",
+  ));
   const canSubmit = Boolean(selection.catalog || selection.expenses || selection.history)
     && !loading && !saving && !result && Boolean(preview) && !hasIssue(preview as LocalImportPreview, "storage");
 
@@ -192,7 +195,7 @@ export function LocalDataImportPage({
 
       <div className="local-import-backup-actions">
         <div><strong>{backupBundle ? "Restaurar desde un respaldo existente." : "Primero, conserva una copia independiente."}</strong><p>{backupBundle ? "El contenido del archivo se valida y se importa sin modificar el archivo original." : "Puedes descargar una copia JSON o recuperar datos desde un respaldo creado anteriormente."}</p></div>
-        {!backupBundle && <button className="outline-button" type="button" disabled={loading || saving || Boolean(preview && hasIssue(preview, "storage"))} onClick={downloadBackup}>Descargar respaldo JSON ↓</button>}
+        {!backupBundle && <button className="outline-button" type="button" disabled={loading || saving || backupUnavailable} onClick={downloadBackup}>Descargar respaldo JSON ↓</button>}
         <label className="local-import-file-field">
           <span>{backupBundle ? "Elegir otro respaldo" : "Seleccionar respaldo JSON"}</span>
           <input type="file" accept=".json,application/json" disabled={loading || saving || attempted} onChange={(event) => void loadBackupFile(event)} />
