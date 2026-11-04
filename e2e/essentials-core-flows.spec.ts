@@ -184,8 +184,29 @@ test("cloud expenses persist fixed and variable costs with their period settings
     { name: "Empaque E2E", expense_type: "variable", amount: 12.5 },
   ]);
 
+  const postReloadExpenseDiagnostics: Array<{ status: number; url: string; body: unknown }> = [];
+  const postReloadPageErrors: string[] = [];
+  page.on("pageerror", (error) => postReloadPageErrors.push(error.message));
+  page.on("response", async (networkResponse) => {
+    if (!networkResponse.url().includes("/rest/v1/fixora_expenses")) return;
+    let body: unknown = null;
+    try { body = await networkResponse.json(); } catch { body = "non-json response"; }
+    postReloadExpenseDiagnostics.push({
+      status: networkResponse.status(),
+      url: networkResponse.url().replace(supabaseUrl, "[supabase]"),
+      body,
+    });
+  });
+
   await page.getByRole("button", { name: "Control de gastos", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Controla tus gastos." })).toBeVisible();
+  const visibleExpenseEntries = await page.locator(".expense-entry").allTextContents();
+  console.log("Post-reload expense diagnostics", JSON.stringify({
+    businessId: reloadedScope.selectedBusinessId,
+    visibleExpenseEntries,
+    expenseResponses: postReloadExpenseDiagnostics,
+    pageErrors: postReloadPageErrors,
+  }));
   await expect(page.locator(".expense-entry").filter({ hasText: "Renta E2E" })).toBeVisible();
   await expect(page.locator(".expense-entry").filter({ hasText: "Empaque E2E" })).toBeVisible();
 
