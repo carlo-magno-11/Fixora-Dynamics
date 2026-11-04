@@ -844,3 +844,14 @@ Durante la revisión final detecté que el camino idempotente de un código ya r
 - **Validación pendiente:** los cambios de estos commits todavía no tienen ejecuciones CI/Browser E2E asociadas visibles en GitHub. No se declara corregido ni aprobado el E2E hasta ejecutar de nuevo las pruebas sobre el HEAD corregido.
 - No se modificó esquema ni migraciones, no se ejecutó SQL remoto ni se desplegaron funciones. Supabase remoto Fixora y EYESITE oficial permanecen sin cambios.
 - ADR-004 sigue en estado de propuesta: el alcance individual frente a negocio, la herencia a miembros y las transferencias continúan pendientes de decisión. No crear tablas/RLS de kits ni migraciones de inventario hasta cerrar esa política.
+
+
+## 2026-11-04 — Diagnóstico de Browser E2E y persistencia de gastos
+
+- HEAD del PR #14 comprobado: `04e879ff90ef67c27e65597cdca1058d8028cdfd`; rama `integration/fixora-mainline-20261103`; PR continúa abierto y draft.
+- En el merge commit de PR `1fd1be20a747dc4f791ac64e08fd4817fee07120`: CI #1880 SUCCESS, Security #692 SUCCESS, CodeQL #540 SUCCESS y Database tests #1434 SUCCESS. Browser E2E #141 FAILURE: 5 de 6 pruebas aprobadas; falla el recorrido de gastos después de recargar la aplicación.
+- La prueba consulta directamente `fixora_expenses` inmediatamente después del guardado y confirma que Supabase devuelve las dos filas activas esperadas (Renta E2E y Empaque E2E). Tras recargar, el formulario aparece, pero no muestra esas filas. Esto acota el defecto al recorrido de lectura/selección de negocio/estado de UI posterior a la recarga; no demuestra todavía cuál de esos componentes es la causa.
+- El intento anterior Browser E2E #58 sobre el commit intermedio `137c45c` falló al iniciar TOTP porque la configuración local no habilitaba explícitamente MFA. La rama central ahora contiene `[auth.mfa.totp]` con `enroll_enabled = true` y `verify_enabled = true`. En el E2E posterior #141, la prueba TOTP ya no aparece entre los fallos; no declarar MFA completamente cerrado sin revisar el flujo entero y los siguientes checks.
+- Se confirmó en la documentación oficial de Supabase que `auth.mfa.totp.enroll_enabled` y `auth.mfa.totp.verify_enabled` son las claves correctas de configuración local. La configuración local no implica que el proyecto remoto haya cambiado.
+- Próximo diagnóstico: en el E2E de gastos, comprobar después de `page.reload()` el ID de negocio seleccionado en `sessionStorage`, volver a consultar las filas con el token de la sesión recargada y comparar ese ámbito con el `businessId` inicial. Si el ámbito coincide y la API devuelve filas, instrumentar la ruta de lectura del repositorio/UI sin convertir fallos de lectura en colecciones vacías.
+- No se modificó la lógica de gastos ni se debilitó la prueba en esta etapa. No se aplicaron migraciones remotas, no se ejecutó SQL remoto, no se desplegaron Edge Functions y no se modificó EYESITE oficial.
