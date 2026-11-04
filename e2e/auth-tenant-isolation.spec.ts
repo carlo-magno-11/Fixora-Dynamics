@@ -125,3 +125,134 @@ test("two authenticated users cannot read each other's business", async ({ brows
   expect(await foreignBusinessResponse.json()).toEqual([]);
   await contextB.close();
 });
+
+
+test("exports scoped and legacy backups separately and restores only the selected source", async ({ browser }) => {
+  test.setTimeout(60_000);
+  // These synthetic records live only in the disposable Supabase/browser context for this CI job.
+  const suffix = crypto.randomUUID();
+  const user = await createTestUser(`e2e-backup-${suffix}@fixora.test`, "E2E Respaldo");
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  const businessId = await signInAndCreateBusiness(page, user, `Negocio respaldo ${suffix}`);
+
+  const namespace = `${user.id}:${businessId}`;
+  const scopedKey = `fixora:${encodeURIComponent(namespace)}:fixora.catalog.v1`;
+  const legacyKey = "fixora.expenses.v1";
+  const productName = `Producto scoped ${suffix.slice(0, 8)}`;
+  const sku = `E2E-${suffix.slice(0, 8).toUpperCase()}`;
+  const scopedCatalog = JSON.stringify([{
+    id: `scoped-${suffix}`,
+    name: productName,
+    kind: "product",
+    unit: "pieza",
+    sku,
+    currency: "MXN",
+    referenceCost: 45,
+    active: true,
+  }]);
+  const legacyExpenses = JSON.stringify({
+    fixed: [{ id: `legacy-${suffix}`, name: "Renta legacy", amount: 1000 }],
+    variable: [],
+    expectedUnits: 100,
+    period: "month",
+    currency: "MXN",
+  });
+
+  await page.evaluate(({ scopedStorageKey, legacyStorageKey, scopedValue, legacyValue }) => {
+    window.localStorage.setItem(scopedStorageKey, scopedValue);
+    window.localStorage.setItem(legacyStorageKey, legacyValue);
+  }, {
+    scopedStorageKey: scopedKey,
+    legacyStorageKey: legacyKey,
+    scopedValue: scopedCatalog,
+    legacyValue: legacyExpenses,
+  });
+
+  await page.getByRole("button", { name: "Importar datos locales" }).click();
+  await expect(page.getByRole("heading", { name: "Trae tus datos locales a la nube." })).toBeVisible();
+  await expect(page.getByText(/Hay datos locales en el ámbito de esta cuenta y también en el almacenamiento anterior/)).toBeVisible();
+
+  const [scopedDownload] = await Promise.all([
+    page.waitForEvent("download"),
+    page.getByRole("button", { name: "Respaldar datos de esta cuenta" }).click(),
+  ]);
+  expect(scopedDownload.suggestedFilename()).toContain("cuenta-negocio");
+  const scopedStream = await scopedDownload.createReadStream();
+  if (!scopedStream) throw new Error("Scoped backup download stream is unavailable.");
+  let scopedBackupText = "";
+  for await (const chunk of scopedStream) {
+    scopedBackupText += Buffer.from(chunk).toString("utf8");
+  }
+  const scopedBackup = JSON.parse(scopedBackupText) as {
+    sourceScope: string;
+    data: { catalog: string | null; expenses: string | null; history: string | null };
+  };
+  expect(scopedBackup.sourceScope).toBe("scoped");
+  expect(scopedBackup.data).toEqual({ catalog: scopedCatalog, expenses: null, history: null });
+
+  const [legacyDownload] = await Promise.all([
+    page.waitForEvent("download"),
+    page.getByRole("button", { name: "Respaldar datos anteriores del navegador" }).click(),
+  ]);
+  expect(legacyDownload.suggestedFilename()).toContain("anterior-navegador");
+  const legacyStream = await legacyDownload.createReadStream();
+  if (!legacyStream) throw new Error("Legacy backup download stream is unavailable.");
+  let legacyBackupText = "";
+  for await (const chunk of legacyStream) {
+    legacyBackupText += Buffer.from(chunk).toString("utf8");
+  }
+  const legacyBackup = JSON.parse(legacyBackupText) as {
+    sourceScope: string;
+    data: { catalog: string | null; expenses: string | null; history: string | null };
+  };
+  expect(legacyBackup.sourceScope).toBe("legacy");
+  expect(legacyBackup.data).toEqual({ catalog: null, expenses: legacyExpenses, history: null });
+
+  const originalStorage = await page.evaluate(({ scopedStorageKey, legacyStorageKey }) => ({
+    scoped: window.localStorage.getItem(scopedStorageKey),
+    legacy: window.localStorage.getItem(legacyStorageKey),
+  }), { scopedStorageKey: scopedKey, legacyStorageKey: legacyKey });
+  expect(originalStorage).toEqual({ scoped: scopedCatalog, legacy: legacyExpenses });
+
+  await page.locator('input[type="file"]').setInputFiles({
+    name: "fixora-respaldo-scoped.json",
+    mimeType: "application/json",
+    buffer: Buffer.from(scopedBackupText, "utf8"),
+  });
+  await expect(page.getByRole("heading", { name: "Restaura un respaldo a la nube." })).toBeVisible();
+  await expect(page.getByText("1 elemento local")).toBeVisible();
+  await page.locator(".local-import-option").filter({ hasText: "Catálogo" }).locator('input[type="checkbox"]').check();
+  await page.getByRole("button", { name: "Importar selección de forma segura" }).click();
+  await expect(page.getByRole("heading", { name: "Tus datos seleccionados ya están en la nube." })).toBeVisible();
+
+  const accessToken = await page.evaluate(() => {
+    const key = Object.keys(window.localStorage).find((candidate) => candidate.endsWith("-auth-token"));
+    const raw = key ? window.localStorage.getItem(key) : null;
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { access_token?: unknown };
+    return typeof parsed.access_token === "string" ? parsed.access_token : null;
+  });
+  expect(accessToken).toBeTruthy();
+
+  const catalogResponse = await fetch(
+    `${supabaseUrl}/rest/v1/fixora_catalog_items?select=name,sku&business_id=eq.${businessId}`,
+    { headers: { apikey: anonKey, Authorization: `Bearer ${accessToken}` } },
+  );
+  expect(catalogResponse.ok).toBeTruthy();
+  expect(await catalogResponse.json()).toEqual([{ name: productName, sku }]);
+
+  const expensesResponse = await fetch(
+    `${supabaseUrl}/rest/v1/fixora_expenses?select=id&business_id=eq.${businessId}&is_active=eq.true`,
+    { headers: { apikey: anonKey, Authorization: `Bearer ${accessToken}` } },
+  );
+  expect(expensesResponse.ok).toBeTruthy();
+  expect(await expensesResponse.json()).toEqual([]);
+
+  const storageAfterRestore = await page.evaluate(({ scopedStorageKey, legacyStorageKey }) => ({
+    scoped: window.localStorage.getItem(scopedStorageKey),
+    legacy: window.localStorage.getItem(legacyStorageKey),
+  }), { scopedStorageKey: scopedKey, legacyStorageKey: legacyKey });
+  expect(storageAfterRestore).toEqual({ scoped: scopedCatalog, legacy: legacyExpenses });
+  await context.close();
+});
