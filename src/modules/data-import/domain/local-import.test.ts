@@ -86,6 +86,18 @@ describe("local import validation", () => {
     expect(result.issues[0]?.code).toBe("storage_unavailable");
   });
 
+  it("requires manual review when scoped and legacy storage both contain data", () => {
+    const result = parseLocalImportBundle({
+      catalog: null,
+      expenses: null,
+      history: null,
+      storageConflict: true,
+    });
+    expect(result.foundLocalData).toBe(true);
+    expect(result.canImport).toBe(false);
+    expect(result.issues[0]?.code).toBe("storage_conflict");
+  });
+
   it("blocks corrupted JSON instead of interpreting it as an empty collection", () => {
     const result = parseLocalImportBundle(rawBundle({ catalog: "{" }));
     expect(result.canImport).toBe(false);
