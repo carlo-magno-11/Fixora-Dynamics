@@ -171,8 +171,10 @@ export function LocalDataImportPage({
   return (
     <div className="secondary-page local-import-page">
       <p className="eyebrow">MI NEGOCIO <span> / </span> MIGRACIÓN SEGURA</p>
-      <h1>Trae tus datos locales a la nube.</h1>
-      <p className="page-lead">Revisa lo que está guardado en este navegador y elige qué copiar al negocio conectado. La importación no elimina ni modifica los datos originales ni el archivo de respaldo.</p>
+      <h1>{backupBundle ? "Restaura un respaldo a la nube." : "Trae tus datos locales a la nube."}</h1>
+      <p className="page-lead">{backupBundle
+        ? "Revisa el contenido del archivo de respaldo y elige qué recuperar en el negocio conectado. El archivo original no se modifica."
+        : "Revisa lo que está guardado en este navegador y elige qué copiar al negocio conectado. La importación no elimina ni modifica los datos originales."}</p>
 
       <section className="surface-card local-import-safety">
         <div className="section-heading">
@@ -180,7 +182,7 @@ export function LocalDataImportPage({
           <div><h2>Antes de comenzar</h2><p>Fixora compara el destino, valida la moneda y evita duplicar identificadores locales.</p></div>
         </div>
         <ul>
-          <li>Los datos originales permanecen en este navegador.</li>
+          <li>{backupBundle ? "El archivo de respaldo original permanece intacto." : "Los datos originales permanecen en este navegador."}</li>
           <li>La importación seleccionada se ejecuta como una sola transacción: si falla una categoría, no se guarda ninguna.</li>
           <li>Los gastos cloud existentes nunca se sobrescriben.</li>
           <li>Los SKU en conflicto se señalan antes de importar; no se fusionan automáticamente.</li>
@@ -243,7 +245,7 @@ export function LocalDataImportPage({
           <p className="eyebrow">IMPORTACIÓN COMPLETADA</p>
           <h2>Tus datos seleccionados ya están en la nube.</h2>
           <p>{formatCount(result.catalogImported, "elemento de catálogo", "elementos de catálogo")} importados · {formatCount(result.catalogSkipped, "elemento omitido", "elementos omitidos")} · {formatCount(result.expensesImported, "gasto", "gastos")} guardados · {formatCount(result.historyImported, "cálculo", "cálculos")} importados · {formatCount(result.historySkipped, "cálculo ya existente", "cálculos ya existentes")}.</p>
-          <p>Los datos originales siguen en este dispositivo. Verifica el catálogo, los gastos y el historial cloud antes de decidir si necesitas conservar una copia adicional.</p>
+          <p>{backupBundle ? "El archivo de respaldo no se modificó." : "Los datos originales siguen en este dispositivo."} Verifica el catálogo, los gastos y el historial cloud antes de decidir si necesitas conservar una copia adicional.</p>
         </section>
       )}
 
