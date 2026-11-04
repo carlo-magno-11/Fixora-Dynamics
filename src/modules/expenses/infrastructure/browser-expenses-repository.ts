@@ -6,8 +6,9 @@ import type {
 } from "../application/expenses-service";
 import type { ExpensePeriod, FixedExpense, VariableExpense } from "../domain/expenses";
 import { resolveKeyValueStorage, type KeyValueStorageSource } from "../../../shared/infrastructure/key-value-storage";
+import { EXPENSES_STORAGE_KEY } from "../../../shared/infrastructure/storage-keys";
+export { EXPENSES_STORAGE_KEY } from "../../../shared/infrastructure/storage-keys";
 
-export const EXPENSES_STORAGE_KEY = "fixora.expenses.v1";
 
 function isFixedExpense(value: unknown): value is FixedExpense {
   if (!value || typeof value !== "object") return false;
