@@ -120,9 +120,6 @@ export function createLocalImportService(
         throw new Error("El catálogo de origen contiene registros inválidos. Corrígelos o excluye el catálogo.");
       }
       if (current.catalog.length === 0) throw new Error("No hay productos o servicios para importar.");
-      if (current.catalogConflicts.length > 0) {
-        throw new Error("Hay SKU que ya existen en el negocio cloud. Excluye el catálogo o resuelve los SKU antes de continuar.");
-      }
     }
     if (input.selection.expenses) {
       if (categoryHasIssues(current.issues, "expenses")) {
@@ -130,9 +127,6 @@ export function createLocalImportService(
       }
       if (!current.expenses) throw new Error("No hay una configuración de gastos para importar.");
       if (current.currencyIssues.length > 0) throw new Error(current.currencyIssues[0].message);
-      if (current.expensesConflict) {
-        throw new Error("El negocio cloud ya tiene gastos configurados. No se sobrescribirán.");
-      }
     }
     if (input.selection.history) {
       if (categoryHasIssues(current.issues, "history")) {

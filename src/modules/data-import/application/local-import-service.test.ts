@@ -98,20 +98,24 @@ describe("local import application service", () => {
     expect(preview.catalogConflicts).toEqual([]);
   });
 
-  it("detects SKU conflicts case-insensitively without overwriting cloud records", async () => {
-    const service = createLocalImportService(
-      source(rawBundle()),
-      repository({ existingSkus: ["taza-01"], expensesConfigured: false }),
-    );
+  it("surfaces SKU conflicts and delegates the final decision to the server", async () => {
+    const calls: Parameters<LocalImportRepositoryPort["importBundle"]>[0][] = [];
+    const service = createLocalImportService(source(rawBundle()), {
+      previewCloudState: async () => ({ existingSkus: ["taza-01"], expensesConfigured: false }),
+      importBundle: async (input) => {
+        calls.push(input);
+        throw new Error("A catalog SKU already exists in the destination business");
+      },
+    });
     const preview = await service.preview("business-1", "MXN");
     expect(preview.catalogConflicts).toEqual(["TAZA-01"]);
-    expect(preview.canImport).toBe(true);
     await expect(service.importBundle({
       businessId: "business-1",
       businessCurrency: "MXN",
       importKey: "11111111-1111-4111-8111-111111111111",
       selection: { catalog: true, expenses: false, history: false },
-    })).rejects.toThrow("Hay SKU que ya existen");
+    })).rejects.toThrow("A catalog SKU already exists");
+    expect(calls).toHaveLength(1);
   });
 
   it("imports only explicitly selected categories and leaves the source untouched", async () => {
@@ -135,7 +139,8 @@ describe("local import application service", () => {
     expect(raw.history).toBe(JSON.stringify(history));
   });
 
-  it("blocks expense import when cloud already has configuration", async () => {
+  it("delegates an existing cloud expense conflict to the server without overwriting", async () => {
+    const calls: Parameters<LocalImportRepositoryPort["importBundle"]>[0][] = [];
     const service = createLocalImportService(
       source(rawBundle({ expenses: JSON.stringify({
         fixed: [{ id: "fixed-1", name: "Renta", amount: 1000 }],
@@ -144,14 +149,23 @@ describe("local import application service", () => {
         period: "month",
         currency: "MXN",
       }) })),
-      repository({ existingSkus: [], expensesConfigured: true }),
+      {
+        previewCloudState: async () => ({ existingSkus: [], expensesConfigured: true }),
+        importBundle: async (input) => {
+          calls.push(input);
+          throw new Error("Cloud expenses already contain data; exclude expenses from this import to avoid overwriting them");
+        },
+      },
     );
+    const preview = await service.preview("business-1", "MXN");
+    expect(preview.expensesConflict).toBe(true);
     await expect(service.importBundle({
       businessId: "business-1",
       businessCurrency: "MXN",
       importKey: "33333333-3333-4333-8333-333333333333",
       selection: { catalog: false, expenses: true, history: false },
-    })).rejects.toThrow("No se sobrescribirán");
+    })).rejects.toThrow("Cloud expenses already contain data");
+    expect(calls).toHaveLength(1);
   });
 
   it("can preview and import a recovered backup without reading browser storage", async () => {
@@ -177,6 +191,24 @@ describe("local import application service", () => {
       expenses: null,
       history,
     });
+  });
+
+  it("allows the server to recover an identical retry after cloud state changed", async () => {
+    const calls: Parameters<LocalImportRepositoryPort["importBundle"]>[0][] = [];
+    const service = createLocalImportService(
+      source(rawBundle()),
+      repository({ existingSkus: ["TAZA-01"], expensesConfigured: false }, calls),
+    );
+    const result = await service.importData({
+      raw: rawBundle(),
+      businessId: "business-1",
+      businessCurrency: "MXN",
+      importKey: "66666666-6666-4666-8666-666666666666",
+      selection: { catalog: true, expenses: false, history: false },
+    });
+    expect(result.importId).toBe("import-1");
+    expect(calls).toHaveLength(1);
+    expect(calls[0].catalog).toEqual(catalog);
   });
 
   it("rejects a selection with no categories", async () => {

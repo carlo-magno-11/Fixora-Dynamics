@@ -215,6 +215,18 @@ test("exports scoped and legacy backups separately and restores only the selecte
   }), { scopedStorageKey: scopedKey, legacyStorageKey: legacyKey });
   expect(originalStorage).toEqual({ scoped: scopedCatalog, legacy: legacyExpenses });
 
+  let firstResponseDropped = false;
+  await page.route("**/rest/v1/rpc/fixora_import_local_bundle", async (route) => {
+    if (firstResponseDropped) {
+      await route.continue();
+      return;
+    }
+    firstResponseDropped = true;
+    const committedResponse = await route.fetch();
+    expect(committedResponse.ok()).toBeTruthy();
+    await route.abort("failed");
+  });
+
   await page.locator('input[type="file"]').setInputFiles({
     name: "fixora-respaldo-scoped.json",
     mimeType: "application/json",
@@ -223,6 +235,25 @@ test("exports scoped and legacy backups separately and restores only the selecte
   await expect(page.getByRole("heading", { name: "Restaura un respaldo a la nube." })).toBeVisible();
   await expect(page.getByText("1 elemento local")).toBeVisible();
   await page.locator(".local-import-option").filter({ hasText: "Catálogo" }).locator('input[type="checkbox"]').check();
+  await page.getByRole("button", { name: "Importar selección de forma segura" }).click();
+  await expect(page.getByRole("alert")).toBeVisible();
+  expect(firstResponseDropped).toBe(true);
+
+  await page.reload();
+  await page.getByRole("button", { name: "Importar datos locales" }).click();
+  await expect(page.getByRole("heading", { name: "Trae tus datos locales a la nube." })).toBeVisible();
+  await page.locator('input[type="file"]').setInputFiles({
+    name: "fixora-respaldo-scoped.json",
+    mimeType: "application/json",
+    buffer: Buffer.from(scopedBackupText, "utf8"),
+  });
+  await expect(page.getByRole("heading", { name: "Restaura un respaldo a la nube." })).toBeVisible();
+  await expect(page.getByText(/SKU que ya existen:/)).toBeVisible();
+  const retryCatalogCheckbox = page.locator(".local-import-option")
+    .filter({ hasText: "Catálogo" })
+    .locator('input[type="checkbox"]');
+  await expect(retryCatalogCheckbox).toBeEnabled();
+  await retryCatalogCheckbox.check();
   await page.getByRole("button", { name: "Importar selección de forma segura" }).click();
   await expect(page.getByRole("heading", { name: "Tus datos seleccionados ya están en la nube." })).toBeVisible();
 

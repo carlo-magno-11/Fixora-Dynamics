@@ -173,8 +173,8 @@ export function LocalDataImportPage({
     }
   }
 
-  const catalogBlocked = !preview || hasIssue(preview, "catalog") || preview.catalogConflicts.length > 0 || preview.catalog.length === 0;
-  const expensesBlocked = !preview || hasIssue(preview, "expenses") || preview.expensesConflict || preview.currencyIssues.length > 0 || preview.expenses === null;
+  const catalogBlocked = !preview || hasIssue(preview, "catalog") || preview.catalog.length === 0;
+  const expensesBlocked = !preview || hasIssue(preview, "expenses") || preview.currencyIssues.length > 0 || preview.expenses === null;
   const historyBlocked = !preview || hasIssue(preview, "history") || preview.history.length === 0;
   const storageConflict = Boolean(preview?.issues.some((issue) => issue.code === "storage_conflict"));
   const backupUnavailable = Boolean(preview?.issues.some((issue) =>
@@ -240,15 +240,15 @@ export function LocalDataImportPage({
               <label className={catalogBlocked ? "local-import-option is-blocked" : "local-import-option"}>
                 <input type="checkbox" checked={selection.catalog} disabled={catalogBlocked || loading || saving || attempted || Boolean(result)} onChange={(event) => toggle("catalog", event.target.checked)} />
                 <span className="local-import-option-copy"><strong>Catálogo</strong><small>{formatCount(preview.catalog.length, "elemento local", "elementos locales")}</small></span>
-                <span className="local-import-option-status">{catalogBlocked ? "Requiere revisión" : "Disponible"}</span>
+                <span className="local-import-option-status">{catalogBlocked ? "Requiere revisión" : preview.catalogConflicts.length > 0 ? "Validación del servidor" : "Disponible"}</span>
               </label>
-              {preview.catalogConflicts.length > 0 && <p className="local-import-warning">SKU que ya existen: {preview.catalogConflicts.join(", ")}</p>}
+              {preview.catalogConflicts.length > 0 && <p className="local-import-warning">SKU que ya existen: {preview.catalogConflicts.join(", ")}. El servidor rechazará un lote nuevo; solo recuperará un resultado anterior si la clave y el contenido coinciden.</p>}
               <label className={expensesBlocked ? "local-import-option is-blocked" : "local-import-option"}>
                 <input type="checkbox" checked={selection.expenses} disabled={expensesBlocked || loading || saving || attempted || Boolean(result)} onChange={(event) => toggle("expenses", event.target.checked)} />
                 <span className="local-import-option-copy"><strong>Configuración de gastos</strong><small>{preview.expenses ? `${preview.expenses.fixed.length} fijos · ${preview.expenses.variable.length} variables · ${preview.expenses.expectedUnits} unidades esperadas` : "No hay configuración legible"}</small></span>
-                <span className="local-import-option-status">{expensesBlocked ? "No disponible" : "Disponible"}</span>
+                <span className="local-import-option-status">{expensesBlocked ? "No disponible" : preview.expensesConflict ? "Validación del servidor" : "Disponible"}</span>
               </label>
-              {preview.expensesConflict && <p className="local-import-warning">El negocio cloud ya tiene gastos configurados. Se conservarán sin cambios.</p>}
+              {preview.expensesConflict && <p className="local-import-warning">El negocio cloud ya tiene gastos configurados. No se sobrescribirán; solo un reintento idéntico puede recuperar el resultado anterior.</p>}
               {preview.currencyIssues.map((issue) => <p className="local-import-warning" key={issue.code}>{issue.message}</p>)}
               <label className={historyBlocked ? "local-import-option is-blocked" : "local-import-option"}>
                 <input type="checkbox" checked={selection.history} disabled={historyBlocked || loading || saving || attempted || Boolean(result)} onChange={(event) => toggle("history", event.target.checked)} />
