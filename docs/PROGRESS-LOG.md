@@ -621,3 +621,14 @@ Durante la revisión final detecté que el camino idempotente de un código ya r
 - Documento de evidencia: `docs/EXECUTION-STATUS-20261103.md`.
 - CI del HEAD consultado durante esta intervención: CI #1526 y Security #338 en ejecución; Database tests #1080 y CodeQL #186 pendientes. No se declaran verdes hasta revisar sus conclusiones.
 - Próxima etapa: terminar Auth y persistencia General con E2E multiusuario/multinegocio/multidispositivo, importación local→cloud y recuperación; después completar el vertical slice Retail.
+
+
+## 2026-11-03 — Reanudación: importación local → cloud
+
+- Se reanudó desde la rama central `integration/fixora-mainline-20261103`, HEAD observado `003b9fedf0c49af56c2b75e8ced002309c84b14c`, PR #14 abierto en draft. No se fusionó, rebobinó ni cambió ninguna rama.
+- La importación ya está implementada en la rama: dominio/validación local, servicio de aplicación, lectura legacy no destructiva, adaptador Supabase, UI de vista previa/selección/confirmación, RPC transaccional y pruebas pgTAP.
+- La migración `20261104010000_fixora_local_data_import.sql` existe en GitHub, pero no está aplicada al Supabase remoto. El historial remoto sigue terminando en `20261103235603`.
+- En el HEAD consultado: CI #1638 SUCCESS; Database tests #1192 CANCELLED; CodeQL #298 CANCELLED; Security #450 CANCELLED. Sólo CI se considera aprobado. No se afirma que la nueva migración haya pasado reconstrucción local ni pgTAP.
+- Se corrigió `docs/LOCAL-TO-CLOUD-IMPORT-SPEC.md` para reflejar el código real y separar lo implementado de lo pendiente. La RPC pública y el helper privado son SECURITY DEFINER con `search_path = ''`, permisos restringidos y autorización de negocio repetida en servidor.
+- Revisión pendiente: E2E con dos usuarios/negocios/dispositivos; timeout y reintento tras recargar; importaciones concurrentes con claves distintas y mismo ID de origen; advertencia explícita de que el localStorage legacy global no acredita quién es su propietario.
+- Próxima acción: renovar Database tests, CodeQL y Security en el HEAD actualizado; corregir fallos antes de considerar la migración para el Supabase remoto. No desplegar Edge Functions ni modificar Storage en esta etapa.
