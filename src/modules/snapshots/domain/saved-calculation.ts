@@ -20,8 +20,10 @@ export function isSavedCalculation(value: unknown): value is SavedCalculation {
   if (
     typeof record.id !== "string" ||
     !record.id.trim() ||
+    record.id.length > 80 ||
     typeof record.name !== "string" ||
     !record.name.trim() ||
+    record.name.length > 120 ||
     typeof record.createdAt !== "string" ||
     Number.isNaN(Date.parse(record.createdAt)) ||
     (record.currency !== "MXN" && record.currency !== "USD") ||
@@ -54,11 +56,11 @@ export function isSavedCalculation(value: unknown): value is SavedCalculation {
   if (record.catalogItem !== undefined) {
     if (!record.catalogItem || typeof record.catalogItem !== "object") return false;
     const item = record.catalogItem as Record<string, unknown>;
-    if (typeof item.id !== "string" || !item.id.trim() ||
-      typeof item.name !== "string" || !item.name.trim() ||
+    if (typeof item.id !== "string" || !item.id.trim() || item.id.length > 80 ||
+      typeof item.name !== "string" || !item.name.trim() || item.name.length > 100 ||
       (item.kind !== "product" && item.kind !== "service") ||
-      typeof item.unit !== "string" || !item.unit.trim() ||
-      typeof item.sku !== "string" ||
+      typeof item.unit !== "string" || !item.unit.trim() || item.unit.length > 40 ||
+      typeof item.sku !== "string" || item.sku.length > 40 ||
       (item.currency !== "MXN" && item.currency !== "USD") ||
       item.currency !== record.currency ||
       typeof item.referenceCost !== "number" || !Number.isFinite(item.referenceCost) || item.referenceCost < 0) return false;
