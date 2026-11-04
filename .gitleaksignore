@@ -4,3 +4,5 @@ c455b2916666b81b8b2ace84278416b4682d2ba3:src/modules/expenses/infrastructure/bro
 6503f4752546ef2d74e9cc217f11b2c358905946:src/modules/snapshots/infrastructure/browser-calculation-repository.ts:generic-api-key:4
 67dac82a1de7b18732ca19e2b90ad0b107f539cf:src/modules/expenses/ui/ExpensesPage.tsx:generic-api-key:5
 b73fe90572d2cf0dea700f6f6857442cf15eccd2:src/app/App.tsx:generic-api-key:16
+03bef73d4e04e784fc5fcd51551cf53b2c9a93d3:src/shared/infrastructure/storage-keys.ts:generic-api-key:2
+03bef73d4e04e784fc5fcd51551cf53b2c9a93d3:src/shared/infrastructure/storage-keys.ts:generic-api-key:3
