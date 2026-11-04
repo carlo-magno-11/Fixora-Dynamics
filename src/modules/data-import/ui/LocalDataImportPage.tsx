@@ -26,7 +26,8 @@ export function LocalDataImportPage({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [result, setResult] = useState<LocalImportResult | null>(null);
-  const [importKey] = useState(() => crypto.randomUUID());
+  const [importKey, setImportKey] = useState(() => crypto.randomUUID());
+  const [attempted, setAttempted] = useState(false);
   const [selection, setSelection] = useState<LocalImportSelection>({
     catalog: false,
     expenses: false,
@@ -56,6 +57,8 @@ export function LocalDataImportPage({
     setError("");
     setResult(null);
     setSelection({ catalog: false, expenses: false, history: false });
+    setImportKey(crypto.randomUUID());
+    setAttempted(false);
     void service.preview(businessId, businessCurrency)
       .then((next) => { if (active) setPreview(next); })
       .catch((cause: unknown) => {
@@ -72,6 +75,7 @@ export function LocalDataImportPage({
   async function importSelected() {
     if (!preview || saving || result) return;
     setSaving(true);
+    setAttempted(true);
     setError("");
     try {
       const imported = await service.importBundle({
@@ -118,7 +122,7 @@ export function LocalDataImportPage({
         <div className="section-heading">
           <div className="section-number">02</div>
           <div><h2>Revisión de datos</h2><p>Destino: negocio seleccionado · Moneda: {businessCurrency}</p></div>
-          <button className="outline-button" type="button" disabled={loading || saving} onClick={() => void loadPreview()}>{loading ? "Revisando…" : "Volver a analizar"}</button>
+          <button className="outline-button" type="button" disabled={loading || saving || attempted} onClick={() => void loadPreview()}>{loading ? "Revisando…" : "Volver a analizar"}</button>
         </div>
 
         {loading && <p className="local-storage-note" role="status">Leyendo los datos locales y comprobando el estado cloud…</p>}
@@ -129,20 +133,20 @@ export function LocalDataImportPage({
             {!preview.foundLocalData && <div className="empty-state"><h2>No encontramos datos locales para migrar</h2><p>No se encontró catálogo, configuración de gastos ni historial en el almacenamiento local compatible.</p></div>}
             <div className="local-import-options">
               <label className={catalogBlocked ? "local-import-option is-blocked" : "local-import-option"}>
-                <input type="checkbox" checked={selection.catalog} disabled={catalogBlocked || saving || Boolean(result)} onChange={(event) => toggle("catalog", event.target.checked)} />
+                <input type="checkbox" checked={selection.catalog} disabled={catalogBlocked || loading || saving || attempted || Boolean(result)} onChange={(event) => toggle("catalog", event.target.checked)} />
                 <span className="local-import-option-copy"><strong>Catálogo</strong><small>{formatCount(preview.catalog.length, "elemento local", "elementos locales")}</small></span>
                 <span className="local-import-option-status">{catalogBlocked ? "Requiere revisión" : "Disponible"}</span>
               </label>
               {preview.catalogConflicts.length > 0 && <p className="local-import-warning">SKU que ya existen: {preview.catalogConflicts.join(", ")}</p>}
               <label className={expensesBlocked ? "local-import-option is-blocked" : "local-import-option"}>
-                <input type="checkbox" checked={selection.expenses} disabled={expensesBlocked || saving || Boolean(result)} onChange={(event) => toggle("expenses", event.target.checked)} />
+                <input type="checkbox" checked={selection.expenses} disabled={expensesBlocked || loading || saving || attempted || Boolean(result)} onChange={(event) => toggle("expenses", event.target.checked)} />
                 <span className="local-import-option-copy"><strong>Configuración de gastos</strong><small>{preview.expenses ? `${preview.expenses.fixed.length} fijos · ${preview.expenses.variable.length} variables · ${preview.expenses.expectedUnits} unidades esperadas` : "No hay configuración legible"}</small></span>
                 <span className="local-import-option-status">{expensesBlocked ? "No disponible" : "Disponible"}</span>
               </label>
               {preview.expensesConflict && <p className="local-import-warning">El negocio cloud ya tiene gastos configurados. Se conservarán sin cambios.</p>}
               {preview.currencyIssues.map((issue) => <p className="local-import-warning" key={issue.code}>{issue.message}</p>)}
               <label className={historyBlocked ? "local-import-option is-blocked" : "local-import-option"}>
-                <input type="checkbox" checked={selection.history} disabled={historyBlocked || saving || Boolean(result)} onChange={(event) => toggle("history", event.target.checked)} />
+                <input type="checkbox" checked={selection.history} disabled={historyBlocked || loading || saving || attempted || Boolean(result)} onChange={(event) => toggle("history", event.target.checked)} />
                 <span className="local-import-option-copy"><strong>Historial de cálculos</strong><small>{formatCount(preview.history.length, "cálculo", "cálculos")}</small></span>
                 <span className="local-import-option-status">{historyBlocked ? "Requiere revisión" : "Disponible"}</span>
               </label>
@@ -166,7 +170,7 @@ export function LocalDataImportPage({
       {error && preview && <p className="error-state" role="alert">{error}</p>}
       <div className="local-import-actions">
         <button className="outline-button" type="button" disabled={saving} onClick={onBack}>Volver</button>
-        {!result && <button className="primary-button compact" type="button" disabled={!canSubmit} onClick={() => void importSelected()}>{saving ? "Importando…" : "Importar selección de forma segura"}</button>}
+        {!result && <button className="primary-button compact" type="button" disabled={!canSubmit} onClick={() => void importSelected()}>{saving ? "Importando…" : attempted && error ? "Reintentar la misma importación" : "Importar selección de forma segura"}</button>}
       </div>
     </div>
   );
