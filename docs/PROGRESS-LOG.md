@@ -759,3 +759,15 @@ Durante la revisión final detecté que el camino idempotente de un código ya r
 - [ ] Confirmar que, tras la corrección, el endpoint responde 403 para AAL1 y para AAL2 sin permiso `admins.manage`.
 - [ ] Revisar el orden de controles de `admin-create-invite`: la autenticación AAL2 y la autorización deben preceder cualquier operación con efectos; el rate limit debe mantenerse sin permitir bypass.
 - No se aplicaron migraciones ni se desplegaron funciones en Supabase remoto. El cambio está versionado en GitHub; validación CI pendiente.
+
+## 2026-11-04 — Investigación competitiva y validación de seguridad
+
+- Rama central: `integration/fixora-mainline-20261103`.
+- HEAD de código anterior a esta actualización documental: `c751013c762fd433f9ddb853a6b08031a2951203`.
+- El parser compartido `readJsonObject` ahora acepta `Content-Length` numérico válido y sigue rechazando longitudes inválidas o superiores al límite. Se añadió prueba Deno para cubrir la regresión.
+- Validación en HEAD `c751013`: CI #1815 SUCCESS (typecheck, Vitest, build, Deno checks y utilidades); Security #627 SUCCESS (Gitleaks, OSV-Scanner, Trivy, zizmor); CodeQL #475 SUCCESS; Database tests #1369 SUCCESS (reconstrucción desde migraciones, pgTAP, mutaciones RLS y concurrencia); Browser E2E #76 SUCCESS, 4 pruebas aprobadas. La prueba E2E del endpoint administrativo volvió a pasar tras la corrección.
+- Se creó `docs/KIT-MARKET-RESEARCH-AND-DIFFERENTIATION.md`: comparativa documental de competidores en México/Latinoamérica y referencias globales; brechas funcionales por kit; propuesta de valor, MVP, pruebas de realidad y umbrales internos de adopción.
+- Se amplió `docs/KIT-MODULES-IMPLEMENTATION-PLAN.md` con diferenciación, límites de alcance y puerta de adopción.
+- La investigación confirma que calculadoras de coste, recetas, agenda, inventario y cotización ya existen en competidores. Fixora no debe competir como ERP/POS/CRM completo; debe conectar operación sencilla, coste explicable, acción siguiente e historial auditable.
+- No se creó ni ejecutó migración de kits. ADR-004 sigue abierto: aunque se recomienda licencia individual, sin herencia a miembros, la titularidad y alcance deben cerrarse antes de crear tablas/RLS de los kits.
+- No se aplicaron migraciones ni se desplegaron Edge Functions en Supabase remoto en esta entrega. El siguiente HEAD documental debe volver a ejecutar workflows.
