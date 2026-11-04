@@ -206,9 +206,12 @@ begin
 
     if jsonb_typeof(v_item -> 'id') is distinct from 'string'
       or v_source_id is null or pg_catalog.char_length(v_source_id) > 80
+      or jsonb_typeof(v_item -> 'name') is distinct from 'string'
       or pg_catalog.char_length(v_name) not between 1 and 100
       or v_kind is null or v_kind not in ('product', 'service')
+      or jsonb_typeof(v_item -> 'unit') is distinct from 'string'
       or pg_catalog.char_length(v_unit) not between 1 and 40
+      or jsonb_typeof(v_item -> 'sku') is distinct from 'string'
       or pg_catalog.char_length(v_sku) > 40
       or v_currency is null or v_currency not in ('MXN', 'USD')
       or jsonb_typeof(v_item -> 'referenceCost') is distinct from 'number'
@@ -325,7 +328,8 @@ begin
 
     for v_item in select value from jsonb_array_elements(v_fixed)
     loop
-      if jsonb_typeof(v_item) <> 'object'
+      if jsonb_typeof(v_item) is distinct from 'object'
+        or jsonb_typeof(v_item -> 'name') is distinct from 'string'
         or pg_catalog.char_length(pg_catalog.btrim(coalesce(v_item ->> 'name', ''))) not between 1 and 120
         or jsonb_typeof(v_item -> 'amount') is distinct from 'number'
       then
@@ -413,7 +417,9 @@ begin
     v_input := v_item -> 'input';
     v_result_payload := v_item -> 'result';
 
-    if v_source_id is null or pg_catalog.char_length(v_source_id) > 80
+    if jsonb_typeof(v_item -> 'id') is distinct from 'string'
+      or v_source_id is null or pg_catalog.char_length(v_source_id) > 80
+      or jsonb_typeof(v_item -> 'name') is distinct from 'string'
       or pg_catalog.char_length(v_name) not between 1 and 120
       or v_currency is null or v_currency not in ('MXN', 'USD')
       or jsonb_typeof(v_input) is distinct from 'object'
@@ -497,20 +503,18 @@ begin
     end if;
 
     if jsonb_typeof(v_item -> 'createdAt') is distinct from 'string'
-      or nullif(v_item ->> 'createdAt', '') is null then
-      raise exception 'A history timestamp is required'
-        using errcode = '22023';
-    else
-      begin
-        v_created_at := (v_item ->> 'createdAt')::timestamptz;
-      exception when others then
-        raise exception 'A history timestamp is invalid'
-          using errcode = '22023';
-      end;
-    else
+      or nullif(v_item ->> 'createdAt', '') is null
+    then
       raise exception 'A history timestamp is required'
         using errcode = '22023';
     end if;
+
+    begin
+      v_created_at := (v_item ->> 'createdAt')::timestamptz;
+    exception when others then
+      raise exception 'A history timestamp is invalid'
+        using errcode = '22023';
+    end;
 
     v_catalog_snapshot := null;
     if v_item ? 'catalogItem' and jsonb_typeof(v_item -> 'catalogItem') <> 'null' then
