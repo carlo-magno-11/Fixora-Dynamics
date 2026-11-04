@@ -161,6 +161,7 @@ export function App({
   const appServices = useMemo(
     () => createAppServices({
       storage,
+      legacyStorage: window.localStorage,
       generateId: () => crypto.randomUUID(),
       now: () => new Date().toISOString(),
     }),
