@@ -3,7 +3,7 @@ import { expect, test, type Page } from "@playwright/test";
 const supabaseUrl = requiredEnv("FIXORA_SUPABASE_URL");
 const anonKey = requiredEnv("FIXORA_SUPABASE_ANON_KEY");
 const serviceRoleKey = requiredEnv("FIXORA_SUPABASE_SERVICE_ROLE_KEY");
-const password = "Fixora-E2E-Only-Password-2026!";
+const password = `Fixora-E2E-${crypto.randomUUID()}-Only!`;
 
 interface TestUser {
   id: string;
