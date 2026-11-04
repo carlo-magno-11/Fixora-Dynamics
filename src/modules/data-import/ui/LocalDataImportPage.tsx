@@ -3,7 +3,7 @@ import type { ChangeEvent } from "react";
 import type { LocalImportService, LocalImportResult, LocalImportPreview } from "../application/local-import-service";
 import type { LocalImportSelection } from "../application/local-import-service";
 import { parseLocalImportBackup, type LocalImportRawBundle } from "../domain/local-import";
-import { createLocalImportFingerprint, getOrCreateLocalImportKey } from "../infrastructure/local-import-idempotency";
+import { createLocalImportFingerprint, getOrCreateLocalImportKey } from "../application/local-import-idempotency";
 
 function hasIssue(preview: LocalImportPreview, category: "catalog" | "expenses" | "history" | "storage"): boolean {
   return preview.issues.some((issue) => issue.category === category);
