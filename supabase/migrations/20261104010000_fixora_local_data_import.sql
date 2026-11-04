@@ -345,7 +345,8 @@ begin
 
     for v_item in select value from jsonb_array_elements(v_variable)
     loop
-      if jsonb_typeof(v_item) <> 'object'
+      if jsonb_typeof(v_item) is distinct from 'object'
+        or jsonb_typeof(v_item -> 'name') is distinct from 'string'
         or pg_catalog.char_length(pg_catalog.btrim(coalesce(v_item ->> 'name', ''))) not between 1 and 120
         or jsonb_typeof(v_item -> 'costPerUnit') is distinct from 'number'
       then
