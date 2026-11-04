@@ -1,12 +1,11 @@
-import { CALCULATION_HISTORY_STORAGE_KEY } from "../../snapshots/infrastructure/browser-calculation-repository";
-import { CATALOG_STORAGE_KEY } from "../../catalog/infrastructure/browser-catalog-repository";
-import { EXPENSES_STORAGE_KEY } from "../../expenses/infrastructure/browser-expenses-repository";
+import {
+  CALCULATION_HISTORY_STORAGE_KEY,
+  CATALOG_STORAGE_KEY,
+  EXPENSES_STORAGE_KEY,
+} from "../../../shared/infrastructure/storage-keys";
 import { resolveKeyValueStorage, type KeyValueStorageSource } from "../../../shared/infrastructure/key-value-storage";
 import type { LocalImportRawBundle } from "../domain/local-import";
-
-export interface LocalImportSourcePort {
-  read(): LocalImportRawBundle;
-}
+import type { LocalImportSourcePort } from "../application/local-import-service";
 
 export function createBrowserLocalImportSource(
   legacyStorage: KeyValueStorageSource,
