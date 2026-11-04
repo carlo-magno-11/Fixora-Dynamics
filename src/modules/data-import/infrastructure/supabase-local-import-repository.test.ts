@@ -84,7 +84,10 @@ describe("Supabase local import repository", () => {
       if (table === "fixora_catalog_items") {
         return { select: () => ({ eq: async () => ({ data: null, error: { message: "permission denied" } }) }) };
       }
-      return {};
+      if (table === "fixora_expense_settings") {
+        return { select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: { version: 1 }, error: null }) }) }) };
+      }
+      return { select: () => ({ eq: () => ({ eq: () => ({ limit: async () => ({ data: [], error: null }) }) }) }) };
     });
     const client = { from } as unknown as SupabaseClient<Database>;
     const repository = createSupabaseLocalImportRepository(client);
