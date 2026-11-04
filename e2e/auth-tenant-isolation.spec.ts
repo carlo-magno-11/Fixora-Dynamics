@@ -45,15 +45,6 @@ async function createTestUser(email: string, displayName: string): Promise<TestU
   return { id: user.id, email: user.email };
 }
 
-async function deleteTestUser(user: TestUser): Promise<void> {
-  const response = await adminRequest(`/auth/v1/admin/users/${encodeURIComponent(user.id)}`, {
-    method: "DELETE",
-  });
-  if (!response.ok && response.status !== 404) {
-    throw new Error(`Could not clean up isolated E2E user (${response.status}): ${await response.text()}`);
-  }
-}
-
 async function signInAndCreateBusiness(page: Page, user: TestUser, businessName: string): Promise<string> {
   await page.goto("/");
   await expect(page.getByRole("heading", { name: "Qué gusto tenerte de vuelta." })).toBeVisible();
@@ -92,49 +83,45 @@ async function signInAndCreateBusiness(page: Page, user: TestUser, businessName:
 }
 
 test("two authenticated users cannot read each other's business", async ({ browser }) => {
+  // The Supabase instance is disposable and isolated to this CI job. Keep the
+  // synthetic users/businesses until job teardown; deleting auth.users while
+  // fixora_businesses.created_by references them is intentionally restricted.
   const suffix = crypto.randomUUID();
   const userA = await createTestUser(`e2e-a-${suffix}@fixora.test`, "E2E Usuario A");
-  let userB: TestUser | null = null;
-  try {
-    userB = await createTestUser(`e2e-b-${suffix}@fixora.test`, "E2E Usuario B");
+  const userB = await createTestUser(`e2e-b-${suffix}@fixora.test`, "E2E Usuario B");
 
-    const contextA = await browser.newContext();
-    const pageA = await contextA.newPage();
-    const businessAId = await signInAndCreateBusiness(pageA, userA, `Negocio A ${suffix}`);
-    await contextA.close();
+  const contextA = await browser.newContext();
+  const pageA = await contextA.newPage();
+  const businessAId = await signInAndCreateBusiness(pageA, userA, `Negocio A ${suffix}`);
+  await contextA.close();
 
-    const contextB = await browser.newContext();
-    const pageB = await contextB.newPage();
-    const businessBId = await signInAndCreateBusiness(pageB, userB, `Negocio B ${suffix}`);
+  const contextB = await browser.newContext();
+  const pageB = await contextB.newPage();
+  const businessBId = await signInAndCreateBusiness(pageB, userB, `Negocio B ${suffix}`);
 
-    const tokenB = await pageB.evaluate(() => {
-      const key = Object.keys(window.localStorage).find((candidate) => candidate.endsWith("-auth-token"));
-      const raw = key ? window.localStorage.getItem(key) : null;
-      if (!raw) return null;
-      const parsed = JSON.parse(raw) as { access_token?: unknown };
-      return typeof parsed.access_token === "string" ? parsed.access_token : null;
-    });
-    expect(tokenB).toBeTruthy();
+  const tokenB = await pageB.evaluate(() => {
+    const key = Object.keys(window.localStorage).find((candidate) => candidate.endsWith("-auth-token"));
+    const raw = key ? window.localStorage.getItem(key) : null;
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { access_token?: unknown };
+    return typeof parsed.access_token === "string" ? parsed.access_token : null;
+  });
+  expect(tokenB).toBeTruthy();
 
-    const ownBusinessResponse = await fetch(
-      `${supabaseUrl}/rest/v1/fixora_businesses?id=eq.${businessBId}&select=id,name`,
-      { headers: { apikey: anonKey, Authorization: `Bearer ${tokenB}` } },
-    );
-    expect(ownBusinessResponse.ok).toBeTruthy();
-    expect(await ownBusinessResponse.json()).toEqual([
-      { id: businessBId, name: `Negocio B ${suffix}` },
-    ]);
+  const ownBusinessResponse = await fetch(
+    `${supabaseUrl}/rest/v1/fixora_businesses?id=eq.${businessBId}&select=id,name`,
+    { headers: { apikey: anonKey, Authorization: `Bearer ${tokenB}` } },
+  );
+  expect(ownBusinessResponse.ok).toBeTruthy();
+  expect(await ownBusinessResponse.json()).toEqual([
+    { id: businessBId, name: `Negocio B ${suffix}` },
+  ]);
 
-    const foreignBusinessResponse = await fetch(
-      `${supabaseUrl}/rest/v1/fixora_businesses?id=eq.${businessAId}&select=id,name`,
-      { headers: { apikey: anonKey, Authorization: `Bearer ${tokenB}` } },
-    );
-    expect(foreignBusinessResponse.ok).toBeTruthy();
-    expect(await foreignBusinessResponse.json()).toEqual([]);
-
-    await contextB.close();
-  } finally {
-    if (userB) await deleteTestUser(userB);
-    await deleteTestUser(userA);
-  }
+  const foreignBusinessResponse = await fetch(
+    `${supabaseUrl}/rest/v1/fixora_businesses?id=eq.${businessAId}&select=id,name`,
+    { headers: { apikey: anonKey, Authorization: `Bearer ${tokenB}` } },
+  );
+  expect(foreignBusinessResponse.ok).toBeTruthy();
+  expect(await foreignBusinessResponse.json()).toEqual([]);
+  await contextB.close();
 });
