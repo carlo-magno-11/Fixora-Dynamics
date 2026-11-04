@@ -818,3 +818,13 @@ Durante la revisión final detecté que el camino idempotente de un código ya r
 - Cambios de corrección en `a3442b20` y `5b1271b9`; documento de descubrimiento en `ff90e1d4`. El CI del HEAD nuevo debe volver a ejecutarse y aprobarse antes de marcar las correcciones como verificadas.
 - No se añadieron pantallas, contenido publicado, notificaciones, analítica, tablas, migraciones ni cambios de licencia/precio. Esta capa sigue como propuesta sujeta a entrevistas y pruebas de prototipo.
 - No se aplicaron migraciones ni SQL remoto, no se desplegaron Edge Functions y no se modificó el proyecto oficial EYESITE.
+
+
+## 2026-11-04 — Matriz de realidad y brechas de producto
+
+- Se inspeccionó el árbol real del repositorio, `src/app/App.tsx`, `AuthGate`, páginas de cuenta/guía/legal, licencias, soporte, administración, servicios cloud y dominios de Comercio y reventa.
+- Se creó `docs/PRODUCT-READINESS-GAP-MATRIX.md` para distinguir por área qué tiene UI, dominio, persistencia cloud, autorización, pruebas CI y qué sigue pendiente en staging/físico.
+- Se confirmó que la pantalla “Kits por negocio” actual selecciona el perfil de actividad; no es un kit especializado ejecutable ni concede derechos premium. Comercio y reventa tiene varios dominios probados, pero todavía carece del flujo UI/persistencia/RLS/entitlement de extremo a extremo. Los demás kits siguen en planificación.
+- Se confirmó que no hay una sección funcional “Explora”, resumen “Mi semana en Fixora” ni sistema de notificaciones en el código inspeccionado. La propuesta de descubrimiento permanece como experimento, no como alcance aprobado.
+- CI #1863: SUCCESS en el HEAD de código `3ceab3f`, incluyendo typecheck, Vitest, build web y checks Deno. El nuevo HEAD documental `7304832` tiene workflows recién en cola; no declarar aún Security, Database tests, Browser E2E ni CodeQL aprobados en ese HEAD.
+- No se modificó código de producto, esquema de base de datos, licencias, precios ni entitlements. No se aplicaron migraciones ni SQL remoto, no se desplegaron funciones y no se modificó EYESITE oficial.
