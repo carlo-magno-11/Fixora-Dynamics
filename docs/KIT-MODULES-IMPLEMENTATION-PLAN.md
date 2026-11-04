@@ -266,3 +266,34 @@ Calcula coste del lote puesto en almacén, coste de adquisición por unidad vend
 - El libro de movimientos es una proyección pura y ordenada por secuencia. No protege contra ventas concurrentes por sí solo: la futura escritura debe pasar por RPC transaccional, generar secuencia/idempotency key en servidor y bloquear el saldo del SKU antes de aceptar una salida.
 
 Este avance es únicamente lógica de dominio. Todavía no incluye interfaz, movimientos persistidos de inventario, tablas, RPC, RLS, entitlement `kit.retail`, SKU comercial ni activación de ventas. Esos elementos se implementarán después de validar el dominio y cerrar las decisiones de titularidad y autorización.
+
+## 10. Diferenciación tras investigación competitiva — 4 de noviembre de 2026
+
+La investigación externa se documenta en `docs/KIT-MARKET-RESEARCH-AND-DIFFERENTIATION.md`. La conclusión es que una calculadora sectorial no es suficiente: ya existen productos maduros con costes, inventario, recetas, producción, agenda, cotización y licencias. Fixora no intentará competir como ERP/POS/CRM integral. Cada kit debe conectar captura operativa sencilla → coste real explicable → acción siguiente → historial auditable.
+
+### Enfoque por kit ajustado
+
+- **Comercio y reventa:** pasar de “calculadora de margen” a “beneficio real por pedido + inventario confiable + reposición explicable”. Prioridad del piloto por código existente. Debe cerrar brechas de variantes, lotes, devoluciones, coste por pedido, multipacks, stock lento y escenarios de cambio de coste. No incluye POS ni sincronización de marketplaces en la primera entrega.
+- **Servicios y belleza:** no competir con Styler/AgendaPro en agenda/CRM. El kit se centra en rentabilidad por servicio/profesional, consumibles, preparación/limpieza, comisiones, paquetes, capacidad y coste de cancelación. La agenda se integra/importa después; no construir otro calendario por defecto.
+- **Alimentos y repostería:** no quedarse en receta × ingrediente. Diferenciar con receta/subreceta versionada, conversiones seguras, lote real, rendimiento vendible, merma, coste real vs. estimado, cambios de precio y trazabilidad básica. No prometer cumplimiento HACCP ni etiquetado normativo automático sin validación legal y de datos.
+- **Taller y manufactura:** no intentar construir un MRP. Conectar cotización → orden → materiales/operaciones → merma/reproceso → coste real vs. estimado y aprobación de cambios. No incluir CAD/CAM, nómina ni programación avanzada de máquinas en el MVP.
+- **Productos digitales y creativos:** ir más allá de amortizar horas. Costear inversión de creación, herramientas recurrentes, soporte/actualizaciones, comisiones por canal, anuncios, bundles, reembolsos y escenarios de recuperación. No construir tienda/descargas/licencias de terceros dentro del kit.
+
+### Reglas de calidad compartidas
+
+- Captura progresiva: mínimos primero, detalles después; evitar formularios gigantes.
+- Cada resultado debe mostrar entradas, unidades, fórmula, supuestos, redondeo, fecha y versión de fórmula.
+- Los cambios de coste, tarifa, receta o BOM nunca reescriben snapshots históricos.
+- No inventar densidad, tasas de canal, salarios, tiempos ni rendimientos. Valores de ejemplo deben estar etiquetados.
+- Alertas deterministas con explicación y acción; no pronósticos ML con pocos datos.
+- Exportación entendible y datos conservados al vencer.
+- No prometer modo offline antes de implementar y probar sincronización/conflictos.
+- Probar en móvil y observar usuarios reales, no medir éxito solo con CI.
+
+### Puerta de adopción del piloto
+
+Antes de vender un kit: entrevistas con 5–8 usuarios del segmento; observar tres tareas reales por usuario; al menos 80% completa el flujo principal sin ayuda crítica; ningún error crítico de dinero/unidades; el usuario explica el resultado y la decisión; 4 de 5 consideran que resuelve una tarea recurrente. Son umbrales internos iniciales, no evidencia estadística del mercado.
+
+### Orden
+
+Se conserva Comercio y reventa como piloto porque ya tiene dominio y pruebas. Se debe validar temprano Alimentos y repostería con entrevistas, porque el flujo de lote/rendimiento puede aportar más valor vertical, pero la complejidad y el riesgo de seguridad alimentaria son superiores. La priorización se puede cambiar si entrevistas reales contradicen esta hipótesis.
