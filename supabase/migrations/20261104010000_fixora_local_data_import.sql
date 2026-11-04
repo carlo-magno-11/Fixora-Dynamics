@@ -515,17 +515,29 @@ begin
       end if;
       v_catalog_snapshot := v_item -> 'catalogItem';
       if jsonb_typeof(v_catalog_snapshot -> 'id') is distinct from 'string'
+        or pg_catalog.char_length(v_catalog_snapshot ->> 'id') > 80
         or nullif(pg_catalog.btrim(v_catalog_snapshot ->> 'id'), '') is null
         or jsonb_typeof(v_catalog_snapshot -> 'name') is distinct from 'string'
+        or pg_catalog.char_length(v_catalog_snapshot ->> 'name') > 100
         or nullif(pg_catalog.btrim(v_catalog_snapshot ->> 'name'), '') is null
+        or v_catalog_snapshot ->> 'kind' is null
         or v_catalog_snapshot ->> 'kind' not in ('product', 'service')
         or jsonb_typeof(v_catalog_snapshot -> 'unit') is distinct from 'string'
+        or pg_catalog.char_length(v_catalog_snapshot ->> 'unit') > 40
         or nullif(pg_catalog.btrim(v_catalog_snapshot ->> 'unit'), '') is null
         or jsonb_typeof(v_catalog_snapshot -> 'sku') is distinct from 'string'
+        or pg_catalog.char_length(v_catalog_snapshot ->> 'sku') > 40
+        or v_catalog_snapshot ->> 'sku' <> pg_catalog.btrim(v_catalog_snapshot ->> 'sku')
         or v_catalog_snapshot ->> 'currency' is distinct from v_currency
         or jsonb_typeof(v_catalog_snapshot -> 'referenceCost') is distinct from 'number'
       then
         raise exception 'A catalog snapshot contains invalid fields'
+          using errcode = '22023';
+      end if;
+
+      v_reference_cost := (v_catalog_snapshot ->> 'referenceCost')::numeric;
+      if v_reference_cost < 0 or v_reference_cost::text in ('NaN', 'Infinity', '-Infinity') then
+        raise exception 'A catalog snapshot cost must be finite and non-negative'
           using errcode = '22023';
       end if;
     end if;
