@@ -27,7 +27,7 @@ export interface AuthWorkspaceProps {
   profileLocale?: "es-MX" | "en-US";
   profileLoading?: boolean;
   profileError?: string;
-  onProfileUpdate?: (input: { displayName: string; locale: "es-MX" | "en-US" }) => Promise<void>;
+  onProfileUpdate?: (input: { displayName: string }) => Promise<void>;
   onBusinessDetailsUpdate?: (input: { name: string; timezone: string }) => Promise<void>;
   initialBusinessType?: BusinessType;
   initialCurrency?: CurrencyCode;
@@ -342,14 +342,14 @@ export function AuthGate({ children }: AuthGateProps) {
     ));
   }
 
-  async function updateProfile(input: { displayName: string; locale: "es-MX" | "en-US" }) {
+  async function updateProfile(input: { displayName: string }) {
     if (!supabase || !session?.user.id) throw new Error("Inicia sesión para actualizar tu perfil.");
     const displayNameValue = input.displayName.trim();
     if (displayNameValue.length < 2 || displayNameValue.length > 80) {
       throw new Error("El nombre visible debe tener entre 2 y 80 caracteres.");
     }
     const { data, error } = await supabase.from("fixora_profiles")
-      .update({ display_name: displayNameValue, locale: input.locale })
+      .update({ display_name: displayNameValue })
       .eq("id", session.user.id)
       .select("display_name, locale")
       .single();
