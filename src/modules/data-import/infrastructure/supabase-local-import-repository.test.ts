@@ -49,6 +49,23 @@ describe("Supabase local import repository", () => {
     })).rejects.toThrow("resultado de importación inesperado");
   });
 
+  it("rejects negative or fractional counts in a server response", async () => {
+    const client = {
+      rpc: vi.fn().mockResolvedValue({
+        data: { ...validResult, catalogImported: -1.5 },
+        error: null,
+      }),
+    } as unknown as SupabaseClient<Database>;
+    const repository = createSupabaseLocalImportRepository(client);
+    await expect(repository.importBundle({
+      businessId: "business-1",
+      importKey: "99999999-9999-4999-8999-999999999999",
+      catalog: [],
+      expenses: null,
+      history: [],
+    })).rejects.toThrow("resultado de importación inesperado");
+  });
+
   it("does not allow an offline repository to pretend an import succeeded", async () => {
     const repository = createSupabaseLocalImportRepository(null);
     await expect(repository.importBundle({
