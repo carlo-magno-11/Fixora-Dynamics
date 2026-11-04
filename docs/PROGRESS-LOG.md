@@ -889,3 +889,16 @@ Durante la revisión final detecté que el camino idempotente de un código ya r
 - Browser E2E #147 seguía `IN_PROGRESS` en la última consulta; no se pudo obtener un log final mientras el job seguía ejecutándose.
 - No se repitió ni se modificó el test para forzar un resultado. Próximo paso: esperar el resultado/timeout del E2E, revisar el log del job y lanzar/revalidar la suite de base de datos en un HEAD de código estable cuando GitHub permita una ejecución no cancelada.
 - El último commit documental de esta actualización es `dff1a218174126d7b089a79aecfd5a1c2f21b723`; el PR #14 sigue draft, base sin cambios.
+
+
+## 2026-11-04 — Cierre de diagnóstico E2E de gastos y continuidad del plan
+
+- HEAD de código validado: `878757a969ae2ee892dd2aaca00e14f4f571ba74`; rama `integration/fixora-mainline-20261103`; PR #14 abierto y en borrador.
+- La suite Browser E2E #155 terminó SUCCESS. El recorrido de gastos comprueba después de recargar la aplicación los valores reales de los inputs de cada gasto (concepto e importe), además de conservar el diagnóstico de respuestas PostgREST y errores JavaScript.
+- El diagnóstico previo había confirmado que las dos filas esperadas existían en Supabase después del guardado. El fallo residual se debía a que la prueba buscaba los conceptos como texto plano dentro del contenedor, aunque la UI los representa como valores de campos de formulario. No se cambió el esquema, la política RLS ni la lógica de persistencia para forzar el resultado.
+- En el mismo HEAD finalizaron correctamente: CI #1894, Security #706, CodeQL #554, Browser E2E #155 y Database tests #1448.
+- La suite verde cierra este fallo específico de prueba/lectura visible; no equivale a cerrar todas las pruebas de Essentials, ni MFA/AAL2, staging, recuperación física o preparación comercial.
+- Revisión de Comercio y reventa: hay dominio probado para costeo, inventario derivado de movimientos, rentabilidad por pedido, comparación estimado-real y reposición determinista. Sigue sin existir el flujo comercial completo con UI integrada, persistencia transaccional, autorización `kit.retail`, RLS y E2E compra→recepción→venta→devolución.
+- ADR-004 está localizado en `docs/DECISIONS/ADR-004-license-scope-and-device-policy.md`. La regla de máximo tres dispositivos activos por licencia está confirmada. El modelo de licencia individual vs. negocio, herencia a miembros y transferencia siguen pendientes; el propio ADR recomienda MVP individual sin herencia, pero lo marca como recomendación, no como decisión aprobada. No crear migraciones de kits que dependan de ese alcance hasta cerrar la decisión.
+- Próxima secuencia: (1) ampliar E2E de Essentials para edición, desconexión/reintento y cambio de negocio; (2) completar validación MFA/AAL2 y permisos admin negativos en staging; (3) cerrar ADR-004; (4) diseñar persistencia/RPC transaccional de Retail y pruebas de concurrencia; (5) integrar UI del flujo Retail; (6) validar prototipo de Explora con usuarios antes de construir contenido dinámico o notificaciones.
+- No se aplicaron migraciones remotas, SQL remoto ni despliegues; no se modificó el proyecto oficial EYESITE.
