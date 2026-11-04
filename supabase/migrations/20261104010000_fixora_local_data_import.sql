@@ -88,6 +88,23 @@ declare
   v_key text;
   v_number numeric;
   v_expected_units numeric;
+  v_materials numeric;
+  v_labor numeric;
+  v_waste numeric;
+  v_direct numeric;
+  v_total numeric;
+  v_discount_factor numeric;
+  v_fee_basis_factor numeric;
+  v_retained numeric;
+  v_margin numeric;
+  v_expected_price numeric;
+  v_net_revenue numeric;
+  v_fee_base numeric;
+  v_revenue_after_fee numeric;
+  v_profit numeric;
+  v_effective_margin numeric;
+  v_markup numeric;
+  v_fee_basis text;
   v_period text;
   v_fixed jsonb;
   v_variable jsonb;
@@ -499,6 +516,70 @@ begin
       or (v_result_payload ->> 'markup')::numeric < 0
     then
       raise exception 'A history result contains values outside the supported range'
+        using errcode = '22023';
+    end if;
+
+    v_fee_basis := coalesce(v_input ->> 'variableFeeBasis', 'discounted_price');
+    if v_fee_basis not in ('discounted_price', 'pre_discount') then
+      raise exception 'A history commission basis is invalid'
+        using errcode = '22023';
+    end if;
+
+    begin
+      v_materials := (v_input ->> 'materials')::numeric;
+      v_labor := ((v_input ->> 'laborMinutes')::numeric / 60)
+        * (v_input ->> 'hourlyRate')::numeric;
+      v_waste := v_materials * (v_input ->> 'wasteRate')::numeric;
+      v_direct := v_materials + v_labor
+        + (v_input ->> 'directExpenses')::numeric + v_waste;
+      v_total := v_direct + (v_input ->> 'fixedExpensesPerUnit')::numeric;
+      v_discount_factor := 1 - (v_input ->> 'discountRate')::numeric;
+      v_fee_basis_factor := case
+        when v_fee_basis = 'pre_discount' then 1
+        else v_discount_factor
+      end;
+      v_retained := v_discount_factor
+        - v_fee_basis_factor * (v_input ->> 'variableFeeRate')::numeric;
+      v_margin := 1 - (v_input ->> 'targetMarginRate')::numeric;
+
+      if v_retained <= 0 or v_margin <= 0 then
+        raise exception 'The historical price cannot be reproduced'
+          using errcode = '22023';
+      end if;
+
+      v_expected_price := ceil((v_total / (v_retained * v_margin)) * 100) / 100;
+      v_net_revenue := v_expected_price * v_discount_factor;
+      v_fee_base := case
+        when v_fee_basis = 'pre_discount' then v_expected_price
+        else v_net_revenue
+      end;
+      v_revenue_after_fee := v_net_revenue
+        - v_fee_base * (v_input ->> 'variableFeeRate')::numeric;
+      v_profit := v_revenue_after_fee - v_total;
+      v_effective_margin := case
+        when v_revenue_after_fee = 0 then 0
+        else v_profit / v_revenue_after_fee
+      end;
+      v_markup := case
+        when v_total = 0 then 0
+        else v_profit / v_total
+      end;
+    exception when others then
+      raise exception 'The historical price cannot be reproduced from its inputs'
+        using errcode = '22023';
+    end;
+
+    if round((v_result_payload ->> 'materialCost')::numeric, 2) is distinct from round(v_materials, 2)
+      or round((v_result_payload ->> 'laborCost')::numeric, 2) is distinct from round(v_labor, 2)
+      or round((v_result_payload ->> 'wasteCost')::numeric, 2) is distinct from round(v_waste, 2)
+      or round((v_result_payload ->> 'directCost')::numeric, 2) is distinct from round(v_direct, 2)
+      or round((v_result_payload ->> 'totalUnitCost')::numeric, 2) is distinct from round(v_total, 2)
+      or (v_result_payload ->> 'suggestedPrice')::numeric is distinct from v_expected_price
+      or round((v_result_payload ->> 'profitAtSuggestedPrice')::numeric, 2) is distinct from round(v_profit, 2)
+      or abs((v_result_payload ->> 'effectiveMargin')::numeric - v_effective_margin) > 0.000001
+      or abs((v_result_payload ->> 'markup')::numeric - v_markup) > 0.000001
+    then
+      raise exception 'A history result does not match the saved pricing inputs and formula version'
         using errcode = '22023';
     end if;
 
