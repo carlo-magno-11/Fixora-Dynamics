@@ -716,3 +716,19 @@ Durante la revisión final detecté que el camino idempotente de un código ya r
 - El primer CI de la exportación detectó errores de tipos en el puerto y el handler del botón; quedaron corregidos antes del HEAD validado. No se ocultó ni se dio por aprobado el intento fallido.
 - No se modificaron migraciones ni esquema. Supabase remoto Fixora `dclaebknyalimmtgppeg` sigue con última migración observada `20261103235603`; la migración de importación `20261104010000` sigue sin aplicar. No hubo SQL remoto, despliegue de funciones, ni cambios de Storage.
 - PR #14 permanece draft/open. Siguientes puertas: E2E de descarga/restauración, importación con respuesta perdida, MFA/AAL2, dispositivos, staging HTTPS y verificación física.
+
+## 2026-11-04 — E2E de respaldo/restauración y recuperación idempotente
+
+- Se amplió `e2e/auth-tenant-isolation.spec.ts` a dos escenarios de navegador con Playwright sobre Supabase local efímero.
+- Browser E2E #30 SUCCESS: 2 pruebas aprobadas en 7.5 s. Además del aislamiento entre dos usuarios/negocios, se verificó el conflicto scoped/legacy, las dos descargas JSON independientes, el contenido exacto de cada archivo y la conservación de los originales.
+- El mismo E2E restaura únicamente el respaldo scoped y verifica que el legacy no se importa ni modifica. Después deja que la RPC complete el lote pero descarta la respuesta HTTP; tras recargar, el cliente repite la solicitud y recupera el resultado idempotente sin duplicar el catálogo.
+- La prueba pgTAP del import local ya cubre misma clave/mismo payload, misma clave/payload diferente, dos import_keys para un mismo ID de origen, editor secundario, viewer no autorizado, rollback completo de categorías y límites de tamaño.
+- HEAD de código probado: `0dc9798ef4709100331cab518df4711f3fc09985`.
+  - CI #1769 SUCCESS.
+  - Security #581 SUCCESS (Gitleaks, OSV-Scanner, Trivy, zizmor).
+  - CodeQL #429 SUCCESS.
+  - Database tests #1323 SUCCESS: 13 archivos / 304 pruebas pgTAP, mutaciones RLS negativas y concurrencia de dispositivos/rate limit.
+  - Browser E2E #30 SUCCESS: 2 pruebas / 7.5 s.
+- Se registró la evidencia y los pendientes restantes en `docs/LAUNCH-GATES.md`; commit documental `8f384b4884074cdc356c37f264ebf0b02e71ddd0`.
+- Pendiente específico: doble clic explícito y concurrencia real entre solicitudes con distintas import_keys para el mismo ID de origen; también MFA/AAL2 real, dispositivos/revocación, staging HTTPS y dispositivos físicos.
+- Supabase remoto Fixora `dclaebknyalimmtgppeg`: la última migración observada sigue en `20261103235603`; `20261104010000_fixora_local_data_import.sql` no se aplicó. No hubo SQL de escritura, despliegues ni cambios de Storage. EYESITE oficial no se tocó.
