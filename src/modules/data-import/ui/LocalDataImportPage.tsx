@@ -189,6 +189,7 @@ export function LocalDataImportPage({
           <li>La importación seleccionada se ejecuta como una sola transacción: si falla una categoría, no se guarda ninguna.</li>
           <li>Los gastos cloud existentes nunca se sobrescriben.</li>
           <li>Los SKU en conflicto se señalan antes de importar; no se fusionan automáticamente.</li>
+          <li>Los respaldos JSON no están cifrados. Guárdalos en un dispositivo privado y no compartas el archivo.</li>
           <li>Puedes volver a intentar una solicitud interrumpida sin duplicar registros.</li>
         </ul>
       </section>
