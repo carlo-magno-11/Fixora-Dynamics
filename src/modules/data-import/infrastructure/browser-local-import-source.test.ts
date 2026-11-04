@@ -97,6 +97,55 @@ describe("browser local import source", () => {
     expect(() => source.createBackup()).toThrow("resolver el acceso o la mezcla");
   });
 
+  it("exports scoped and legacy data as separate backups when a conflict exists", () => {
+    const scopedData = {
+      [CATALOG_STORAGE_KEY]: '[{"id":"scoped-item"}]',
+    };
+    const legacyData = {
+      [EXPENSES_STORAGE_KEY]: '{"fixed":[{"id":"legacy-rent"}]}',
+      [CALCULATION_HISTORY_STORAGE_KEY]: '[{"id":"legacy-history"}]',
+    };
+    const source = createBrowserLocalImportSource(
+      memoryStorage(scopedData),
+      memoryStorage(legacyData),
+    );
+
+    expect(source.read()).toMatchObject({ storageConflict: true });
+
+    const scopedBackup = JSON.parse(source.createBackup("scoped")) as {
+      sourceScope: string;
+      data: { catalog: string | null; expenses: string | null; history: string | null };
+    };
+    expect(scopedBackup.sourceScope).toBe("scoped");
+    expect(scopedBackup.data).toEqual({
+      catalog: scopedData[CATALOG_STORAGE_KEY],
+      expenses: null,
+      history: null,
+    });
+
+    const legacyBackup = JSON.parse(source.createBackup("legacy")) as {
+      sourceScope: string;
+      data: { catalog: string | null; expenses: string | null; history: string | null };
+    };
+    expect(legacyBackup.sourceScope).toBe("legacy");
+    expect(legacyBackup.data).toEqual({
+      catalog: null,
+      expenses: legacyData[EXPENSES_STORAGE_KEY],
+      history: legacyData[CALCULATION_HISTORY_STORAGE_KEY],
+    });
+  });
+
+  it("does not create a scoped or legacy backup when that source has no data", () => {
+    const source = createBrowserLocalImportSource(memoryStorage(), memoryStorage());
+    expect(() => source.createBackup("scoped")).toThrow("No hay datos");
+    expect(() => source.createBackup("legacy")).toThrow("No hay datos");
+  });
+
+  it("refuses a legacy backup when no separate legacy storage exists", () => {
+    const source = createBrowserLocalImportSource(memoryStorage(localData));
+    expect(() => source.createBackup("legacy")).toThrow("No existe un almacenamiento anterior");
+  });
+
   it("does not expose a write or delete operation", () => {
     const source = createBrowserLocalImportSource(memoryStorage());
     expect(Object.keys(source)).toEqual(["createBackup", "read"]);
