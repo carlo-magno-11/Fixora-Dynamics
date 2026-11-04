@@ -99,6 +99,6 @@ describe("browser local import source", () => {
 
   it("does not expose a write or delete operation", () => {
     const source = createBrowserLocalImportSource(memoryStorage());
-    expect(Object.keys(source)).toEqual(["read"]);
+    expect(Object.keys(source)).toEqual(["createBackup", "read"]);
   });
 });
