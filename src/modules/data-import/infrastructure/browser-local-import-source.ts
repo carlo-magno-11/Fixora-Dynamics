@@ -28,7 +28,7 @@ export function createBrowserLocalImportSource(
     read() {
       try {
         const scoped = readKeys(scopedStorage);
-        if (!legacyStorage || resolveKeyValueStorage(scopedStorage) === resolveKeyValueStorage(legacyStorage)) {
+        if (!legacyStorage || scopedStorage === legacyStorage) {
           return scoped;
         }
 
