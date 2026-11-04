@@ -7,6 +7,7 @@ import { CloudExpensesPage } from "../modules/expenses/ui/CloudExpensesPage";
 import { CatalogPage } from "../modules/catalog/ui/CatalogPage";
 import { CloudCatalogPage } from "../modules/catalog/ui/CloudCatalogPage";
 import { CloudHistoryPage } from "../modules/snapshots/ui/CloudHistoryPage";
+import { LocalDataImportPage } from "../modules/data-import/ui/LocalDataImportPage";
 import { SupportPage } from "../modules/support/ui/SupportPage";
 import { AdminConsoleContainer } from "../modules/admin/ui/AdminConsoleContainer";
 import type { CatalogItem } from "../modules/catalog/domain/catalog";
@@ -25,7 +26,7 @@ import { createNamespacedKeyValueStorage, type KeyValueStorage } from "../shared
 import { getSupabaseClient } from "../shared/infrastructure/supabase/client";
 import type { Database } from "../shared/infrastructure/supabase/database.types";
 
-type View = "essentials" | "calculator" | "breakEven" | "expenses" | "catalog" | "kits" | "history" | "guide" | "account" | "support" | "admin" | "about" | "terms" | "privacy";
+type View = "essentials" | "calculator" | "breakEven" | "expenses" | "catalog" | "kits" | "history" | "import" | "guide" | "account" | "support" | "admin" | "about" | "terms" | "privacy";
 const mobilePrimaryViews: View[] = ["essentials", "calculator", "expenses", "history"];
 type BusinessType = "general" | "retail" | "food" | "services_beauty" | "digital_products" | "workshop";
 type CurrencyCode = "MXN" | "USD";
@@ -167,7 +168,7 @@ export function App({
     }),
     [storage],
   );
-  const { historyRepository, snapshotService, catalogService, expensesService, cloudCatalogService, cloudExpensesService, cloudHistoryService, cloudCalculatorDraftService } = appServices;
+  const { historyRepository, snapshotService, catalogService, expensesService, cloudCatalogService, cloudExpensesService, cloudHistoryService, cloudCalculatorDraftService, localImportService } = appServices;
   const [restoredDraft] = useState(() => readCalculatorDraftWithLegacyFallback(
     calculatorDraftStorage,
     storage,
@@ -698,6 +699,7 @@ export function App({
         <button type="button" onClick={() => { setView("catalog"); setMobileMoreOpen(false); }}><span className="mobile-menu-icon"><FixoraIcon name="package" /></span>Catálogo</button>
         <button type="button" onClick={() => { setView("kits"); setMobileMoreOpen(false); }}><span className="mobile-menu-icon"><FixoraIcon name="layers" /></span>Kits por negocio</button>
         <button type="button" onClick={() => { setView("account"); setMobileMoreOpen(false); }}><span className="mobile-menu-icon"><FixoraIcon name="user" /></span>Mi cuenta</button>
+        {authMode === "cloud" && businessId && <button type="button" onClick={() => { setView("import"); setMobileMoreOpen(false); }}><span className="mobile-menu-icon"><FixoraIcon name="download" /></span>Importar datos locales</button>}
         {authMode === "cloud" && <button type="button" onClick={() => { setView("support"); setMobileMoreOpen(false); }}><span className="mobile-menu-icon"><FixoraIcon name="support" /></span>Soporte</button>}
         {authMode === "cloud" && <button type="button" onClick={() => { setView("admin"); setMobileMoreOpen(false); }}><span className="mobile-menu-icon"><FixoraIcon name="shield" /></span>Administración</button>}
         <button type="button" onClick={() => { setView("guide"); setMobileMoreOpen(false); }}><span className="mobile-menu-icon"><FixoraIcon name="book" /></span>Guía de uso</button>
@@ -734,6 +736,7 @@ export function App({
           </button>
           <p className="nav-label nav-label-spaced">TU CUENTA</p>
           <button className={view === "account" ? "nav-item active" : "nav-item"} aria-current={view === "account" ? "page" : undefined} onClick={() => setView("account")}><FixoraIcon className="nav-icon" name="user" /> Mi cuenta</button>
+          {authMode === "cloud" && businessId && <button className={view === "import" ? "nav-item active" : "nav-item"} aria-current={view === "import" ? "page" : undefined} onClick={() => setView("import")}><FixoraIcon className="nav-icon" name="download" /> Importar datos locales</button>}
           {authMode === "cloud" && <button className={view === "support" ? "nav-item active" : "nav-item"} aria-current={view === "support" ? "page" : undefined} onClick={() => setView("support")}><FixoraIcon className="nav-icon" name="support" /> Soporte</button>}
           {authMode === "cloud" && <button className={view === "admin" ? "nav-item active" : "nav-item"} aria-current={view === "admin" ? "page" : undefined} onClick={() => setView("admin")}><FixoraIcon className="nav-icon" name="shield" /> Administración</button>}
           <button className={view === "about" ? "nav-item active" : "nav-item"} aria-current={view === "about" ? "page" : undefined} onClick={() => setView("about")}><FixoraIcon className="nav-icon" name="grid" /> Nuestra familia</button>
@@ -1014,6 +1017,14 @@ export function App({
             </div>
           )}
 
+          {view === "import" && authMode === "cloud" && businessId && (
+            <LocalDataImportPage
+              businessId={businessId}
+              businessCurrency={initialCurrency ?? currency}
+              service={localImportService}
+              onBack={() => setView("account")}
+            />
+          )}
           {view === "support" && authMode === "cloud" && <SupportPage businessId={businessId} />}
           {view === "admin" && authMode === "cloud" && <AdminConsoleContainer />}
           {view === "guide" && <GuidePage />}
