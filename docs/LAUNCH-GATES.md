@@ -222,3 +222,14 @@ La evidencia E2E anterior es local/efímera y no sustituye staging ni la validac
 - [ ] PR #14 continúa draft y no se fusiona hasta cerrar las puertas restantes.
 
 La concurrencia probada usa Supabase local efímero. No implica que se haya ejecutado contra el proyecto remoto ni en staging.
+ 
+## 6. Kits especializados — producto y mercado (4-nov-2026)
+- [x] Investigación documental de competidores y diferenciación registrada en `docs/KIT-MARKET-RESEARCH-AND-DIFFERENTIATION.md`.
+- [x] Alcance y puerta de adopción añadidos a `docs/KIT-MODULES-IMPLEMENTATION-PLAN.md`.
+- [ ] Resolver ADR-004 (titularidad de licencia y ámbito de miembros) antes de crear tablas/RLS de los kits.
+- [ ] Comercio y reventa: completar ciclo compra/lote → recepción → inventario → pedido/venta → devolución → coste real por pedido → reposición; UI, persistencia y RLS pendientes.
+- [ ] Servicios y belleza: validar con usuarios el flujo de rentabilidad por servicio antes de desarrollar agenda/CRM.
+- [ ] Alimentos y repostería: validar recetas/subrecetas, conversiones, lote real y rendimiento con reposteros; no prometer HACCP/compliance.
+- [ ] Taller y manufactura: validar cotización → orden → tiempo/materiales → merma/reproceso → cierre.
+- [ ] Productos digitales: validar inversión inicial/recurrente, fees por canal, bundles, reembolsos y coste de soporte.
+- [ ] Probar cada kit con usuarios reales y superar la puerta de adopción antes de habilitar venta.
