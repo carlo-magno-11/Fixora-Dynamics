@@ -806,3 +806,15 @@ Durante la revisión final detecté que el camino idempotente de un código ya r
 - Documento completo: `docs/PRODUCT-STRATEGY-ROOT-PROBLEM-AND-COMMERCIAL-ROADMAP.md`.
 - No se modificó código de producto, esquema de base de datos, licencias ni precios. Es una estrategia propuesta para revisión, no un cambio de alcance aprobado.
 - No se ejecutaron migraciones remotas ni despliegues. El nuevo commit documental aún no tiene workflows de CI visibles.
+
+
+## 2026-11-04 — Descubrimiento, aprendizaje y retorno a Fixora
+
+- Se identificó una hipótesis de producto pendiente de validar: Fixora necesita un segundo motivo de retorno, además de resolver tareas operativas. La propuesta no es una red social ni un feed infinito, sino recursos breves y accionables conectados con problemas reales del negocio.
+- Se creó `docs/PRODUCT-DISCOVERY-RETENTION-EXPERIMENTS.md` con dos superficies propuestas: “Explora” (biblioteca de ideas, herramientas, casos y novedades reales) y “Mi semana en Fixora” (señales personalizadas basadas solo en datos disponibles y verificables).
+- Se definieron límites: sin rachas, scroll infinito, comunidad prematura, noticias genéricas, notificaciones diarias por defecto ni recomendaciones sin fuente/supuestos. Se propone validar primero una biblioteca editorial pequeña; el resumen personalizado y los recordatorios optativos son etapas posteriores.
+- Se consultó evidencia sobre notificaciones y retención: un ensayo microaleatorizado encontró efecto de apertura a corto plazo, pero no mejoró retención de 30 días con notificaciones fijas/aleatorias; un estudio exploratorio de recordatorios interactivos tuvo muestra pequeña. Las fuentes y limitaciones están dentro del documento.
+- Revisión de CI anterior: en el merge commit `2a827bca52aac70f5de783ed1137e23994e6522e` (PR head `e47789d`) fallaron 2 pruebas Vitest y pasaron 266. Una prueba de arquitectura confundía la palabra “window” en comentarios con uso del global; se ajustó el escaneo para ignorar comentarios. La prueba de overflow de reposición se ajustó para aislar el desbordamiento de la suma de días, en lugar de fallar antes por el punto de reposición.
+- Cambios de corrección en `a3442b20` y `5b1271b9`; documento de descubrimiento en `ff90e1d4`. El CI del HEAD nuevo debe volver a ejecutarse y aprobarse antes de marcar las correcciones como verificadas.
+- No se añadieron pantallas, contenido publicado, notificaciones, analítica, tablas, migraciones ni cambios de licencia/precio. Esta capa sigue como propuesta sujeta a entrevistas y pruebas de prototipo.
+- No se aplicaron migraciones ni SQL remoto, no se desplegaron Edge Functions y no se modificó el proyecto oficial EYESITE.
