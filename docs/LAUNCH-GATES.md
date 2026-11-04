@@ -200,3 +200,24 @@ Conclusión: la política de 30 días, los entitlements específicos por kit y l
 - [ ] PR #14 permanece draft; no fusionar ni anunciar producción.
 
 La evidencia E2E anterior es local/efímera y no sustituye staging ni la validación con dispositivos reales.
+
+
+## Concurrencia de importación — E2E ampliado 2026-11-04
+
+**HEAD de código:** `38135a25cd070ef199af6a2e6eb090bdf8c0f370`.
+
+- [x] CI #1775 SUCCESS: typecheck, Vitest, build web y Deno checks.
+- [x] Security #587 SUCCESS: Gitleaks, OSV-Scanner, Trivy y zizmor.
+- [x] CodeQL #435 SUCCESS.
+- [x] Database tests #1329 SUCCESS: 13 archivos pgTAP / 304 pruebas; reconstrucción limpia, mutaciones RLS negativas y pruebas de concurrencia de dispositivos/rate limit.
+- [x] Browser E2E #36 SUCCESS: 3 pruebas / 7.9 s en Supabase local efímero.
+  - Aislamiento de lectura entre dos usuarios y negocios.
+  - Exportación scoped/legacy, restauración del respaldo seleccionado, originales intactos y recuperación después de descartar la respuesta de una RPC ya confirmada.
+  - Dos envíos concurrentes con la misma import_key recuperan el mismo importId; dos import_keys diferentes que apuntan al mismo ID de origen no crean registros duplicados.
+- [ ] MFA/AAL2 end-to-end con TOTP y bloqueo de endpoints administrativos para AAL1.
+- [ ] Dos dispositivos reales, revocación y cambio de negocio durante operaciones pendientes.
+- [ ] Staging HTTPS, pruebas de accesibilidad/visual y validación física iOS/Android.
+- [ ] Revisión/aplicación controlada de migraciones remotas Fixora. La migración `20261104010000_fixora_local_data_import.sql` sigue sin aplicarse al proyecto remoto.
+- [ ] PR #14 continúa draft y no se fusiona hasta cerrar las puertas restantes.
+
+La concurrencia probada usa Supabase local efímero. No implica que se haya ejecutado contra el proyecto remoto ni en staging.
