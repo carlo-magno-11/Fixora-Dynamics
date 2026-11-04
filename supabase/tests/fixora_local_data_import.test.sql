@@ -1,7 +1,7 @@
 \set ON_ERROR_STOP on
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
-SELECT plan(20);
+SELECT plan(21);
 SELECT has_table('fixora_private','fixora_import_batches','Import ledger exists');
 SELECT has_table('fixora_private','fixora_import_source_records','Source map exists');
 SELECT ok((SELECT relrowsecurity AND relforcerowsecurity FROM pg_class WHERE oid='fixora_private.fixora_import_batches'::regclass),'Import ledger forces RLS');
