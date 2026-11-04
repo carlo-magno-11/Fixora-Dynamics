@@ -632,3 +632,20 @@ Durante la revisión final detecté que el camino idempotente de un código ya r
 - Se corrigió `docs/LOCAL-TO-CLOUD-IMPORT-SPEC.md` para reflejar el código real y separar lo implementado de lo pendiente. La RPC pública y el helper privado son SECURITY DEFINER con `search_path = ''`, permisos restringidos y autorización de negocio repetida en servidor.
 - Revisión pendiente: E2E con dos usuarios/negocios/dispositivos; timeout y reintento tras recargar; importaciones concurrentes con claves distintas y mismo ID de origen; advertencia explícita de que el localStorage legacy global no acredita quién es su propietario.
 - Próxima acción: renovar Database tests, CodeQL y Security en el HEAD actualizado; corregir fallos antes de considerar la migración para el Supabase remoto. No desplegar Edge Functions ni modificar Storage en esta etapa.
+
+## 2026-11-04 — Validación integrada de importación local y seguridad
+
+- Rama consultada: `integration/fixora-mainline-20261103`.
+- HEAD validado por GitHub Actions: `d446fba46d29fb341deb20c5f439f6b943325655`.
+- PR #14 continúa abierto y en borrador; no se fusionó ni se cambió de rama.
+- CI #1715: SUCCESS. Pasaron instalación congelada, TypeScript, Vitest, build web, comprobación de Edge Functions y 14 pruebas Deno.
+- Database tests #1269: SUCCESS. La base local aislada se reconstruyó desde las migraciones versionadas; pgTAP pasó con 304 pruebas en 13 archivos, incluida `fixora_local_data_import.test.sql`. También pasaron las pruebas de mutación RLS y las pruebas de concurrencia de activación de dispositivos y rate limit.
+- CodeQL #375: SUCCESS.
+- Security #527: SUCCESS. Pasaron Gitleaks, zizmor, OSV-Scanner y Trivy.
+- Supabase Security Advisor del proyecto Fixora `dclaebknyalimmtgppeg`: sin hallazgos (`lints: []`) en la consulta de esta revisión.
+- Performance Advisor: avisos informativos de índices no utilizados y asignación de conexiones Auth. No se borraron índices ni se cambió configuración; deben revisarse con carga representativa.
+- La migración `20261104010000_fixora_local_data_import.sql` y sus pruebas están versionadas y pasaron la reconstrucción/pgTAP local de CI. **No está aplicada en Supabase remoto**: el historial remoto consultado continúa hasta `20261103235603`.
+- No se ejecutó migración remota, SQL de escritura, despliegue de Edge Functions, cambio de Storage ni modificación de EYESITE oficial.
+- Pendientes de General: E2E de dos usuarios/dos negocios/dos dispositivos; conflicto, desconexión y reintento de importación; recuperación del resultado idempotente tras perder la respuesta; respaldo separado y recuperación cuando existen datos simultáneos en almacenamiento scoped y legacy; pruebas de backup/restauración.
+- Kits: Comercio y reventa conserva dominio inicial probado, pero siguen pendientes UI completa, persistencia transaccional, RLS, entitlements ejecutables y guía integrada.
+- No declarar sincronización integral, staging, dispositivo físico ni producción listos por estos resultados de CI.
