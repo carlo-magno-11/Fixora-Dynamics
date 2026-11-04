@@ -149,10 +149,11 @@ export function CloudExpensesPage({ businessId, currency, formatMoney, service }
         expectedVersion: version,
       });
       if (activeBusinessId.current !== saveBusinessId || saveRequestId.current !== currentSaveRequest) return;
-      setMessage("Gastos y asignación guardados en Supabase. Los cambios se aplicaron como una sola operación.");
       const refreshed = await loadData();
-      if (!refreshed && activeBusinessId.current === saveBusinessId) {
-        setMessage("Los cambios se guardaron, pero no pudimos actualizar la vista. Pulsa Actualizar para volver a consultar.");
+      if (activeBusinessId.current === saveBusinessId) {
+        setMessage(refreshed
+          ? "Gastos y asignación guardados en Supabase. Los cambios se aplicaron como una sola operación."
+          : "Los cambios se guardaron, pero no pudimos actualizar la vista. Pulsa Actualizar para volver a consultar.");
       }
     } catch (error) {
       if (activeBusinessId.current !== saveBusinessId || saveRequestId.current !== currentSaveRequest) return;
