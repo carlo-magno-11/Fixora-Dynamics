@@ -45,7 +45,8 @@ describe("calculateRetailOrderProfit", () => {
       contributionBeforeFixed: 166,
       fixedCostAllocation: 10,
       estimatedContributionAfterFixed: 156,
-      contributionMargin: 0.29434,
+      contributionMargin: 0.313208,
+      estimatedOperatingMargin: 0.29434,
     });
   });
 
