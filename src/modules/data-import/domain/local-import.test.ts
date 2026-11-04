@@ -80,6 +80,12 @@ describe("local import validation", () => {
     expect(result.issues).toEqual([]);
   });
 
+  it("does not mistake browser storage access failure for an empty account", () => {
+    const result = parseLocalImportBundle({ catalog: null, expenses: null, history: null, storageError: true });
+    expect(result.canImport).toBe(false);
+    expect(result.issues[0]?.code).toBe("storage_unavailable");
+  });
+
   it("blocks corrupted JSON instead of interpreting it as an empty collection", () => {
     const result = parseLocalImportBundle(rawBundle({ catalog: "{" }));
     expect(result.canImport).toBe(false);
