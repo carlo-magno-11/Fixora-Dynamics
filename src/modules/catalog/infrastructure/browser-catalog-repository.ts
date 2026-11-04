@@ -1,8 +1,9 @@
 import type { CatalogRepositoryPort } from "../application/catalog-service";
 import type { CatalogItem } from "../domain/catalog";
 import { resolveKeyValueStorage, type KeyValueStorageSource } from "../../../shared/infrastructure/key-value-storage";
+import { CATALOG_STORAGE_KEY } from "../../../shared/infrastructure/storage-keys";
+export { CATALOG_STORAGE_KEY } from "../../../shared/infrastructure/storage-keys";
 
-export const CATALOG_STORAGE_KEY = "fixora.catalog.v1";
 const MAX_CATALOG_ITEMS = 500;
 
 export function isStoredCatalogItem(value: unknown): value is CatalogItem {
