@@ -661,3 +661,15 @@ Durante la revisión final detecté que el camino idempotente de un código ya r
 - La línea base de seguridad se alinea con OWASP Top 10:2025 y ASVS 5.0.0. Referencias oficiales: https://top10.owasp.org/2025/ y https://asvs.owasp.org/. Esto es una matriz de trabajo, no certificación.
 - Supabase remoto Fixora `dclaebknyalimmtgppeg`: historial de migraciones permanece hasta `20261103235603`; `20261104010000_fixora_local_data_import.sql` sigue sólo versionada y probada en reconstrucción local CI. No se aplicó ninguna migración remota ni se modificó EYESITE oficial.
 - Puerta siguiente: incorporar un harness E2E de navegador ligero (Playwright) con fixtures aislados y pruebas de importación/reintento y aislamiento multiusuario; antes de escribir, revisar el árbol y lockfile actual, elegir versión fijada y ejecutar CI completo. Luego preparar pruebas reales de staging con cuentas de prueba y MFA. No declarar General lista hasta completar esa evidencia.
+
+
+
+## 2026-11-04 — Reintentos de importación deterministas entre pestañas
+
+- Se cerró una carrera del cliente en la importación local→cloud: antes, dos pestañas abiertas al mismo tiempo podían generar claves aleatorias distintas antes de persistir el primer intento en localStorage.
+- El fingerprint SHA-256 identifica negocio, moneda, selección y contenido seleccionado. La clave de servidor ahora es un UUIDv5 determinista del negocio + fingerprint; recargas y pestañas concurrentes para la misma operación producen la misma clave sin depender del almacenamiento local.
+- Se eliminó la dependencia de localStorage para mantener el ledger de claves de reintento del navegador. No se guarda el contenido de origen en ese mecanismo.
+- Se añadieron pruebas para estabilidad entre pestañas/recargas, separación por negocio y payload, y entradas inválidas. La especificación `docs/LOCAL-TO-CLOUD-IMPORT-SPEC.md` refleja el contrato nuevo.
+- Commits: `64ef93a` (clave determinista), `9472f20` (integración UI), `9fd184e` (pruebas), `f085e26` (especificación).
+- Estado de validación: pendiente de CI, Database tests, CodeQL y Security sobre el HEAD documental más reciente. No se declara aprobado hasta consultar las ejecuciones.
+- No se modificó esquema ni migraciones. No se aplicó nada al Supabase remoto Fixora, no se desplegaron Edge Functions, no se tocaron Storage ni EYESITE oficial.
