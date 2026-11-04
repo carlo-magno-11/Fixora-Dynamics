@@ -128,6 +128,10 @@ export function AuthGate({ children }: AuthGateProps) {
       setSession(nextSession);
       if (event === "SIGNED_IN" || event === "SIGNED_OUT") {
         businessLoadRequest.current += 1;
+        profileLoadRequest.current += 1;
+        setProfile(null);
+        setProfileError("");
+        setProfileLoading(false);
         setBusinessLoading(false);
         setBusinesses([]);
         setSelectedBusinessId(null);
@@ -159,6 +163,7 @@ export function AuthGate({ children }: AuthGateProps) {
       return;
     }
     const requestId = ++profileLoadRequest.current;
+    setProfile(null);
     setProfileLoading(true);
     setProfileError("");
     void supabase.from("fixora_profiles")
