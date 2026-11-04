@@ -3,7 +3,7 @@ import type { ChangeEvent } from "react";
 import type { LocalImportService, LocalImportResult, LocalImportPreview } from "../application/local-import-service";
 import type { LocalImportSelection } from "../application/local-import-service";
 import { parseLocalImportBackup, type LocalImportRawBundle } from "../domain/local-import";
-import { createLocalImportFingerprint, getOrCreateLocalImportKey } from "../application/local-import-idempotency";
+import { createLocalImportFingerprint, createLocalImportKey } from "../application/local-import-idempotency";
 
 function hasIssue(preview: LocalImportPreview, category: "catalog" | "expenses" | "history" | "storage"): boolean {
   return preview.issues.some((issue) => issue.category === category);
@@ -152,7 +152,7 @@ export function LocalDataImportPage({
           history: selection.history ? raw.history : null,
         },
       });
-      const importKey = getOrCreateLocalImportKey(window.localStorage, businessId, fingerprint);
+      const importKey = await createLocalImportKey(businessId, fingerprint);
       const imported = await service.importData({
         raw,
         businessId,
