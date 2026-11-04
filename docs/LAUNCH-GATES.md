@@ -145,3 +145,18 @@ Conclusión: la política de 30 días, los entitlements específicos por kit y l
 - La migración de unidades estimadas se reconstruyó y pasó pgTAP en Database tests #1055; el tipo numérico conserva precisión para que la validación no acepte redondeos silenciosos.
 - CI #1505 / Security #317 / CodeQL #165 / Database tests #1059 fueron SUCCESS en el commit documental `b525370`. Los commits posteriores de alineación de migraciones requieren sus propias comprobaciones.
 - Se aplicaron exclusivamente migraciones del esquema Fixora en `eyesite-security-test`; no se desplegaron Edge Functions ni se modificó Storage. No hay staging multiusuario/multidispositivo validado.
+
+
+## Validación adicional — 2026-11-04 (HEAD a85d1d9)
+
+- [x] CI #1751 SUCCESS: TypeScript, Vitest, build web, Deno check y utilidades.
+- [x] Security #563 SUCCESS: Gitleaks, OSV-Scanner, Trivy y zizmor.
+- [x] CodeQL #411 SUCCESS.
+- [x] Database tests #1305 SUCCESS: reconstrucción completa; 13 archivos pgTAP, 304 pruebas PASS; mutaciones negativas RLS en negocios, catálogo y soporte; concurrencia del límite de tres dispositivos y rate limiting.
+- [x] Browser E2E #12 SUCCESS: Playwright 1.64.1 + Chromium contra Supabase local efímero; dos cuentas y dos contextos independientes; un negocio por usuario; el usuario B no puede leer el negocio A. 1 prueba, 5.3 s.
+- [x] La validación de URL acepta HTTP solo para loopback en modo desarrollo; HTTP público se rechaza y producción exige HTTPS.
+- [ ] E2E adicionales: timeout y reintento de importación, conflicto entre respaldo scoped/legacy, restauración, cambio de negocio/dispositivo, MFA/AAL2 y permisos admin negativos.
+- [ ] Staging HTTPS con cuentas controladas; probar dos dispositivos reales, MFA y flujos de recuperación.
+- [ ] Validación física en iOS/Android no realizada; la versión actual es web Vite.
+- [ ] No se aplicó `20261104010000_fixora_local_data_import.sql` al Supabase remoto Fixora. El historial remoto verificado termina en `20261103235603`. No se desplegaron Edge Functions ni se modificó Storage.
+- [ ] PR #14 permanece draft; no fusionar ni anunciar producción hasta cerrar el resto de puertas.

@@ -686,3 +686,17 @@ Durante la revisión final detecté que el camino idempotente de un código ya r
 - PR #14 permanece draft/open/mergeable; base `feat/licensing-duration-days-20261103`, head `integration/fixora-mainline-20261103`. No se fusiona todavía.
 - Supabase remoto Fixora `dclaebknyalimmtgppeg`: última migración observada `20261103235603`; `20261104010000_fixora_local_data_import.sql` sigue sin aplicar. Security Advisor sin hallazgos; Performance Advisor mantiene avisos INFO (12 índices sin uso y configuración Auth de conexiones). No se aplicó SQL, migración ni despliegue remoto.
 - Siguiente puerta: E2E de navegador con entorno local aislado, pruebas multiusuario/negocio y flujos de importación/reintento/restauración. Después, staging real con MFA y dispositivos. CI/pgTAP verdes no sustituyen esa evidencia.
+
+
+## 2026-11-04 — Browser E2E y validación completa del HEAD a85d1d9
+
+- HEAD de código validado: `a85d1d9bb8d6eb100f5ab3c43e920f2e9e40ff03`.
+- CI #1751: SUCCESS (typecheck, Vitest, build web, Deno check y utilidades).
+- Security #563: SUCCESS (Gitleaks, OSV-Scanner, Trivy y zizmor).
+- CodeQL #411: SUCCESS.
+- Database tests #1305: SUCCESS. Reconstrucción desde todas las migraciones; pgTAP: 13 archivos, 304 pruebas PASS. Cuatro mutaciones RLS permisivas detectadas (businesses, catalog_items, support_tickets, support_messages). Concurrencia de activación: una aceptada, una rechazada y tres dispositivos activos; rate limit concurrente: 3 permitidas, 9 rechazadas.
+- Browser E2E #12: SUCCESS. Playwright 1.64.1 + Chromium sobre Supabase local desechable. Dos usuarios sintéticos, dos contextos de navegador, creación de un negocio por cuenta y consulta cruzada: el usuario B obtiene su propio negocio y cero filas del negocio A. Una prueba aprobada en 5.3 segundos. Los datos de prueba quedan en el proyecto local efímero del job y desaparecen al terminar; no se crean usuarios ni negocios en Supabase remoto.
+- Se corrigió la validación de URL Supabase: HTTP solo se acepta para localhost/127.0.0.1/::1 en modo desarrollo; producción y hosts públicos requieren HTTPS. Pruebas Vitest cubren loopback, HTTP público y HTTPS.
+- No se modificó el esquema ni las migraciones en este cambio. Supabase remoto Fixora `dclaebknyalimmtgppeg`: última migración observada `20261103235603`; `20261104010000_fixora_local_data_import.sql` sigue sin aplicar. No se ejecutó SQL remoto ni se desplegaron Edge Functions.
+- PR #14 sigue draft/open/mergeable, base `feat/licensing-duration-days-20261103`; no se fusiona.
+- Siguiente puerta: ampliar E2E con importación y respuesta perdida, conflicto y restauración de respaldos, cambio de negocio/dispositivo y MFA/AAL2. Después, staging HTTPS y validación física. El primer E2E no representa cobertura integral.
