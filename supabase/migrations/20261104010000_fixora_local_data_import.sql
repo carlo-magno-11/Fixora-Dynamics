@@ -204,12 +204,13 @@ begin
     v_sku := pg_catalog.btrim(coalesce(v_item ->> 'sku', ''));
     v_currency := v_item ->> 'currency';
 
-    if v_source_id is null or pg_catalog.char_length(v_source_id) > 80
+    if jsonb_typeof(v_item -> 'id') is distinct from 'string'
+      or v_source_id is null or pg_catalog.char_length(v_source_id) > 80
       or pg_catalog.char_length(v_name) not between 1 and 100
       or v_kind is null or v_kind not in ('product', 'service')
       or pg_catalog.char_length(v_unit) not between 1 and 40
       or pg_catalog.char_length(v_sku) > 40
-      or v_currency is null or v_currency is null or v_currency is null or v_currency not in ('MXN', 'USD')
+      or v_currency is null or v_currency not in ('MXN', 'USD')
       or jsonb_typeof(v_item -> 'referenceCost') is distinct from 'number'
       or jsonb_typeof(v_item -> 'active') is distinct from 'boolean'
     then
@@ -414,9 +415,9 @@ begin
 
     if v_source_id is null or pg_catalog.char_length(v_source_id) > 80
       or pg_catalog.char_length(v_name) not between 1 and 120
-      or v_currency not in ('MXN', 'USD')
-      or jsonb_typeof(v_input) <> 'object'
-      or jsonb_typeof(v_result_payload) <> 'object'
+      or v_currency is null or v_currency not in ('MXN', 'USD')
+      or jsonb_typeof(v_input) is distinct from 'object'
+      or jsonb_typeof(v_result_payload) is distinct from 'object'
     then
       raise exception 'A history record contains invalid fields'
         using errcode = '22023';
@@ -495,7 +496,11 @@ begin
         using errcode = '22023';
     end if;
 
-    if v_item ? 'createdAt' and nullif(v_item ->> 'createdAt', '') is not null then
+    if jsonb_typeof(v_item -> 'createdAt') is distinct from 'string'
+      or nullif(v_item ->> 'createdAt', '') is null then
+      raise exception 'A history timestamp is required'
+        using errcode = '22023';
+    else
       begin
         v_created_at := (v_item ->> 'createdAt')::timestamptz;
       exception when others then
