@@ -1,7 +1,7 @@
 # Fixora Essentials — matriz de realidad y brechas del producto
 
 **Corte de revisión:** 4 de noviembre de 2026  
-**HEAD revisado:** `3ceab3fb9495081bda7711b02f4e8cd2e6cbb50d`  
+**HEAD revisado:** `878757a969ae2ee892dd2aaca00e14f4f571ba74`  
 **Rama:** `integration/fixora-mainline-20261103`  
 **PR:** #14, abierto y en borrador.  
 **Propósito:** evitar confundir código de dominio, interfaz, persistencia, autorización, CI, staging y disponibilidad comercial.
@@ -77,14 +77,14 @@ Documentación: `docs/PRODUCT-DISCOVERY-RETENTION-EXPERIMENTS.md`.
 
 ## 5. Puertas de validación del HEAD
 
-Al momento de esta revisión:
-- CI #1863: SUCCESS en el HEAD `3ceab3f` (typecheck, Vitest, build web, comprobación Deno y utilidades Deno).
-- Security #675: en ejecución.
-- Browser E2E #124: en ejecución.
-- Database tests #1417: en ejecución.
-- CodeQL #523: en ejecución.
+En el HEAD `878757a969ae2ee892dd2aaca00e14f4f571ba74` finalizaron SUCCESS las cinco suites del PR #14:
+- CI #1894: SUCCESS.
+- Security #706: SUCCESS (Gitleaks, OSV-Scanner, Trivy y zizmor).
+- Browser E2E #155: SUCCESS; incluye recorrido de catálogo/cálculo/historial y gastos después de recargar, con verificación de los valores de los inputs.
+- Database tests #1448: SUCCESS.
+- CodeQL #554: SUCCESS.
 
-No declarar aprobados los cuatro últimos hasta que terminen en el mismo HEAD. El Browser E2E existente es una primera prueba de aislamiento entre dos cuentas/negocios; no cubre el recorrido completo de Essentials, licencias, MFA, importación, backup/restauración ni staging físico.
+Este resultado valida ese HEAD y esos escenarios, no toda la aplicación. Continúan pendientes los E2E ampliados de edición, desconexión/reintento, cambio de negocio durante operaciones, MFA/AAL2 completo, autorización administrativa negativa, licencias/pagos, pruebas de staging y dispositivos físicos. Las suites locales/efímeras no sustituyen la validación en staging.
 
 ## 6. Orden de ejecución recomendado
 
