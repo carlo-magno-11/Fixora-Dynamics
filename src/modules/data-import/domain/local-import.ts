@@ -37,13 +37,14 @@ export interface LocalImportBundle {
 const MAX_CATALOG_ITEMS = 500;
 const MAX_EXPENSE_LINES = 100;
 const MAX_HISTORY_RECORDS = 100;
+const MAX_IMPORT_PAYLOAD_BYTES = 1_048_576;
 
-function parseJson(raw: string, category: LocalImportIssue["category"], issues: LocalImportIssue[]): unknown | null {
+function parseJson(raw: string, category: LocalImportIssue["category"], issues: LocalImportIssue[]): unknown | undefined {
   try {
     return JSON.parse(raw) as unknown;
   } catch {
     issues.push({ category, code: "invalid_json", message: "Los datos guardados están dañados y no se importarán." });
-    return null;
+    return undefined;
   }
 }
 
@@ -83,6 +84,13 @@ function hasDuplicateIds(items: readonly { id: string }[]): boolean {
 export function parseLocalImportBundle(raw: LocalImportRawBundle): LocalImportBundle {
   const issues: LocalImportIssue[] = [];
   const foundLocalData = raw.catalog !== null || raw.expenses !== null || raw.history !== null;
+  const payloadBytes = [raw.catalog, raw.expenses, raw.history]
+    .filter((value): value is string => value !== null)
+    .reduce((total, value) => total + new TextEncoder().encode(value).byteLength, 0);
+  if (payloadBytes > MAX_IMPORT_PAYLOAD_BYTES) {
+    issues.push({ category: "storage", code: "payload_too_large", message: "Los datos locales superan el límite de 1 MiB por importación." });
+    return { catalog: [], expenses: null, history: [], issues, foundLocalData, canImport: false };
+  }
   let catalog: CatalogItem[] = [];
   let expenses: LocalExpensesBundle | null = null;
   let history: SavedCalculation[] = [];
@@ -90,7 +98,7 @@ export function parseLocalImportBundle(raw: LocalImportRawBundle): LocalImportBu
   if (raw.catalog !== null) {
     const parsed = parseJson(raw.catalog, "catalog", issues);
     if (!Array.isArray(parsed)) {
-      if (parsed !== null) issues.push({ category: "catalog", code: "invalid_shape", message: "El catálogo local no tiene el formato esperado." });
+      if (parsed !== undefined) issues.push({ category: "catalog", code: "invalid_shape", message: "El catálogo local no tiene el formato esperado." });
     } else if (parsed.length > MAX_CATALOG_ITEMS) {
       issues.push({ category: "catalog", code: "too_many_items", message: "El catálogo supera el límite de 500 elementos." });
     } else {
@@ -132,7 +140,7 @@ export function parseLocalImportBundle(raw: LocalImportRawBundle): LocalImportBu
           currency,
         };
       }
-    } else if (parsed !== null) {
+    } else if (parsed !== undefined) {
       issues.push({ category: "expenses", code: "invalid_shape", message: "La configuración local de gastos no tiene el formato esperado." });
     }
   }
@@ -140,7 +148,7 @@ export function parseLocalImportBundle(raw: LocalImportRawBundle): LocalImportBu
   if (raw.history !== null) {
     const parsed = parseJson(raw.history, "history", issues);
     if (!Array.isArray(parsed)) {
-      if (parsed !== null) issues.push({ category: "history", code: "invalid_shape", message: "El historial local no tiene el formato esperado." });
+      if (parsed !== undefined) issues.push({ category: "history", code: "invalid_shape", message: "El historial local no tiene el formato esperado." });
     } else if (parsed.length > MAX_HISTORY_RECORDS) {
       issues.push({ category: "history", code: "too_many_records", message: "El historial supera el límite de 100 registros por importación." });
     } else {
