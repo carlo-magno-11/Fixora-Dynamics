@@ -26,7 +26,7 @@ export function LocalDataImportPage({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [result, setResult] = useState<LocalImportResult | null>(null);
-  const [importKey, setImportKey] = useState(() => crypto.randomUUID());
+  const [importKey] = useState(() => crypto.randomUUID());
   const [selection, setSelection] = useState<LocalImportSelection>({
     catalog: false,
     expenses: false,
