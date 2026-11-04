@@ -197,3 +197,35 @@ export function validateLocalImportCurrency(
     message: "La moneda de los gastos locales no coincide con la moneda principal del negocio. No se convertirán importes automáticamente.",
   }];
 }
+
+export function parseLocalImportBackup(contents: string): LocalImportRawBundle {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(contents) as unknown;
+  } catch {
+    throw new Error("El archivo de respaldo no contiene JSON válido.");
+  }
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+    throw new Error("El archivo no tiene el formato de respaldo Fixora.");
+  }
+  const backup = parsed as Record<string, unknown>;
+  if (backup.format !== "fixora-local-backup" || backup.version !== 1) {
+    throw new Error("El formato o la versión del respaldo no es compatible con esta versión de Fixora.");
+  }
+  if (typeof backup.exportedAt !== "string" || !Number.isFinite(Date.parse(backup.exportedAt))) {
+    throw new Error("La fecha de exportación del respaldo no es válida.");
+  }
+  if (!backup.data || typeof backup.data !== "object" || Array.isArray(backup.data)) {
+    throw new Error("El respaldo no contiene las categorías de datos esperadas.");
+  }
+  const data = backup.data as Record<string, unknown>;
+  const categories = [data.catalog, data.expenses, data.history];
+  if (!categories.every((value) => value === null || typeof value === "string")) {
+    throw new Error("El respaldo contiene una categoría con un formato no compatible.");
+  }
+  return {
+    catalog: data.catalog as string | null,
+    expenses: data.expenses as string | null,
+    history: data.history as string | null,
+  };
+}
