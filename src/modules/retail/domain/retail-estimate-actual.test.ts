@@ -84,7 +84,7 @@ describe("compareRetailEstimateWithActual", () => {
 
     expect(result.variance.contributionBeforeFixedRate).toBeNull();
     expect(result.variance.estimatedContributionAfterFixedRate).toBeUndefined();
-    expect(result.variance.estimatedContributionAfterFixedRateRate).toBeNull();
+    expect(result.variance.estimatedContributionAfterFixedRate).toBeNull();
   });
 
   it("rejects estimates and actuals with different currencies", () => {
