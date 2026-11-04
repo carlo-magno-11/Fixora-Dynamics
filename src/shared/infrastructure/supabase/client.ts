@@ -26,7 +26,9 @@ export function getSupabaseConfigurationError(): string | null {
   }
   try {
     const parsed = new URL(supabaseUrl);
-    if (parsed.protocol !== "https:" && parsed.hostname !== "localhost") {
+    const isLocalDevelopmentHost = import.meta.env.DEV
+      && ["localhost", "127.0.0.1", "[::1]"].includes(parsed.hostname);
+    if (parsed.protocol !== "https:" && !isLocalDevelopmentHost) {
       return "La URL de Supabase debe utilizar HTTPS.";
     }
   } catch {
