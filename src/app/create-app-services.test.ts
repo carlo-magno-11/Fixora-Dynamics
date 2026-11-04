@@ -21,6 +21,7 @@ describe("application composition root", () => {
 
     expect(typeof services.localImportService.preview).toBe("function");
     expect(typeof services.localImportService.importBundle).toBe("function");
+    expect(typeof services.localImportService.createBackup).toBe("function");
     expect(services.catalogService.loadState()).toEqual({
       items: [],
       needsRecovery: false,
