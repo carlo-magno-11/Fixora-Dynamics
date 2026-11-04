@@ -8,7 +8,7 @@ if [ -z "$database_url" ]; then
 fi
 
 case "$database_url" in
-  *127.0.0.1:54322*|*localhost:54322*) ;;
+  *127.0.0.1:54322*|*localhost:54322*|*127.0.0.1:54332*|*localhost:54332*) ;;
   *)
     echo "Refusing to run rate limit concurrency fixtures outside the local Supabase test database."
     exit 2

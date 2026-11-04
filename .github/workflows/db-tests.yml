@@ -7,7 +7,6 @@ on:
       - main
       - "foundation/**"
       - "security/**"
-      - "integration/**"
 
 permissions:
   contents: read

@@ -216,3 +216,77 @@ test("cloud expenses persist fixed and variable costs with their period settings
 
   await context.close();
 });
+
+
+test("switching businesses isolates the catalog view and cloud records", async ({ browser }) => {
+  test.setTimeout(90_000);
+  const suffix = crypto.randomUUID();
+  const user = await createTestUser(`e2e-business-scope-${suffix}@fixora.test`);
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  const firstBusinessName = `Principal ${suffix.slice(0, 8)}`;
+  const firstBusinessId = await signInAndCreateBusiness(page, user, firstBusinessName);
+  const productName = `Solo primer negocio ${suffix.slice(0, 8)}`;
+
+  await page.getByRole("button", { name: "Catálogo", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Tu catálogo de productos y servicios." })).toBeVisible();
+  await page.getByLabel("Nombre", { exact: true }).fill(productName);
+  await page.locator(".catalog-form select").nth(0).selectOption("product");
+  await page.getByLabel("Unidad", { exact: true }).fill("pieza");
+  await page.getByLabel("Coste de referencia (MXN)").fill("25");
+  await page.getByRole("button", { name: "Añadir al catálogo" }).click();
+  await expect(page.getByText("Elemento añadido al catálogo cloud.")).toBeVisible();
+
+  const token = await page.evaluate(() => {
+    const key = Object.keys(localStorage).find((candidate) => candidate.endsWith("-auth-token"));
+    const raw = key ? localStorage.getItem(key) : null;
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { access_token?: unknown };
+    return typeof parsed.access_token === "string" ? parsed.access_token : null;
+  });
+  expect(token).toBeTruthy();
+
+  const secondBusinessName = `Secundario ${suffix.slice(0, 8)}`;
+  const createSecondBusiness = await fetch(`${supabaseUrl}/rest/v1/rpc/fixora_create_business`, {
+    method: "POST",
+    headers: {
+      apikey: anonKey,
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      p_name: secondBusinessName,
+      p_business_type: "retail",
+      p_currency_code: "MXN",
+      p_timezone: "America/Merida",
+    }),
+  });
+  expect(createSecondBusiness.ok, await createSecondBusiness.text()).toBeTruthy();
+  const secondBusinessId = await createSecondBusiness.json() as string;
+  expect(secondBusinessId).toMatch(/^[0-9a-f-]{36}$/i);
+
+  const firstBusinessRows = await fetch(
+    `${supabaseUrl}/rest/v1/fixora_catalog_items?select=name&business_id=eq.${firstBusinessId}`,
+    { headers: { apikey: anonKey, Authorization: `Bearer ${token}` } },
+  );
+  const secondBusinessRows = await fetch(
+    `${supabaseUrl}/rest/v1/fixora_catalog_items?select=name&business_id=eq.${secondBusinessId}`,
+    { headers: { apikey: anonKey, Authorization: `Bearer ${token}` } },
+  );
+  expect(firstBusinessRows.ok).toBeTruthy();
+  expect(secondBusinessRows.ok).toBeTruthy();
+  expect(await firstBusinessRows.json()).toEqual([{ name: productName }]);
+  expect(await secondBusinessRows.json()).toEqual([]);
+
+  await page.reload();
+  await expect(page.getByRole("button", { name: "Cambiar negocio" })).toBeVisible();
+  await page.getByRole("button", { name: "Cambiar negocio" }).click();
+  await expect(page.getByRole("heading", { name: "Elige tu espacio." })).toBeVisible();
+  await page.getByRole("button", { name: new RegExp(secondBusinessName) }).click();
+  await expect(page.locator(".topbar-caption")).toHaveText(secondBusinessName);
+  await page.getByRole("button", { name: "Catálogo", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Tu catálogo de productos y servicios." })).toBeVisible();
+  await expect(page.locator(".catalog-row").filter({ hasText: productName })).toHaveCount(0);
+
+  await context.close();
+});
