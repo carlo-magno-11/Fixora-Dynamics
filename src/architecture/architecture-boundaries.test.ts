@@ -55,12 +55,12 @@ describe("architecture boundaries", () => {
 
       if (
         ["domain", "application"].includes(sourceLayer) &&
-        /\b(window|document|localStorage|sessionStorage|fetch|XMLHttpRequest)\b/.test(source)
+        /\b(window|document|localStorage|sessionStorage|fetch|XMLHttpRequest)\b/.test(executableSource)
       ) {
         violations.push(`${sourcePath} uses a browser or network global outside infrastructure/UI`);
       }
 
-      if (sourceLayer === "domain" && /\bcrypto\b/.test(source)) {
+      if (sourceLayer === "domain" && /\bcrypto\b/.test(executableSource)) {
         violations.push(`${sourcePath} uses a global cryptography API instead of an injected port`);
       }
 
