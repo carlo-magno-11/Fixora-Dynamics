@@ -12,11 +12,15 @@ import { createCloudCalculationHistoryApplicationService } from "../modules/snap
 import { createSupabaseCalculationHistoryRepository } from "../modules/snapshots/infrastructure/supabase-calculation-history-repository";
 import { createCloudCalculatorDraftApplicationService } from "../modules/drafts/application/cloud-calculator-draft-service";
 import { createSupabaseCalculatorDraftRepository } from "../modules/drafts/infrastructure/supabase-calculator-draft-repository";
+import { createLocalImportService } from "../modules/data-import/application/local-import-service";
+import { createBrowserLocalImportSource } from "../modules/data-import/infrastructure/browser-local-import-source";
+import { createSupabaseLocalImportRepository } from "../modules/data-import/infrastructure/supabase-local-import-repository";
 import { getSupabaseClient } from "../shared/infrastructure/supabase/client";
 import type { KeyValueStorageSource } from "../shared/infrastructure/key-value-storage";
 
 export interface AppRuntime {
   storage: KeyValueStorageSource;
+  legacyStorage?: KeyValueStorageSource;
   generateId: () => string;
   now: () => string;
 }
@@ -47,6 +51,10 @@ export function createAppServices(runtime: AppRuntime) {
     ),
     cloudCalculatorDraftService: createCloudCalculatorDraftApplicationService(
       createSupabaseCalculatorDraftRepository(supabase),
+    ),
+    localImportService: createLocalImportService(
+      createBrowserLocalImportSource(runtime.legacyStorage ?? runtime.storage),
+      createSupabaseLocalImportRepository(supabase),
     ),
   };
 }
