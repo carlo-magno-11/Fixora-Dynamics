@@ -828,3 +828,19 @@ Durante la revisión final detecté que el camino idempotente de un código ya r
 - Se confirmó que no hay una sección funcional “Explora”, resumen “Mi semana en Fixora” ni sistema de notificaciones en el código inspeccionado. La propuesta de descubrimiento permanece como experimento, no como alcance aprobado.
 - CI #1863: SUCCESS en el HEAD de código `3ceab3f`, incluyendo typecheck, Vitest, build web y checks Deno. El nuevo HEAD documental `7304832` tiene workflows recién en cola; no declarar aún Security, Database tests, Browser E2E ni CodeQL aprobados en ese HEAD.
 - No se modificó código de producto, esquema de base de datos, licencias, precios ni entitlements. No se aplicaron migraciones ni SQL remoto, no se desplegaron funciones y no se modificó EYESITE oficial.
+
+
+## 2026-11-04 — Corrección de regresiones detectadas por Browser E2E
+
+- HEAD de referencia antes de la corrección: `7ab852f2402b68731a736be37964630a45780ca6`.
+- En ese HEAD CI #1873, Database tests #1427, Security #685 y CodeQL #533 finalizaron SUCCESS. Browser E2E #134 finalizó FAILURE: 4 pruebas aprobaron y 2 fallaron.
+- Diagnóstico del E2E:
+  - El flujo de catálogo no encontraba el selector `Tipo` por usar un nombre accesible exacto que no coincide con el control compuesto; se sustituyó por un selector estable dentro del formulario.
+  - El flujo de gastos seleccionaba el periodo con un nombre accesible exacto frágil; se sustituyó por el selector dentro de `.expense-allocation`.
+  - Se detectó un defecto real en `CloudExpensesPage`: el guardado mostraba el mensaje de éxito y después llamaba a `loadData()`, que limpiaba el mensaje antes de que el usuario pudiera verlo. Ahora la confirmación se establece después de la recarga; si la escritura terminó pero la lectura posterior falla, se muestra una advertencia veraz.
+- Commits de corrección:
+  - `14028496593425f1b9818fc49d5c21c14f5a406d` — selectores E2E estables.
+  - `684ea58a32bf8530df578aaa0d8e2bf18f32faaa` — conservar confirmación del guardado cloud después de refrescar.
+- **Validación pendiente:** los cambios de estos commits todavía no tienen ejecuciones CI/Browser E2E asociadas visibles en GitHub. No se declara corregido ni aprobado el E2E hasta ejecutar de nuevo las pruebas sobre el HEAD corregido.
+- No se modificó esquema ni migraciones, no se ejecutó SQL remoto ni se desplegaron funciones. Supabase remoto Fixora y EYESITE oficial permanecen sin cambios.
+- ADR-004 sigue en estado de propuesta: el alcance individual frente a negocio, la herencia a miembros y las transferencias continúan pendientes de decisión. No crear tablas/RLS de kits ni migraciones de inventario hasta cerrar esa política.
