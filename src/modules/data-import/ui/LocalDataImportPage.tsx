@@ -25,6 +25,7 @@ export function LocalDataImportPage({
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [backupMessage, setBackupMessage] = useState("");
   const [result, setResult] = useState<LocalImportResult | null>(null);
   const [importKey, setImportKey] = useState(() => crypto.randomUUID());
   const [attempted, setAttempted] = useState(false);
@@ -67,6 +68,25 @@ export function LocalDataImportPage({
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
   }, [businessId, businessCurrency, service]);
+
+  function downloadBackup() {
+    try {
+      const backup = service.createBackup();
+      const blob = new Blob([backup], { type: "application/json;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `fixora-respaldo-local-${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+      setBackupMessage("Copia JSON descargada. Guárdala en un lugar privado y seguro.");
+      setError("");
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "No fue posible crear una copia local.");
+    }
+  }
 
   function toggle(category: keyof LocalImportSelection, checked: boolean) {
     setSelection((current) => ({ ...current, [category]: checked }));
@@ -117,6 +137,12 @@ export function LocalDataImportPage({
           <li>Puedes volver a intentar una solicitud interrumpida sin duplicar registros.</li>
         </ul>
       </section>
+
+      <div className="local-import-backup-actions">
+        <div><strong>Primero, conserva una copia independiente.</strong><p>La exportación guarda el contenido local original, incluso si alguna categoría necesita revisión.</p></div>
+        <button className="outline-button" type="button" disabled={loading || saving || Boolean(preview && hasIssue(preview, "storage"))} onClick={downloadBackup}>Descargar respaldo JSON ↓</button>
+      </div>
+      {backupMessage && <p className="save-message" role="status">{backupMessage}</p>}
 
       <section className="surface-card local-import-preview">
         <div className="section-heading">
