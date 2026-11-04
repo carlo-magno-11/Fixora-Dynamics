@@ -160,3 +160,21 @@ Conclusión: la política de 30 días, los entitlements específicos por kit y l
 - [ ] Validación física en iOS/Android no realizada; la versión actual es web Vite.
 - [ ] No se aplicó `20261104010000_fixora_local_data_import.sql` al Supabase remoto Fixora. El historial remoto verificado termina en `20261103235603`. No se desplegaron Edge Functions ni se modificó Storage.
 - [ ] PR #14 permanece draft; no fusionar ni anunciar producción hasta cerrar el resto de puertas.
+
+
+## Exportación scoped/legacy y validación — 2026-11-04 (HEAD 33b5072)
+
+- [x] Exportación JSON separada para almacenamiento namespaced scoped y almacenamiento legacy global cuando existe conflicto; sin mezcla ni modificación de originales.
+- [x] Metadato `sourceScope` y nombres de archivo diferenciados; formato v1 anterior compatible.
+- [x] Pruebas Vitest: 40 archivos / 250 pruebas aprobadas.
+- [x] CI #1759 SUCCESS.
+- [x] Security #571 SUCCESS (Gitleaks, OSV-Scanner, Trivy, zizmor).
+- [x] CodeQL #419 SUCCESS.
+- [x] Database tests #1313 SUCCESS: 13 archivos pgTAP / 304 pruebas, cuatro mutaciones RLS detectadas, concurrencia de dispositivos y rate limit aprobados.
+- [x] Browser E2E #20 SUCCESS: dos usuarios, dos negocios, dos contextos; aislamiento confirmado; 1 prueba en 4.7 s.
+- [ ] E2E de descarga y restauración de respaldos scoped/legacy y comprobación de que los originales siguen intactos.
+- [ ] E2E de importación tras timeout/respuesta perdida, doble clic y dos import_keys diferentes con mismo ID de origen.
+- [ ] MFA/AAL2 real, dos dispositivos, revocación, cambio de negocio durante operación y permisos negativos de administración.
+- [ ] Staging HTTPS y pruebas físicas iOS/Android.
+- [ ] Supabase remoto: última migración observada `20261103235603`; `20261104010000_fixora_local_data_import.sql` no aplicada. No se modificó la base remota ni se desplegaron funciones.
+- [ ] PR #14 continúa draft; no fusionar ni anunciar producción.

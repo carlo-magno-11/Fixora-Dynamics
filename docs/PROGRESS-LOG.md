@@ -700,3 +700,19 @@ Durante la revisión final detecté que el camino idempotente de un código ya r
 - No se modificó el esquema ni las migraciones en este cambio. Supabase remoto Fixora `dclaebknyalimmtgppeg`: última migración observada `20261103235603`; `20261104010000_fixora_local_data_import.sql` sigue sin aplicar. No se ejecutó SQL remoto ni se desplegaron Edge Functions.
 - PR #14 sigue draft/open/mergeable, base `feat/licensing-duration-days-20261103`; no se fusiona.
 - Siguiente puerta: ampliar E2E con importación y respuesta perdida, conflicto y restauración de respaldos, cambio de negocio/dispositivo y MFA/AAL2. Después, staging HTTPS y validación física. El primer E2E no representa cobertura integral.
+
+
+## 2026-11-04 — Exportaciones separadas scoped/legacy y validación completa
+
+- Se cerró el bloqueo de respaldo cuando hay datos simultáneos en el almacenamiento namespaced de la cuenta/negocio y en el legacy global del navegador. La detección de conflicto continúa fail-closed: no se mezclan ni se importan automáticamente.
+- La pantalla ofrece dos descargas JSON independientes (scoped y legacy), con `sourceScope`, nombres diferenciados y contenido limitado a su propio almacenamiento. Los originales no se modifican. Cada respaldo se puede seleccionar después para revisión/restauración individual; el formato v1 anterior sigue siendo compatible.
+- Se añadieron pruebas para conflicto, contenido exacto por ámbito, fuentes vacías y ausencia de legacy. Vitest CI #1759: 40 archivos, 250 pruebas PASS.
+- Validación del HEAD `33b507261af5745e93442a5dd298f4b40e216e52`:
+  - CI #1759 SUCCESS (typecheck, 250 Vitest, build web, Deno check y utilidades).
+  - Security #571 SUCCESS (Gitleaks, OSV-Scanner, Trivy, zizmor).
+  - CodeQL #419 SUCCESS.
+  - Database tests #1313 SUCCESS: reconstrucción completa; 13 archivos pgTAP / 304 pruebas PASS; cuatro mutaciones RLS detectadas; límite concurrente de tres dispositivos y rate limit aprobados.
+  - Browser E2E #20 SUCCESS: Supabase local efímero, Playwright/Chromium, dos usuarios y dos contextos, creación de dos negocios y verificación de aislamiento. 1 prueba PASS en 4.7 s.
+- El primer CI de la exportación detectó errores de tipos en el puerto y el handler del botón; quedaron corregidos antes del HEAD validado. No se ocultó ni se dio por aprobado el intento fallido.
+- No se modificaron migraciones ni esquema. Supabase remoto Fixora `dclaebknyalimmtgppeg` sigue con última migración observada `20261103235603`; la migración de importación `20261104010000` sigue sin aplicar. No hubo SQL remoto, despliegue de funciones, ni cambios de Storage.
+- PR #14 permanece draft/open. Siguientes puertas: E2E de descarga/restauración, importación con respuesta perdida, MFA/AAL2, dispositivos, staging HTTPS y verificación física.
