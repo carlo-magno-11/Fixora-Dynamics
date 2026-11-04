@@ -435,6 +435,21 @@ async function readAdminAccess(page: Page): Promise<{ allowed?: boolean; reason?
   return body.access;
 }
 
+async function invokeAdminCreateInvite(page: Page): Promise<{ status: number; error?: string }> {
+  const token = await readSessionAccessToken(page);
+  const response = await fetch(`${supabaseUrl}/functions/v1/admin-create-invite`, {
+    method: "POST",
+    headers: {
+      apikey: anonKey,
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ email: "no-side-effect@fixora.test", role: "auditor" }),
+  });
+  const body = await response.json() as { error?: string };
+  return { status: response.status, ...(typeof body.error === "string" ? { error: body.error } : {}) };
+}
+
 test("TOTP enrollment raises assurance to AAL2 and admin access still requires a role", async ({ browser }) => {
   test.setTimeout(90_000);
   const suffix = crypto.randomUUID();
@@ -445,6 +460,10 @@ test("TOTP enrollment raises assurance to AAL2 and admin access still requires a
   await signInAndCreateBusiness(page, user, `Negocio MFA ${suffix.slice(0, 8)}`);
 
   expect(await readAdminAccess(page)).toEqual({ allowed: false, reason: "mfa_required", permissions: [] });
+  expect(await invokeAdminCreateInvite(page)).toEqual({
+    status: 403,
+    error: "AAL2 administrator authentication is required.",
+  });
 
   await page.getByRole("button", { name: "Abrir mi cuenta" }).click();
   await page.getByRole("button", { name: "Configurar autenticador" }).click();
@@ -463,6 +482,10 @@ test("TOTP enrollment raises assurance to AAL2 and admin access still requires a
   await page.getByRole("button", { name: "Verificar y activar" }).click();
   await expect(page.getByText("Autenticación multifactor activada correctamente para esta cuenta.")).toBeVisible();
   expect(await readAdminAccess(page)).toEqual({ allowed: false, reason: "role_missing", permissions: [] });
+  expect(await invokeAdminCreateInvite(page)).toEqual({
+    status: 403,
+    error: "Administrator management permission is required.",
+  });
 
   await page.getByRole("button", { name: "Salir" }).click();
   await expect(page.getByRole("heading", { name: "Qué gusto tenerte de vuelta." })).toBeVisible();
