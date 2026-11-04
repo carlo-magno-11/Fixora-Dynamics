@@ -17,6 +17,7 @@ export interface LocalImportRawBundle {
   expenses: string | null;
   history: string | null;
   storageError?: boolean;
+  storageConflict?: boolean;
 }
 
 export interface LocalImportIssue {
@@ -85,8 +86,14 @@ function hasDuplicateIds(items: readonly { id: string }[]): boolean {
 export function parseLocalImportBundle(raw: LocalImportRawBundle): LocalImportBundle {
   const issues: LocalImportIssue[] = [];
   const foundLocalData = raw.catalog !== null || raw.expenses !== null || raw.history !== null;
-  if (raw.storageError) {
-    issues.push({ category: "storage", code: "storage_unavailable", message: "El navegador no permitió leer los datos locales. No se asumirá que están vacíos." });
+  if (raw.storageError || raw.storageConflict) {
+    issues.push({
+      category: "storage",
+      code: raw.storageConflict ? "storage_conflict" : "storage_unavailable",
+      message: raw.storageConflict
+        ? "Hay datos locales en el ámbito de esta cuenta y también en el almacenamiento anterior del navegador. No se mezclarán automáticamente; conserva una copia y revisa qué conjunto quieres importar."
+        : "El navegador no permitió leer todos los datos locales. No se asumirá que están vacíos.",
+    });
     return { catalog: [], expenses: null, history: [], issues, foundLocalData, canImport: false };
   }
   const payloadBytes = [raw.catalog, raw.expenses, raw.history]
