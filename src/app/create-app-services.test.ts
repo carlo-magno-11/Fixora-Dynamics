@@ -19,6 +19,8 @@ describe("application composition root", () => {
       now: () => "2026-10-31T12:00:00.000Z",
     });
 
+    expect(typeof services.localImportService.preview).toBe("function");
+    expect(typeof services.localImportService.importBundle).toBe("function");
     expect(services.catalogService.loadState()).toEqual({
       items: [],
       needsRecovery: false,
