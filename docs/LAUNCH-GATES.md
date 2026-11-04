@@ -178,3 +178,25 @@ Conclusión: la política de 30 días, los entitlements específicos por kit y l
 - [ ] Staging HTTPS y pruebas físicas iOS/Android.
 - [ ] Supabase remoto: última migración observada `20261103235603`; `20261104010000_fixora_local_data_import.sql` no aplicada. No se modificó la base remota ni se desplegaron funciones.
 - [ ] PR #14 continúa draft; no fusionar ni anunciar producción.
+
+## E2E de importación y restauración — validación ampliada 2026-11-04
+
+**HEAD de código comprobado:** `0dc9798ef4709100331cab518df4711f3fc09985`.
+
+- [x] CI #1769 SUCCESS: instalación reproducible, TypeScript, Vitest, build web, Deno check y utilidades.
+- [x] Security #581 SUCCESS: Gitleaks, OSV-Scanner, Trivy y zizmor.
+- [x] CodeQL #429 SUCCESS.
+- [x] Database tests #1323 SUCCESS: reconstrucción local completa; 13 archivos pgTAP / 304 pruebas; pruebas de mutaciones RLS permisivas; concurrencia del límite de tres dispositivos y rate limit aprobados.
+- [x] Browser E2E #30 SUCCESS: 2 pruebas / 7.5 s contra Supabase local efímero.
+  - Dos usuarios autenticados en contextos independientes no pueden leer el negocio del otro.
+  - Conflicto scoped/legacy: se descargan dos respaldos independientes, se comprueba el contenido exacto y que los datos originales permanecen intactos.
+  - Restauración seleccionada: se restaura solo el respaldo scoped; el conjunto legacy no se importa ni modifica.
+  - Recuperación tras respuesta perdida: el E2E deja que la RPC confirme la importación y descarta su respuesta HTTP; tras recargar, el mismo respaldo se reintenta y la aplicación recupera el resultado idempotente sin duplicar catálogo.
+- [x] pgTAP verifica además que un segundo import_key no puede duplicar IDs de origen previamente importados; cambios parciales de una categoría hacen rollback completo.
+- [ ] E2E de doble clic explícito y dos solicitudes verdaderamente concurrentes; el backend ya tiene unicidad por (user, business, import_key) y unicidad por (business, source_type, source_id), pero falta la prueba de navegador/concurrencia específica.
+- [ ] MFA/AAL2 real, dos dispositivos, revocación, cambio de negocio durante operación y permisos negativos de administración.
+- [ ] Staging HTTPS con cuentas controladas; pruebas físicas iOS/Android.
+- [ ] Supabase remoto Fixora: última migración observada `20261103235603`; `20261104010000_fixora_local_data_import.sql` continúa sin aplicar. No se ejecutó SQL de escritura ni despliegue remoto.
+- [ ] PR #14 permanece draft; no fusionar ni anunciar producción.
+
+La evidencia E2E anterior es local/efímera y no sustituye staging ni la validación con dispositivos reales.
