@@ -1,17 +1,8 @@
-export interface LocalImportKeyStorage {
-  getItem(key: string): string | null;
-  setItem(key: string, value: string): void;
-}
-
-interface StoredImportKeys {
-  version: 1;
-  entries: Record<string, string>;
-}
-
-const STORAGE_PREFIX = "fixora.local-import-idempotency.v1:";
 const FINGERPRINT_PATTERN = /^[a-f0-9]{64}$/;
-const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-const MAX_STORED_KEYS = 64;
+const UUID_NAMESPACE = new Uint8Array([
+  0x6b, 0xa7, 0xb8, 0x11, 0x9d, 0xad, 0x11, 0xd1,
+  0x80, 0xb4, 0x00, 0xc0, 0x4f, 0xd4, 0x30, 0xc8,
+]);
 
 export async function createLocalImportFingerprint(input: unknown): Promise<string> {
   const serialized = JSON.stringify(input);
@@ -23,61 +14,27 @@ export async function createLocalImportFingerprint(input: unknown): Promise<stri
   return Array.from(new Uint8Array(digest), (value) => value.toString(16).padStart(2, "0")).join("");
 }
 
-export function getOrCreateLocalImportKey(
-  storage: LocalImportKeyStorage,
+/**
+ * Creates a deterministic UUIDv5 for one business + payload fingerprint.
+ * This avoids cross-tab races: two tabs importing the same selection produce
+ * the same server idempotency key even if neither tab has local metadata yet.
+ */
+export async function createLocalImportKey(
   businessId: string,
   fingerprint: string,
-  generateId: () => string = () => globalThis.crypto.randomUUID(),
-): string {
+): Promise<string> {
   if (!businessId.trim() || !FINGERPRINT_PATTERN.test(fingerprint)) {
     throw new Error("No se puede crear una clave de importación para un destino o contenido inválido.");
   }
 
-  const storageKey = `${STORAGE_PREFIX}${encodeURIComponent(businessId)}`;
-  const stored = storage.getItem(storageKey);
-  let entries: Record<string, string> = {};
+  const name = new TextEncoder().encode(`fixora-local-import:v1:${businessId}:${fingerprint}`);
+  const input = new Uint8Array(UUID_NAMESPACE.length + name.length);
+  input.set(UUID_NAMESPACE, 0);
+  input.set(name, UUID_NAMESPACE.length);
+  const digest = new Uint8Array(await globalThis.crypto.subtle.digest("SHA-1", input));
+  digest[6] = (digest[6] & 0x0f) | 0x50;
+  digest[8] = (digest[8] & 0x3f) | 0x80;
 
-  if (stored !== null) {
-    let parsed: unknown;
-    try {
-      parsed = JSON.parse(stored);
-    } catch {
-      throw new Error("El registro local de reintentos está dañado. No se iniciará otra importación automáticamente.");
-    }
-    if (
-      typeof parsed !== "object"
-      || parsed === null
-      || !("version" in parsed)
-      || parsed.version !== 1
-      || !("entries" in parsed)
-      || typeof parsed.entries !== "object"
-      || parsed.entries === null
-      || Array.isArray(parsed.entries)
-    ) {
-      throw new Error("El registro local de reintentos no tiene un formato válido.");
-    }
-    entries = parsed.entries as Record<string, string>;
-    for (const [key, value] of Object.entries(entries)) {
-      if (!FINGERPRINT_PATTERN.test(key) || typeof value !== "string" || !UUID_PATTERN.test(value)) {
-        throw new Error("El registro local de reintentos contiene una clave inválida.");
-      }
-    }
-  }
-
-  const existing = entries[fingerprint];
-  if (existing) return existing;
-
-  const importKey = generateId();
-  if (!UUID_PATTERN.test(importKey)) {
-    throw new Error("No se pudo generar una clave de importación válida.");
-  }
-
-  entries[fingerprint] = importKey;
-  const keys = Object.keys(entries);
-  while (keys.length > MAX_STORED_KEYS) {
-    delete entries[keys.shift() as string];
-  }
-  const next: StoredImportKeys = { version: 1, entries };
-  storage.setItem(storageKey, JSON.stringify(next));
-  return importKey;
+  const hex = Array.from(digest.slice(0, 16), (value) => value.toString(16).padStart(2, "0")).join("");
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
 }
