@@ -11,7 +11,7 @@ export async function readJsonObject(
 ): Promise<Record<string, unknown> | null> {
   const declaredLength = request.headers.get("content-length");
   if (declaredLength !== null) {
-    if (!/^\\d+$/.test(declaredLength)) return null;
+    if (!/^\d+$/.test(declaredLength)) return null;
     const length = Number(declaredLength);
     if (!Number.isSafeInteger(length) || length > maxBytes) return null;
   }
