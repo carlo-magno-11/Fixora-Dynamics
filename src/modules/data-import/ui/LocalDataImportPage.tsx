@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import type { ChangeEvent } from "react";
 import type { LocalImportService, LocalImportResult, LocalImportPreview } from "../application/local-import-service";
 import type { LocalImportSelection } from "../application/local-import-service";
 import { parseLocalImportBackup, type LocalImportRawBundle } from "../domain/local-import";
@@ -76,7 +77,7 @@ export function LocalDataImportPage({
     return () => { active = false; };
   }, [businessId, businessCurrency, service]);
 
-  async function loadBackupFile(event: React.ChangeEvent<HTMLInputElement>) {
+  async function loadBackupFile(event: ChangeEvent<HTMLInputElement>) {
     const file = event.currentTarget.files?.[0];
     event.currentTarget.value = "";
     if (!file) return;
@@ -85,6 +86,7 @@ export function LocalDataImportPage({
     setError("");
     setPreview(null);
     setBackupBundle(null);
+    setBackupMessage("");
     setResult(null);
     setSelection({ catalog: false, expenses: false, history: false });
     setImportKey(crypto.randomUUID());
@@ -94,6 +96,7 @@ export function LocalDataImportPage({
         throw new Error("El archivo supera el límite admitido. Divide los datos y genera respaldos más pequeños.");
       }
       const raw = parseLocalImportBackup(await file.text());
+      setBackupBundle(raw);
       const next = await service.previewData(raw, businessId, businessCurrency);
       if (requestId !== backupRequest.current) return;
       setBackupBundle(raw);
