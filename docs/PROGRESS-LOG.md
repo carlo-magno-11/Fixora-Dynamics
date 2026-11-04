@@ -673,3 +673,16 @@ Durante la revisión final detecté que el camino idempotente de un código ya r
 - Commits: `64ef93a` (clave determinista), `9472f20` (integración UI), `9fd184e` (pruebas), `f085e26` (especificación).
 - Estado de validación: pendiente de CI, Database tests, CodeQL y Security sobre el HEAD documental más reciente. No se declara aprobado hasta consultar las ejecuciones.
 - No se modificó esquema ni migraciones. No se aplicó nada al Supabase remoto Fixora, no se desplegaron Edge Functions, no se tocaron Storage ni EYESITE oficial.
+
+
+## 2026-11-04 — Validación completa del HEAD b4fa053
+
+- HEAD validado: `b4fa053db43e4a66125b2436d80261a6cd19b43d`.
+- CI #1733: SUCCESS (TypeScript, Vitest, build web, Deno check y pruebas de utilidades).
+- Security #545: SUCCESS (Gitleaks, OSV-Scanner, Trivy y zizmor).
+- CodeQL #393: SUCCESS.
+- Database tests #1287: SUCCESS. Se reconstruyó la base aislada desde todas las migraciones versionadas; pgTAP: 13 archivos, 304 pruebas, PASS. Las cuatro mutaciones RLS permisivas se detectaron en businesses, catalog_items, support_tickets y support_messages. La prueba concurrente de activación aceptó una operación, rechazó otra y conservó tres dispositivos activos; rate limit concurrente: 3 solicitudes permitidas, 9 rechazadas, sin exceder el límite.
+- La corrección UUIDv5/SHA-256 de importación local→cloud ya pasó los controles automatizados de este HEAD. No modifica esquema ni migraciones.
+- PR #14 permanece draft/open/mergeable; base `feat/licensing-duration-days-20261103`, head `integration/fixora-mainline-20261103`. No se fusiona todavía.
+- Supabase remoto Fixora `dclaebknyalimmtgppeg`: última migración observada `20261103235603`; `20261104010000_fixora_local_data_import.sql` sigue sin aplicar. Security Advisor sin hallazgos; Performance Advisor mantiene avisos INFO (12 índices sin uso y configuración Auth de conexiones). No se aplicó SQL, migración ni despliegue remoto.
+- Siguiente puerta: E2E de navegador con entorno local aislado, pruebas multiusuario/negocio y flujos de importación/reintento/restauración. Después, staging real con MFA y dispositivos. CI/pgTAP verdes no sustituyen esa evidencia.
