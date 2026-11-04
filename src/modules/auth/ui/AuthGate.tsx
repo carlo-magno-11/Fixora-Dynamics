@@ -24,7 +24,6 @@ export interface AuthWorkspaceProps {
   businessTimezone?: string;
   businessCurrency?: CurrencyCode;
   profileDisplayName?: string;
-  profileLocale?: "es-MX" | "en-US";
   profileLoading?: boolean;
   profileError?: string;
   onProfileUpdate?: (input: { displayName: string }) => Promise<void>;
@@ -518,7 +517,6 @@ export function AuthGate({ children }: AuthGateProps) {
         businessTimezone: selectedBusiness.timezone,
         businessCurrency: selectedBusiness.currency_code === "USD" ? "USD" : "MXN",
         profileDisplayName: profile?.display_name ?? (typeof session.user.user_metadata.display_name === "string" ? session.user.user_metadata.display_name : ""),
-        profileLocale: profile?.locale === "en-US" ? "en-US" : "es-MX",
         profileLoading,
         profileError,
         onProfileUpdate: updateProfile,
