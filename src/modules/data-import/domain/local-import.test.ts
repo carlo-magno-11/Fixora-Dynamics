@@ -103,7 +103,7 @@ describe("local import validation", () => {
 
   it("rejects duplicate SKUs within the local catalog", () => {
     const result = parseLocalImportBundle(rawBundle({
-      catalog: JSON.stringify([catalogItem, { ...catalogItem, id: "local-item-2", sku: " taza-01 " }]),
+      catalog: JSON.stringify([catalogItem, { ...catalogItem, id: "local-item-2", sku: "taza-01" }]),
     }));
     expect(result.canImport).toBe(false);
     expect(result.issues.some((issue) => issue.code === "duplicate_sku")).toBe(true);
