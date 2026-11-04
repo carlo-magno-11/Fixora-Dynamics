@@ -39,6 +39,7 @@ jobs:
           cd /tmp/fixora-db-ci
           supabase init
           sed -i 's/^major_version = .*/major_version = 17/' supabase/config.toml
+          sed -i '/^\[db\]/a port = 54332\nshadow_port = 54330' supabase/config.toml
           cp -R "$GITHUB_WORKSPACE/supabase/migrations" supabase/
           cp -R "$GITHUB_WORKSPACE/supabase/tests" supabase/
 
@@ -59,7 +60,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          database_url="postgresql://postgres:postgres@127.0.0.1:54322/postgres"
+          database_url="postgresql://postgres:postgres@127.0.0.1:54332/postgres"
           run_mutation() {
             policy_name="$1"
             table_name="$2"
@@ -90,7 +91,7 @@ jobs:
           supabase test db
 
       - name: Test concurrent license device activation limit
-        run: bash scripts/test-license-concurrency.sh "postgresql://postgres:postgres@127.0.0.1:54322/postgres"
+        run: bash scripts/test-license-concurrency.sh "postgresql://postgres:postgres@127.0.0.1:54332/postgres"
 
       - name: Test concurrent server rate limit
-        run: bash scripts/test-rate-limit-concurrency.sh "postgresql://postgres:postgres@127.0.0.1:54322/postgres"
+        run: bash scripts/test-rate-limit-concurrency.sh "postgresql://postgres:postgres@127.0.0.1:54332/postgres"
