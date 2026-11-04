@@ -311,3 +311,12 @@ El resultado separa:
 - contribución estimada después de asignación fija y margen operativo estimado.
 
 Los importes de tarifas se capturan como valores reales del pedido; el dominio no inventa las reglas de Etsy ni asume que impuestos, procesamiento y comisión usan la misma base. La conciliación automatizada por canal, el vínculo con ventas y movimientos persistidos siguen pendientes. El módulo aún no tiene UI, repositorio ni migración.
+
+
+### 10.2 Reposición determinista — dominio inicial
+
+Se añadió `src/modules/retail/domain/retail-restock.ts` y su suite `retail-restock.test.ts`. La función recibe demanda diaria promedio proporcionada por el llamador, unidades vendibles, reservadas y en camino, tiempo de entrega, periodo de revisión, stock de seguridad, compra mínima y múltiplo de compra.
+
+Calcula posición de inventario, punto de reposición, objetivo y cantidad sugerida. Usa aritmética decimal para los umbrales y valida enteros seguros. Si la demanda suministrada es cero, devuelve `no_demand` y no inventa una predicción.
+
+**Límites explícitos:** no calcula por sí misma la demanda desde ventas históricas, no corrige periodos con quiebre de stock, no consulta proveedores, no crea órdenes de compra y no modifica inventario. El resultado es una sugerencia determinista basada en entradas, no un pronóstico. Aún no tiene UI, persistencia ni E2E; la suite unitaria está añadida pero debe pasar CI antes de considerarse validada.
