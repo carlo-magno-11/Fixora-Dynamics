@@ -784,3 +784,12 @@ Durante la revisión final detecté que el camino idempotente de un código ya r
 - La investigación de mercado se amplió con señales anecdóticas de Reddit sobre complejidad/coste de inventario, fórmulas de panadería y conciliación de tarifas de Etsy; no son muestras representativas.
 - No hay interfaz ni persistencia de pedidos todavía; el dominio nuevo es lógica pura probada por CI. No se creó ni ejecutó migración en esta entrega.
 - Supabase remoto Fixora y EYESITE oficial no fueron modificados; no se desplegaron funciones.
+
+
+## 2026-11-04 — Reposición sugerida para Comercio y reventa
+
+- Se añadió `src/modules/retail/domain/retail-restock.ts`: cálculo determinista con demanda diaria promedio suministrada, inventario vendible, reservado y en camino, plazo de entrega, periodo de revisión, stock de seguridad, compra mínima y múltiplo.
+- La función no lee ventas ni inventario, no pronostica demanda, no crea órdenes de compra y no cambia existencias. No se anunciará como reposición automática.
+- Se añadieron pruebas unitarias para umbral, stock suficiente, demanda cero, múltiplo/MOQ, reservas superiores al stock vendible y validaciones de rango. La validación CI del nuevo HEAD aún debe confirmarse.
+- Se documentó el alcance y sus límites en `docs/KIT-MODULES-IMPLEMENTATION-PLAN.md`.
+- El dominio sigue sin UI, persistencia, conexión al ledger ni RLS. No se creó ni aplicó migración Supabase.
